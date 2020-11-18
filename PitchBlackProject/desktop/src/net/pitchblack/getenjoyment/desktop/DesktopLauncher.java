@@ -2,11 +2,15 @@ package net.pitchblack.getenjoyment.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import net.pitchblack.getenjoyment.PitchBlack;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
 
 public class DesktopLauncher {
-	public static void main (String[] arg) {
+	public static void main (String[] args) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		new LwjglApplication(new PitchBlack(), config);
+		config.title = "Pitch Black";
+		config.width = 1080;
+		config.height = 720;
+		new LwjglApplication(new PitchBlackGraphicsTest(), config);
+	
 	}
 }
