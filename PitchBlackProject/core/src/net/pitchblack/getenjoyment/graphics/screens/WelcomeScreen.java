@@ -13,14 +13,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 public class WelcomeScreen implements Screen {
 	
-	private PitchBlackGraphicsTest parent;
+	private PitchBlackGraphics parent;
 	private Stage stage;
 
-	public WelcomeScreen(PitchBlackGraphicsTest hGT) {
+	public WelcomeScreen(PitchBlackGraphics hGT) {
 		parent = hGT;
 		
 		stage = new Stage(new ScreenViewport());  // stage relates to a controller which will react to user inputs
@@ -57,7 +57,7 @@ public class WelcomeScreen implements Screen {
 		newGame.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				parent.changeScreen(PitchBlackGraphicsTest.GAME);
+				parent.changeScreen(PitchBlackGraphics.GAME);
 			}
 		});
 	}

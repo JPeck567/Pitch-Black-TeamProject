@@ -84,6 +84,8 @@ task addSource {
 tasks.compileGwt.dependsOn(addSource)
 tasks.draftCompileGwt.dependsOn(addSource)
 
+apply plugin: "java"
+
 sourceCompatibility = 1.7
 sourceSets.main.java.srcDirs = [ "src/" ]
 

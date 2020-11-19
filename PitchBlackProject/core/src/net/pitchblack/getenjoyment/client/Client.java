@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import com.badlogic.gdx.Gdx;
 
 import net.pitchblack.getenjoyment.entities.Player;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 import io.socket.client.IO;
 import io.socket.client.Socket;

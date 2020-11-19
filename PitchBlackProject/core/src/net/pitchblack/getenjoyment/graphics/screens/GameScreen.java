@@ -7,7 +7,7 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 
 import net.pitchblack.getenjoyment.client.Client;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.helpers.AssetLoader;
 import net.pitchblack.getenjoyment.helpers.InputHandler;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
@@ -15,7 +15,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameScreen implements Screen {
 	
-	private PitchBlackGraphicsTest parent;
+	private PitchBlackGraphics parent;
 	
 	private GameWorld gameWorld;
 	private GameRenderer gameRenderer;
@@ -23,7 +23,7 @@ public class GameScreen implements Screen {
 	
 	private Client client;
 	
-	public GameScreen(PitchBlackGraphicsTest pbG) {
+	public GameScreen(PitchBlackGraphics pbG) {
 		parent = pbG;
 				
 		gameWorld = new GameWorld();

@@ -3,7 +3,7 @@ package net.pitchblack.getenjoyment.helpers;
 import com.badlogic.gdx.Input.Keys;
 
 import net.pitchblack.getenjoyment.entities.Player;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;

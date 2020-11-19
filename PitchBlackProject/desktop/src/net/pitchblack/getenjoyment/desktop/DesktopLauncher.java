@@ -2,7 +2,7 @@ package net.pitchblack.getenjoyment.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphicsTest;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 public class DesktopLauncher {
 	public static void main (String[] args) {
@@ -10,7 +10,7 @@ public class DesktopLauncher {
 		config.title = "Pitch Black";
 		config.width = 1080;
 		config.height = 720;
-		new LwjglApplication(new PitchBlackGraphicsTest(), config);
+		new LwjglApplication(new PitchBlackGraphics(), config);
 	
 	}
 }
