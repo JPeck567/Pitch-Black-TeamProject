@@ -9,17 +9,21 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.graphics.screens.WelcomeScreen;
-import net.pitchblack.getenjoyment.helpers.AssetLoader;
+import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 
 public class PitchBlackGraphics extends Game {
 	public static final int MENU = 0;
 	public static final int GAME = 1;
 	private WelcomeScreen welcomeScreen;
 	private GameScreen gameScreen;
+	private final PBAssetManager pbManager;
+	
+	public PitchBlackGraphics() {
+		pbManager = new PBAssetManager();
+	}
 
 	@Override
 	public void create() {
-		AssetLoader.load();
 		changeScreen(0);
 	}
 
@@ -36,5 +40,14 @@ public class PitchBlackGraphics extends Game {
 			this.setScreen(gameScreen);
 			break;
 		}
+	}
+	
+	@Override
+	public void dispose() {
+		pbManager.dispose();
+	}
+
+	public PBAssetManager getAssetManager() {
+		return pbManager;
 	}
 }

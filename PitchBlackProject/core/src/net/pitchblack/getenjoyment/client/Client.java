@@ -25,7 +25,7 @@ public class Client {
 	
 	public Client(GameWorld gameWorld) {
 		this.gameWorld = gameWorld;
-		this.player = gameWorld.getPlayer();
+		this.player = gameWorld.getPlayer("0");
 		connectSocket();
 		configSocketEvents();
 	}

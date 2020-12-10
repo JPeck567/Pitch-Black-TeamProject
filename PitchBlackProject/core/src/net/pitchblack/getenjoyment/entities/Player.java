@@ -2,187 +2,187 @@ package net.pitchblack.getenjoyment.entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;  // powerful! is a 2d vector
+import com.badlogic.gdx.physics.box2d.Body;
 
 import net.pitchblack.getenjoyment.entities.Player.State;
-import net.pitchblack.getenjoyment.helpers.AssetLoader;
+import net.pitchblack.getenjoyment.helpers.PBAssetManager;
+import net.pitchblack.getenjoyment.logic.CollisionHandler;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-public class Player extends Sprite {
-	public static final float SPEED = 100 * 2;
-	public static final float FALLING_SPEED = 100 * 2;
-	public static final float GRAVITY = 60 * 1.8f;
+public class Player {
+	public static final float SPEED = 3f;
+	public static final Vector2 SPEED_VECTOR = new Vector2(SPEED, 0);
+	public static final float JUMP_FORCE = 7f;
+	public static final float TERMINAL_VELOCITY = 10f;
+	private static final int JUMP_LIMIT = 2;
 	
-	public static final int JUMP_SPEED = 22*20;
-	public static final double JUMP_LIMIT = 200*20;
-	
-	//private Vector2 position;
+	private Vector2 position;
 	private Vector2 velocity;
+	private Body body;
 	
+	private float height;
+	private float width;
 	private Rectangle boundRect;
-	private int jumpHeight;
 	
 	private State state;
+	private boolean pushState;
+	private int jumps;  // number of jumps, capped at JUMP_LIMIT
+	private boolean movementLeft;
+	private boolean movementRight;
 	
-	private TiledMapTileLayer collisionLayer;
+	private TiledMapTileLayer collisionLayer; // in server, will update so often if player moves to different map 
 	
-	enum State {
+	public enum State {
 		  ASCENDING,
 		  DESCENDING,
-		  STANDING
+		  STANDING,
+		  LEFT,
+		  RIGHT
 		}
 	
-	public Player(TiledMapTileLayer collisionLayer) {
-		super(AssetLoader.player);
-		//position = new Vector2(x, y);
+	public Player(Body body, float height, float width) {
+		this.height = height;
+		this.width = width;
+		
+		position = new Vector2(GameWorld.START_POS_X, GameWorld.START_POS_Y);
 		velocity = new Vector2(0, 0);
+		this.body = body;
+		body.setFixedRotation(true);
+		body.setSleepingAllowed(false);
 		
-		boundRect = this.getBoundingRectangle();
-		this.jumpHeight = 0;
-		state = State.DESCENDING;
-		
-		this.collisionLayer = collisionLayer;
+		state = State.STANDING;
+		pushState = false;
+		movementLeft = false;
+		movementRight = false;
 	}
 
 	public void update(float delta) {
-		float oldY = getY();
-		float oldX = getX();
-		//System.out.println(position.x + " " + position.y + " " + jumpHeight);
-		// uses delta to work out pos to achieve frame-rate independent movement. if execution time takes x2 normal speed to execute, we will compensate
-		// by moving at 2x the normal distance. makes it super slow which not sure how to go about
-		velocity.y -= GRAVITY * delta;
+		float oldY = position.y;
+		float oldX = position.x;
 		
-		if(velocity.y > FALLING_SPEED) {
-			velocity.y = FALLING_SPEED;
-		} else if(velocity.y < FALLING_SPEED) {
-			velocity.y = -FALLING_SPEED;
-		}	
+		if(body.getLinearVelocity().y < 0 && jumps != 0) {
+			state = State.DESCENDING;
+		}
+		
+		System.out.println(pushState);
+		System.out.print(" " + state);
+		
+		if(movementLeft && body.getLinearVelocity().x > -TERMINAL_VELOCITY) {
+			// if pushing, divide by 2
+			body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/-50f) : SPEED_VECTOR.cpy().scl(-1), body.getWorldCenter(), true);
+		}
+		
+		if(movementRight && body.getLinearVelocity().x < TERMINAL_VELOCITY) {
+			body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/50f) : SPEED_VECTOR, body.getWorldCenter(), true);
+		}
+	}
 
-		if(state == State.ASCENDING) {  // meaning to jump up
-			jumpHeight += JUMP_SPEED;
-			if(jumpHeight >= JUMP_LIMIT) {
-				state = State.DESCENDING;
-				jumpHeight = 0;
-			} else {
-				velocity.y += JUMP_SPEED;
-			}
-		}
-		
-		// - for y as y is facing down when rendered
-		setPosition(getX() + velocity.x * delta, getY() - velocity.y * delta);
-
-		if(velocity.y < 0) {  // just went up
-			if(collidesTop()) {
-				setY(oldY);
-				state = State.STANDING;
-			}
-			
-		} else if (velocity.y > 0) { // just went down
-			if(collidesBottom()) {
-				setY(oldY);
-			}
-		}
-		
-		if(velocity.x > 0) {  // just went right
-			if(collidesRight()) {
-				setX(oldX);
-			}
-		} else if (velocity.x < 0) { // just went left
-			if(collidesLeft()) {
-				setX(oldX);
-			}
-		}
-	}
-	
-	private boolean isCellBlocked(float x, float y) {
-		Cell cell = collisionLayer.getCell((int) (x / GameWorld.TILE_DIM), (int) (y / GameWorld.TILE_DIM));
-		return cell != null ? true : false;
-	}
-	
-	public boolean collidesRight() {
-		boolean collides = false;
-	
-		for(float step = 0; step < getHeight(); step += GameWorld.TILE_DIM / 2)
-			if(collides = isCellBlocked(getX() + getWidth(), getY() + step))
-				break;
-	
-		return collides;
-	}
-	
-	public boolean collidesLeft() {
-		boolean collides = false;
-	
-		for(float step = 0; step < getHeight(); step += GameWorld.TILE_DIM / 2)
-			if(collides = isCellBlocked(getX(), getY() + step))
-				break;
-	
-		return collides;
-	}
-	
-	public boolean collidesTop() {
-		boolean collides = false;
-	
-		for(float step = 0; step < getWidth(); step += GameWorld.TILE_DIM / 2)
-			if(collides = isCellBlocked(getX() + step, getY() + getHeight()))
-				break;
-	
-		return collides;
-	
-	}
-	
-	public boolean collidesBottom() {
-		boolean collides = false;
-	
-		for(float step = 0; step < getWidth(); step += GameWorld.TILE_DIM / 2)
-			if(collides = isCellBlocked(getX() + step, getY()))
-				break;
-	
-		return collides;
-	
-	}
 	
 	public void keyDown(int keycode) {
 		switch(keycode) {
 			case Keys.A:
 				System.out.println("A Down");
-				velocity.x += -SPEED;
+				movementLeft = true;
+				//velocity.x += -SPEED;
+				//Vector2 velA = body.getLinearVelocity();
+				//velA.x = -SPEED;
+				//body.setLinearVelocity(velA);
+				//body.setLinearVelocity(body.getLinearVelocity().y - SPEED, body.getLinearVelocity().y);
 				break;
 			case Keys.D:
 				System.out.println("D Down");
-				velocity.x += SPEED;
+				movementRight= true;
+				//velocity.x += SPEED;
+				//Vector2 velD = body.getLinearVelocity();
+				//velD.x = SPEED;
+				//body.setLinearVelocity(velD);
+				//body.applyForceToCenter(new Vector2(0, SPEED), true);
+				//body.applyLinearImpulse(new Vector2(SPEED, 0), body.getWorldCenter(), true);
 				break;
 			case Keys.SPACE:
-				if(state == State.STANDING) {  // so cannot keep jumping
+				System.out.println("Space Down");
+// 				if(state == State.STANDING) {  // so cannot keep jumping
+//					velocity.y += JUMP_VELOCITY;
+//					state = State.ASCENDING;
+//				}
+				//body.setLinearVelocity(body.getLinearVelocity().x, JUMP_FORCE);
+				//body.setLinearVelocity(0, JUMP_FORCE);
+//	            
+//				break;
+//				
+				if(jumps < JUMP_LIMIT) {
+					Vector2 vel2 = body.getLinearVelocity();
+					Vector2 pos = body.getPosition();
+					
+					//body.applyForce(new Vector2(0, JUMP_FORCE), body.getWorldCenter(), true);
+					//body.applyForceToCenter(0, 35f, true);
+					body.applyLinearImpulse(new Vector2(0, JUMP_FORCE), body.getWorldCenter(), true);
 					state = State.ASCENDING;
-					velocity.y -= JUMP_SPEED;
+					jumps++;
 				}
-				System.out.println("Space Pressed");
-				break;
+				break;	
 		}
 	}
 	
 	public void keyUp(int keycode) {
 		switch(keycode) {
-			case Keys.A:
+			case Keys.A:  // same as d
 				System.out.println("A Up");
-				velocity.x += SPEED;
+				Vector2 vel1 = body.getLinearVelocity();
+				vel1.x = 0;
+				body.setLinearVelocity(vel1);
+				movementLeft = false;
 				break;
+//				Vector2 velA = body.getLinearVelocity();
+//				//velocity.x += SPEED;
+//				body.setLinearVelocity(0, body.getLinearVelocity().y);
+//				break;
 			case Keys.D:
 				System.out.println("D Up");
-				velocity.x += -SPEED;
+				//velocity.x += -SPEED;
+				Vector2 vel2 = body.getLinearVelocity();
+				vel2.x = 0;
+				body.setLinearVelocity(vel2);
+				movementRight = false;
 				break;
 		}
 	}
-	
+
 	public boolean hasMoved() {
-		return !velocity.isZero();
+		return !movementRight || !movementLeft;
+	}
+
+	public float getX() {
+		return body.getPosition().x - (width / 2) + (3 / GameWorld.PPM);
+	}
+	
+	public float getY() {
+		return body.getPosition().y - (height / 2) - (3 / GameWorld.PPM);
+	}
+	
+	public Vector2 getVelocity(){
+		return body.getLinearVelocity().cpy();
+	}
+
+	public void setState(State state) {
+		if(state == State.STANDING) {
+			jumps = 0;
+		}
+		this.state = state;
+	}
+	
+	public void setPushState(Boolean flag){
+		pushState = flag;
 	}
 }

@@ -4,26 +4,29 @@ import com.badlogic.gdx.Input.Keys;
 
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.logic.GameWorld;
 
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 
 public class InputHandler implements InputProcessor {
-	private Player player;
+	private GameWorld gameWorld;
 	
-	public InputHandler(Player player) {
-		this.player = player;
+	public InputHandler(GameWorld gameWorld) {
+		this.gameWorld = gameWorld;
 	}
-
+	
+	// for server, send message, then call appropriate method in game world
+	
 	@Override
 	public boolean keyDown(int keycode) {
-		player.keyDown(keycode);
+		gameWorld.keyDown(keycode);
 		return true; // to show key press has been handled
 	}
 
 	@Override
 	public boolean keyUp(int keycode) {
-		player.keyUp(keycode);
+		gameWorld.keyUp(keycode);
 		return true; // to show key press has been handled
 	}
 
