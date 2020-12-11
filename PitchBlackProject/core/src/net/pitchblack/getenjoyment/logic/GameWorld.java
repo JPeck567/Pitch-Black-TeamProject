@@ -23,6 +23,7 @@ import com.badlogic.gdx.physics.box2d.World;
 
 import net.pitchblack.getenjoyment.entities.BodyFactory;
 import net.pitchblack.getenjoyment.entities.Entity;
+import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.helpers.MapBodyFactory;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
@@ -48,16 +49,21 @@ public class GameWorld {
 	private HashMap<Vector2, Body> mapBody;
 	private float playerWidth, playerHeight;
 	private Player player;
+	private Fog fog;
 	private HashMap<String, Player> players;
 	private HashMap<String, Vector2> otherPlayers;  // will be all players in server, so <String, Player>
 	private int playerCount;
 	private ArrayList<Entity> entities;
+	private float fogWidth, fogHeight;
 	
 	private CollisionHandler collisionHandler;
 	
 	public GameWorld(TiledMap map, int playerWidth, int playerHeight) {
 		this.playerWidth = playerWidth;
 		this.playerHeight = playerHeight;
+		
+		fogWidth = 192;
+		fogHeight = map.getProperties.get("height", Integer.class);
 		
 		physWorld = new World(GRAVITY_VECT, true);  // last param tells world to not simulate inactive bodies (ie two equal forces against each other)
 		physWorld.setContactListener(new CollisionListener(this));
@@ -78,6 +84,9 @@ public class GameWorld {
 		player = createPlayer();
 		Player player2 = createPlayer();
 		
+		fog = createFog();
+		
+		
 		otherPlayers = new HashMap<String, Vector2>();
 	}
 	
@@ -86,7 +95,7 @@ public class GameWorld {
 		
 		// in server, updates all players
 		player.update(delta);
-		
+		fog.update(delta, playerCount);
 	}
 	
 	public Player createPlayer() {
@@ -138,4 +147,19 @@ public class GameWorld {
 	public World getWorld() {
 		return physWorld;
 	}
+	
+	public Fog createFog() {
+		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, 0, 0, BodyDef.BodyType.Kinematic, FOG_USER_DATA);
+		fogBody.setLinearVelocity(0, 0);
+		Fog f = new Fog(fogBody, fogWidth, fogHeight);
+		return f;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 }

@@ -45,6 +45,7 @@ public class GameRenderer {
 	// will need array list of string id's to sprites to update from server
 	private Player player;  // replace w/ class for just pos + state
 	private Sprite playerTexture;
+	private Sprite fogTexture;
 		
 	private OrthographicCamera camera;
 	private Viewport viewport;
@@ -58,13 +59,15 @@ public class GameRenderer {
 	
 	private Box2DDebugRenderer debugRenderer;
 
-	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture) {
+	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture, Texture fogTexture) {
 		this.gameWorld = gameWorld;
 		this.pbAssetManager = pbAssetManager;
 		
 		player = gameWorld.getPlayer("0");
 		this.playerTexture = new Sprite(playerTexture);
 		this.playerTexture.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
+		
+		this.fogTexture = new Sprite(fogTexture);
 		
 		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
 		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
@@ -130,6 +133,9 @@ public class GameRenderer {
 		batcher.begin();
 		
 		playerTexture.draw(batcher);
+		
+		fogTexture.draw(batcher);
+		
 		
 		//batcher.draw(playerTexture, player.getX(), player.getY());
 		// other player entities

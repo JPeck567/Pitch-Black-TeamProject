@@ -14,8 +14,9 @@ import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;  // powerful! is a 2d vector
+import com.badlogic.gdx.math.Vector2;  
 import com.badlogic.gdx.physics.box2d.Body;
+
 
 
 public class Fog {
@@ -24,69 +25,44 @@ public class Fog {
 	private int speed = 1;
 	private Texture image;
 	private EntityType type;
+	private Body body;
+	private int width, height;
 	
 	private boolean allPlayersEliminated = false;
 	private int playersLeft = 4;
 	
-	public enum EntityType {
-		
-		//width and height need to be changed to fit the map height and the width appropriate for the map width
-		FOG("fog", 192, 320);
-		
-		private String id;
-		private int width, height;
-		
-		private EntityType(String id, int width, int height) {
-			this.id = id;
-			this.width = width;
-			this.height = height;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public int getWidth() {
-			return width;
-		}
-
-		public int getHeight() {
-			return height;
-		}			
-	}
 	
-	public Fog(float x, float y) {
-		
+	
+	public Fog(Body body, float x, float y, int width, int height) {
+		this.body = body;
 		this.position = new Vector2(x, y);
-		type = EntityType.FOG;
-		image = new Texture("fog.png");		
+		image = new Texture("fog.png");	
+		this.width = width;
+		this.height = height;		
 	}
 	
 	
-	public void update(float deltaTime, float gravity) {		
-		// -------needs to be changed to when the game starts ---------------
-		if (Gdx.input.isKeyPressed(Keys.RIGHT)) {
+	public void update(float deltaTime, int playersLeft) {		
+		
+		//only runs if players are left
+		if(playersLeft > 0) {
+			//runs a timer every 50 milliseconds
+			//which then uses the moveX method to move the fog along
+			Timer slowdown = new Timer();
+			slowdown.schedule(new TimerTask(){
+			    @Override
+			    public void run() {
+			       //0.8 can be changed to a higher or lower value to change the speed of the fog
+			       moveX(speed * 0.8f);
+			    }
+			}, 0, 50);	
 			
-			if (!allPlayersEliminated) {
-				//runs a timer every 50 milliseconds
-				//which then uses the moveX method to move the fog along
-				Timer slowdown = new Timer();
-				slowdown.schedule(new TimerTask(){
-				    @Override
-				    public void run() {
-				       //0.8 can be changed to a higher or lower value to change the speed of the fog
-				       moveX(speed * 0.8f);
-				    }
-				}, 0, 50);	
-				
-				
-			}			
-		}	
+		}		
 	}
 	
 	
 	public void render(SpriteBatch batch) {
-		batch.draw(image, position.x, position.y, type.getWidth(), type.getHeight());
+		batch.draw(image, position.x, position.y, width, height);
 	}
 	
 	
