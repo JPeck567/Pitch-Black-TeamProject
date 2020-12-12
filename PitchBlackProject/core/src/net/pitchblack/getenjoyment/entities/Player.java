@@ -21,7 +21,7 @@ import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class Player {
-	public static final float SPEED = 3f;
+	public static final float SPEED = 2f;
 	public static final Vector2 SPEED_VECTOR = new Vector2(SPEED, 0);
 	public static final float JUMP_FORCE = 7f;
 	public static final float TERMINAL_VELOCITY = 10f;

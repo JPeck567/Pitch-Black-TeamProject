@@ -49,6 +49,21 @@ public class CollisionListener implements ContactListener {
 			Player p =  gameWorld.getPlayer(id);
 			p.setPushState(true);
 		}
+		
+		//fog to player
+		if(bodyAData.startsWith(GameWorld.FOG_USER_DATA) && bodyBData.equals(GameWorld.PLAYER_USER_DATA)) {
+			System.out.println("Fog Collison");
+			String id = bodyAData.substring(bodyAData.length() - 1);
+			gameWorld.removePlayer(id);
+		}
+		
+		//player to fog
+		if(bodyAData.startsWith(GameWorld.PLAYER_USER_DATA) && bodyBData.equals(GameWorld.FOG_USER_DATA)) {
+			System.out.println("Fog Collison");
+			String id = bodyAData.substring(bodyAData.length() - 1);
+			gameWorld.removePlayer(id);
+		}
+		
 	}
 
 	@Override

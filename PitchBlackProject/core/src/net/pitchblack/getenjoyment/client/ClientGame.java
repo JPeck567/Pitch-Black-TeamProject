@@ -1,5 +1,5 @@
 package net.pitchblack.getenjoyment.client;
 
-public class ClientGame {
+public class ClientGame { 
 
 }
