@@ -35,12 +35,16 @@ public class GameScreen implements Screen {
 		pbManager.loadMaps();
 		
 		Texture playerTexture = pbManager.get(PBAssetManager.playerTexture);
+		Texture fogTexture = pbManager.get(PBAssetManager.fogTexture);
 		
 		// will be client game eventually
 		gameWorld = new GameWorld(
 				pbManager.get(PBAssetManager.map0),
 				playerTexture.getWidth(),
-				playerTexture.getHeight());
+				playerTexture.getHeight(),
+				fogTexture.getWidth(),
+				fogTexture.getHeight()
+				);
 		
 		gameRenderer = new GameRenderer(gameWorld, pbManager, playerTexture);	
 		inputHandler = new InputHandler(gameWorld);

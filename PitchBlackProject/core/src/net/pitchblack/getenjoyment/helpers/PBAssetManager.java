@@ -26,6 +26,7 @@ public class PBAssetManager {
 	// TODO: use texture atlas for skin + eventually player sprite sheets
     public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin/glassy-ui.json", Skin.class, new SkinLoader.SkinParameter("skin/glassy-ui.atlas"));
     public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("textures/player.png", Texture.class);
+    public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("textures/fog.png", Texture.class);
     
     private static final String map0Path = "maps/map0.tmx";  // need to manually load parameters and class 
     public static final AssetDescriptor<TiledMap> map0 = new AssetDescriptor<TiledMap>(map0Path, TiledMap.class);
@@ -43,6 +44,7 @@ public class PBAssetManager {
     
     public void loadTextures() {  // for game
     	manager.load(playerTexture);
+    	manager.load(fogTexture);
     	manager.finishLoading();
     }
     

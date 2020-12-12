@@ -30,6 +30,7 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
@@ -42,42 +43,32 @@ public class GameRenderer {
 	
 	private PBAssetManager pbAssetManager;
 	
-	// will need array list of string id's to sprites to update from server
-	private Player player;  // replace w/ class for just pos + state
-	private Sprite playerTexture;
-	private Sprite fogTexture;
-		
-	private OrthographicCamera camera;
-	private Viewport viewport;
-	//private ShapeRenderer shapeRenderer;  // draws lines and shapes easily
-	
 	private TiledMap map;
 	private ArrayList<Integer> maps;
 	private OrthogonalTiledMapRenderer mapRenderer;
 	
-	private SpriteBatch batcher;
+	// will need array list of string id's to sprites to update from server
+	private HashMap<String, GraphicsEntity> entities;
 	
+	private Player player;  // replace w/ class for just pos + state
+	private Fog fog;
+	private Sprite playerSprite;
+	private Sprite fogSprite;
+		
+	private OrthographicCamera camera;
+	private Viewport viewport;
+
+	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
 
-	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture, Texture fogTexture) {
+	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture) {
 		this.gameWorld = gameWorld;
 		this.pbAssetManager = pbAssetManager;
-		
-		player = gameWorld.getPlayer("0");
-		this.playerTexture = new Sprite(playerTexture);
-		this.playerTexture.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
-		
-		this.fogTexture = new Sprite(fogTexture);
 		
 		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
 		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
 		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM,  camera);
 
-		// initial position
-		camera.position.set(viewport.getWorldHeight() / 2, 100, 0);
-		camera.update();
-		
-		
 		// map creation
 		Integer[] ints = {1, 1, 1, 1};
 		List<Integer> initialMaps = Arrays.asList(ints);
@@ -90,10 +81,24 @@ public class GameRenderer {
 		batcher = new SpriteBatch();
 		batcher.setProjectionMatrix(camera.combined);
 		batcher.enableBlending();
-		//this.shapeRenderer = new ShapeRenderer();
-		//shapeRenderer.setProjectionMatrix(camera.combined);
+		
+		// initial position
+		camera.position.set(0, camera.viewportHeight / 4, 0);
+		camera.update();
+		mapRenderer.setView(camera);
+		batcher.setProjectionMatrix(camera.combined);
+		
+		player = gameWorld.getPlayer("0");
+		fog = gameWorld.getFog();
+	
+		this.playerSprite = new Sprite(playerTexture);
+		this.playerSprite.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
+		
+		this.fogSprite = new Sprite(pbAssetManager.get(PBAssetManager.fogTexture));
+		this.fogSprite.setBounds(0, 0, 192 / PPM, map.getProperties().get("height", Integer.class)); // no / by ppm, as it is * by ppm too
 		
 		debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true); 
+
 	}
 
 	public void render(float delta) {
@@ -109,8 +114,8 @@ public class GameRenderer {
 			}
 		}
 		
-		playerTexture.setPosition(player.getX(), player.getY());
-		
+		playerSprite.setPosition(player.getX(), player.getY());
+		fogSprite.setPosition(fog.getX(), fog.getY());
 		
 //		shapeRenderer.setProjectionMatrix(camera.combined);
 //		
@@ -132,16 +137,15 @@ public class GameRenderer {
 	
 		batcher.begin();
 		
-		playerTexture.draw(batcher);
-		
-		fogTexture.draw(batcher);
+		playerSprite.draw(batcher);
+		fogSprite.draw(batcher);
 		
 		
 		//batcher.draw(playerTexture, player.getX(), player.getY());
 		// other player entities
 		for(Vector2 vect2 : (gameWorld.getOtherPlayers()).values()) {
 			if(vect2 != null) {
-				batcher.draw(playerTexture, vect2.x, vect2.y);
+				batcher.draw(playerSprite, vect2.x, vect2.y);
 			}	
 		}
 		

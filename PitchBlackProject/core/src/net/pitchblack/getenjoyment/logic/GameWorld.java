@@ -32,7 +32,7 @@ public class GameWorld {
 	
 	public static final float PPM = 32; // pixels per meter
 	public static final float START_POS_X = 16f;
-	public static final float START_POS_Y = (PPM * 5f);
+	public static final float START_POS_Y = (32f * 5f);
 	public static final int SPEED_MODIFIER = 0;
 	public static final Vector2 GRAVITY_VECT = new Vector2(0, -9.81f);  // so downwards at 9.81px per second
 	public static int TILE_DIM;
@@ -58,13 +58,13 @@ public class GameWorld {
 	
 	private CollisionHandler collisionHandler;
 	
-	public GameWorld(TiledMap map, int playerWidth, int playerHeight) {
+	public GameWorld(TiledMap map, int playerWidth, int playerHeight, int fogWidth, int fogHeight) {
 		this.playerWidth = playerWidth;
 		this.playerHeight = playerHeight;
 		
-		fogWidth = 192;
-		fogHeight = map.getProperties.get("height", Integer.class);
-		
+		this.fogWidth = 192;
+		this.fogHeight = map.getProperties().get("height", Integer.class) * PPM;
+				
 		physWorld = new World(GRAVITY_VECT, true);  // last param tells world to not simulate inactive bodies (ie two equal forces against each other)
 		physWorld.setContactListener(new CollisionListener(this));
 		
@@ -107,6 +107,13 @@ public class GameWorld {
 	    return p;
 	}
 	
+	public Fog createFog() {
+		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
+		fogBody.setLinearVelocity(0, 0); //  - (fogWidth * .75f ) -(fogWidth * 2f)
+		Fog f = new Fog(fogBody, fogWidth, fogHeight);
+		return f;
+	}
+	
 	public void addPlayer(String id, Object o) {
 		otherPlayers.put(id, null);
 	}
@@ -147,19 +154,8 @@ public class GameWorld {
 	public World getWorld() {
 		return physWorld;
 	}
-	
-	public Fog createFog() {
-		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, 0, 0, BodyDef.BodyType.Kinematic, FOG_USER_DATA);
-		fogBody.setLinearVelocity(0, 0);
-		Fog f = new Fog(fogBody, fogWidth, fogHeight);
-		return f;
+
+	public Fog getFog() {
+		return fog;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
 }
