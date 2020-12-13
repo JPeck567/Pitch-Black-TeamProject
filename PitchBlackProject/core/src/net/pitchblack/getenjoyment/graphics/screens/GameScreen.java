@@ -31,34 +31,24 @@ public class GameScreen implements Screen {
 	public GameScreen(PitchBlackGraphics parent) {
 		this.parent = parent;
 		
-		PBAssetManager pbManager = parent.getAssetManager();
+		PBAssetManager pbManager = parent.pbAssetManager;
 		pbManager.loadTextures();
 		pbManager.loadMaps();
 		
-<<<<<<< Updated upstream
-		Texture playerTexture = pbManager.get(PBAssetManager.playerTexture);
-		Texture fogTexture = pbManager.get(PBAssetManager.fogTexture);
-=======
+
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
->>>>>>> Stashed changes
+		Texture fogTexture = pbManager.getAsset(PBAssetManager.fogTexture);
 		
 		// will be client game eventually for client
 		gameWorld = new GameWorld(
 				pbManager.getAsset(PBAssetManager.map0),
 				playerTexture.getWidth(),
 				playerTexture.getHeight(),
-<<<<<<< Updated upstream
-				fogTexture.getWidth(),
-				fogTexture.getHeight()
-=======
 				pbManager
->>>>>>> Stashed changes
 				);
 		
 		gameRenderer = new GameRenderer(gameWorld, pbManager, playerTexture);	
 		inputHandler = new InputHandler(gameWorld);
-		
-		pbManager = parent.getAssetManager();
 		
 		client = new Client(gameWorld);
 		

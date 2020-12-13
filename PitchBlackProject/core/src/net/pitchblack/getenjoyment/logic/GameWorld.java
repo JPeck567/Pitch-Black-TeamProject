@@ -33,13 +33,10 @@ import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 public class GameWorld {
 	
 	public static final float PPM = 32; // pixels per meter
-<<<<<<< Updated upstream
-	public static final float START_POS_X = 16f;
-	public static final float START_POS_Y = (32f * 5f);
-=======
+
 	public static final float START_POS_X = 1f * PPM;
 	public static final float START_POS_Y = 16f * PPM;
->>>>>>> Stashed changes
+
 	public static final int SPEED_MODIFIER = 0;
 	public static final Vector2 GRAVITY_VECT = new Vector2(0, -9.81f);  // so downwards at 9.81px per second
 	public static int TILE_DIM;
@@ -69,16 +66,12 @@ public class GameWorld {
 	private float fogWidth, fogHeight;
 	
 	private CollisionHandler collisionHandler;
-	
-<<<<<<< Updated upstream
-	public GameWorld(TiledMap map, int playerWidth, int playerHeight, int fogWidth, int fogHeight) {
-=======
+
 	public GameWorld(TiledMap map, int playerWidth, int playerHeight, PBAssetManager pbAssetManager) {
 		MapProperties prop = map.getProperties();
 		MAP_WIDTH_PX = ((float) prop.get("width", Integer.class)) * PPM;
 		MAP_HEIGHT_PX = ((float) prop.get("height", Integer.class)) * PPM;
-		
->>>>>>> Stashed changes
+
 		this.playerWidth = playerWidth;
 		this.playerHeight = playerHeight;
 		
@@ -136,9 +129,8 @@ public class GameWorld {
 		
 		// in server, updates all players
 		player.update(delta);
-<<<<<<< Updated upstream
 		fog.update(delta, playerCount);
-=======
+
 		
 		if(player.getX() > gameMapSequence.size() * MAP_WIDTH_PX) {
 			appendMap(0, gameMapSequence.size() + 1);
@@ -150,7 +142,7 @@ public class GameWorld {
 			physWorld.destroyBody(player.getBody());
 			playerCount--;
 		}
->>>>>>> Stashed changes
+
 	}
 	
 	public Player createPlayer() {
@@ -161,14 +153,14 @@ public class GameWorld {
 	    playerCount++;
 	    return p;
 	}
-	
-<<<<<<< Updated upstream
+
 	public Fog createFog() {
 		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
 		fogBody.setLinearVelocity(0, 0); //  - (fogWidth * .75f ) -(fogWidth * 2f)
 		Fog f = new Fog(fogBody, fogWidth, fogHeight);
 		return f;
-=======
+	}
+
 	private void appendMap(int mapNumber, int position) {  // position starts from 1
 		TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
 		mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, position));
@@ -183,7 +175,7 @@ public class GameWorld {
 		}
 		
 		return mapNo;
->>>>>>> Stashed changes
+
 	}
 	
 	public void addPlayer(String id, Object o) {
@@ -226,14 +218,15 @@ public class GameWorld {
 	public World getWorld() {
 		return physWorld;
 	}
-<<<<<<< Updated upstream
+
 
 	public Fog getFog() {
 		return fog;
-=======
+	}
+
 	
 	public ArrayList<Integer> getMapSequence(){
 		return gameMapSequence;
->>>>>>> Stashed changes
+
 	}
 }

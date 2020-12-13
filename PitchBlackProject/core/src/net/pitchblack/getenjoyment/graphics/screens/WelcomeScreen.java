@@ -24,7 +24,7 @@ public class WelcomeScreen implements Screen {
 	public WelcomeScreen(PitchBlackGraphics parent) {
 		this.parent = parent;
 		
-		parent.getAssetManager().loadSkins();
+		parent.pbAssetManager.loadSkins();
 		stage = new Stage(new ScreenViewport());  // stage relates to a controller which will react to user inputs
 		Gdx.input.setInputProcessor(stage);  // sets the top-level framework to direct inputs to the stage for further processing
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));  // makes stage to react to user input by checking each frame, as specified by the smallest time from 0.03s or deltaTime(?)
@@ -40,7 +40,7 @@ public class WelcomeScreen implements Screen {
 		
 		stage.addActor(table);  // gives stage the things to draw
 		
-		Skin skin = parent.getAssetManager().getAsset(PBAssetManager.menuSkin);
+		Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
 		TextButton newGame = new TextButton("New Game", skin);
 		TextButton exit = new TextButton("Exit", skin);
 		

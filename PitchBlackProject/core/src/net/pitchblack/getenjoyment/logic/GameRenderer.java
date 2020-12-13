@@ -47,11 +47,7 @@ public class GameRenderer {
 	private GameWorld gameWorld;
 	
 	private PBAssetManager pbAssetManager;
-	
-	private TiledMap map;
-	private ArrayList<Integer> maps;
-	private OrthogonalTiledMapRenderer mapRenderer;
-	
+		
 	// will need array list of string id's to sprites to update from server
 	private HashMap<String, GraphicsEntity> entities;
 	
@@ -62,17 +58,15 @@ public class GameRenderer {
 		
 	private OrthographicCamera camera;
 	private Viewport viewport;
-<<<<<<< Updated upstream
 
-=======
 	//private ShapeRenderer shapeRenderer;  // draws lines and shapes easily
 	
-	private TiledMap map;
+
 	private HashMap<Integer, TiledMap> mapMap;
 	private ArrayList<Integer> gameMaps;
 	private OrthogonalTiledMapRenderer mapRenderer;
 	
->>>>>>> Stashed changes
+
 	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
 
@@ -84,14 +78,14 @@ public class GameRenderer {
 		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
 		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
 		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM,  camera);
-<<<<<<< Updated upstream
 
-=======
+
+
 		
 		// get all maps
 		mapMap = pbAssetManager.getMaps();
 		
->>>>>>> Stashed changes
+
 		// map creation
 		//Integer[] ints = {0, 0, 0, 0};
 		//List<Integer> initialMaps = Arrays.asList(ints);
@@ -125,13 +119,10 @@ public class GameRenderer {
 		this.playerSprite = new Sprite(playerTexture);
 		this.playerSprite.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
 		
-		this.fogSprite = new Sprite(pbAssetManager.get(PBAssetManager.fogTexture));
-		this.fogSprite.setBounds(0, 0, 192 / PPM, map.getProperties().get("height", Integer.class)); // no / by ppm, as it is * by ppm too
+		this.fogSprite = new Sprite(pbAssetManager.getAsset(PBAssetManager.fogTexture));
+		this.fogSprite.setBounds(0, 0, 192 / PPM, MAP_HEIGHT); // no / by ppm, as it is * by ppm too
 		
 		debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true); 
-<<<<<<< Updated upstream
-
-=======
 		
 		// initial position
 		//camera.position.set(viewport.getWorldWidth() / 2, (viewport.getWorldHeight() / 2), 0);// - (50 / PPM)
@@ -141,15 +132,15 @@ public class GameRenderer {
 //		camera.update();
 //		mapRenderer.setView(camera);
 //		batcher.setProjectionMatrix(camera.combined);
->>>>>>> Stashed changes
+
 	}
 
 	public void render(float delta) {
 		// move player texture
-		playerTexture.setPosition(player.getX(), player.getY());
+		playerSprite.setPosition(player.getX(), player.getY());
 		
 		// control camera here
-		camera.position.set(playerTexture.getX(), playerTexture.getY(), 0);
+		camera.position.set(playerSprite.getX(), playerSprite.getY(), 0);
 			// camera x is too far right
 			if(camera.position.x - (camera.viewportWidth * 0.5f) <= 0) {  // left coords
 				camera.position.set(camera.viewportWidth * .5f, camera.position.y, 0);
@@ -171,15 +162,15 @@ public class GameRenderer {
 				mapRenderer.setView(camera);
 				batcher.setProjectionMatrix(camera.combined);
 			}
-<<<<<<< Updated upstream
-		}
+
+		
 		
 		playerSprite.setPosition(player.getX(), player.getY());
 		fogSprite.setPosition(fog.getX(), fog.getY());
-=======
+
 
 		// start rendering here
->>>>>>> Stashed changes
+
 		
 		// Black background is drawn which prevents flickering.
 		Gdx.gl.glClearColor(0, 0, 0, 0);
@@ -206,16 +197,11 @@ public class GameRenderer {
 		camera.update();
 		mapRenderer.setView(camera);
 		batcher.setProjectionMatrix(camera.combined);
-	
+
 		
-<<<<<<< Updated upstream
+		batcher.begin();
 		playerSprite.draw(batcher);
 		fogSprite.draw(batcher);
-		
-=======
-		batcher.begin();
-		playerTexture.draw(batcher);
->>>>>>> Stashed changes
 		
 		//batcher.draw(playerTexture, player.getX(), player.getY());
 		// other player entities

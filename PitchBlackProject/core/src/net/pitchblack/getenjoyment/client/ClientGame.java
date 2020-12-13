@@ -1,10 +1,3 @@
-<<<<<<< Updated upstream
-package net.pitchblack.getenjoyment.client;
-
-public class ClientGame { 
-
-}
-=======
 package net.pitchblack.getenjoyment.client;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -49,4 +42,3 @@ public class ClientGame extends ApplicationAdapter{
 	}
 	
 }
->>>>>>> Stashed changes

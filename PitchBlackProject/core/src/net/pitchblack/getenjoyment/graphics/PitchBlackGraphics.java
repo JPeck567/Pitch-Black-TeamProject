@@ -16,11 +16,7 @@ public class PitchBlackGraphics extends Game {
 	public static final int GAME = 1;
 	private WelcomeScreen welcomeScreen;
 	private GameScreen gameScreen;
-	private final PBAssetManager pbManager;
-	
-	public PitchBlackGraphics() {
-		pbManager = new PBAssetManager();
-	}
+	public final PBAssetManager pbAssetManager = new PBAssetManager();
 
 	@Override
 	public void create() {
@@ -40,14 +36,5 @@ public class PitchBlackGraphics extends Game {
 			this.setScreen(gameScreen);
 			break;
 		}
-	}
-	
-	@Override
-	public void dispose() {
-		pbManager.dispose();
-	}
-
-	public PBAssetManager getAssetManager() {
-		return pbManager;
 	}
 }
