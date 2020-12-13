@@ -30,11 +30,9 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
  * Adapted from: <a href = "https://github.com/dsaltares/sioncore/blob/master/src/com/siondream/core/physics/MapBodyManager.java"> MapBodyManager.java by David Saltares </a>
  */
 public class MapBodyFactory {
-
-    private static final float TILE_SIZE = 32f;
-
-	public static ArrayList<Body> getCollisionBodies(Map map, World world) {
+	public static ArrayList<Body> getCollisionBodies(Map map, World world, int mapPos) {
 		MapObjects objects = map.getLayers().get("collisionObjLayer").getObjects();
+		int mapWidth = map.getProperties().get("width", Integer.class);
 
 		ArrayList<Body> bodies = new ArrayList<Body>();
 
@@ -48,37 +46,36 @@ public class MapBodyFactory {
 			Vector2 position;
 
 			if (object instanceof RectangleMapObject) {
-				shape = getRectangle((RectangleMapObject) object);
+				shape = getRectangle((RectangleMapObject) object, mapPos);
 				position = new Vector2(
-						((RectangleMapObject) object).getRectangle().getX() / GameWorld.PPM ,
-						((RectangleMapObject) object).getRectangle().getY() / GameWorld.PPM
+						(((RectangleMapObject) object).getRectangle().getX()) / GameWorld.PPM ,
+						(((RectangleMapObject) object).getRectangle().getY()) / GameWorld.PPM
 						);
 			} else if (object instanceof PolygonMapObject) {
 				shape = getPolygon((PolygonMapObject) object);
 				position = new Vector2(
-						((PolygonMapObject) object).getPolygon().getX(),
-						((PolygonMapObject) object).getPolygon().getY()
+						((PolygonMapObject) object).getPolygon().getX() / GameWorld.PPM,
+						((PolygonMapObject) object).getPolygon().getY() / GameWorld.PPM
 						);
 			} else if (object instanceof PolylineMapObject) {
 				shape = getPolyline((PolylineMapObject) object);
 				position = new Vector2(
-						((PolylineMapObject) object).getPolyline().getX(),
-						((PolylineMapObject) object).getPolyline().getY()
+						((PolylineMapObject) object).getPolyline().getX() / GameWorld.PPM,
+						((PolylineMapObject) object).getPolyline().getY() / GameWorld.PPM
 						);
 			} else if (object instanceof CircleMapObject) {
 				shape = getCircle((CircleMapObject) object);
 				position = new Vector2(
-						((CircleMapObject) object).getCircle().x,
-						((CircleMapObject) object).getCircle().y
+						((CircleMapObject) object).getCircle().x / GameWorld.PPM,
+						((CircleMapObject) object).getCircle().y / GameWorld.PPM
 						);
 			} else {
 				continue;
 			}
 			
-			
 			BodyDef bodyDef = new BodyDef();
 			bodyDef.type = BodyType.StaticBody;
-			bodyDef.position.set(position);
+			bodyDef.position.set(position.x + ((mapPos - 1) * mapWidth), position.y);
 			Body body = world.createBody(bodyDef);
 			
 			FixtureDef fixtureDef = new FixtureDef();
@@ -90,14 +87,14 @@ public class MapBodyFactory {
 			bodies.add(body);
 			
 			
-			//body.setTransform(position, 0f);
+			//body.setTransform(position.x * mapPos, position.y, 0f);
 
 			shape.dispose();
 		}
 		return bodies;
 	}
 
-	private static PolygonShape getRectangle(RectangleMapObject rectangleObject) {
+	private static PolygonShape getRectangle(RectangleMapObject rectangleObject, int mapNumber) {
 		Rectangle rectangle = rectangleObject.getRectangle();
 		PolygonShape polygonShape = new PolygonShape();
 		
@@ -129,8 +126,8 @@ public class MapBodyFactory {
 	private static CircleShape getCircle(CircleMapObject circleObject) {
 		Circle circle = circleObject.getCircle();
 		CircleShape circleShape = new CircleShape();
-		circleShape.setRadius(circle.radius / TILE_SIZE);
-		circleShape.setPosition(new Vector2(circle.x / TILE_SIZE, circle.y / TILE_SIZE));
+		circleShape.setRadius(circle.radius / GameWorld.PPM);
+		circleShape.setPosition(new Vector2(circle.x / GameWorld.PPM, circle.y / GameWorld.PPM));
 		return circleShape;
 	}
 
@@ -142,7 +139,7 @@ public class MapBodyFactory {
 
 		for (int i = 0; i < vertices.length; ++i) {
 			System.out.println(vertices[i]);
-			worldVertices[i] = vertices[i] / TILE_SIZE;
+			worldVertices[i] = vertices[i] / GameWorld.PPM;
 		}
 
 		polygon.set(worldVertices);
@@ -155,8 +152,8 @@ public class MapBodyFactory {
 
 		for (int i = 0; i < vertices.length / 2; ++i) {
 			worldVertices[i] = new Vector2();
-			worldVertices[i].x = vertices[i * 2] / TILE_SIZE;
-			worldVertices[i].y = vertices[i * 2 + 1] / TILE_SIZE;
+			worldVertices[i].x = vertices[i * 2] / GameWorld.PPM;
+			worldVertices[i].y = vertices[i * 2 + 1] / GameWorld.PPM;
 		}
 
 		ChainShape chain = new ChainShape();

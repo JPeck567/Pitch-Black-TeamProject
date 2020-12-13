@@ -21,11 +21,15 @@ import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class Player {
+<<<<<<< Updated upstream
 	public static final float SPEED = 2f;
+=======
+	public static final float SPEED = 1.5f;
+>>>>>>> Stashed changes
 	public static final Vector2 SPEED_VECTOR = new Vector2(SPEED, 0);
-	public static final float JUMP_FORCE = 7f;
+	public static final float JUMP_FORCE = 5.5f;
 	public static final float TERMINAL_VELOCITY = 10f;
-	private static final int JUMP_LIMIT = 2;
+	private static final int JUMP_LIMIT = 1000; // 2
 	
 	private Vector2 position;
 	private Vector2 velocity;
@@ -48,7 +52,8 @@ public class Player {
 		  DESCENDING,
 		  STANDING,
 		  LEFT,
-		  RIGHT
+		  RIGHT,
+		  DEAD
 		}
 	
 	public Player(Body body, float height, float width) {
@@ -75,8 +80,9 @@ public class Player {
 			state = State.DESCENDING;
 		}
 		
-		System.out.println(pushState);
-		System.out.print(" " + state);
+		//System.out.println(pushState);
+		//System.out.print(" " + state);
+		System.out.println(body.getPosition().toString());
 		
 		if(movementLeft && body.getLinearVelocity().x > -TERMINAL_VELOCITY) {
 			// if pushing, divide by 2
@@ -184,5 +190,19 @@ public class Player {
 	
 	public void setPushState(Boolean flag){
 		pushState = flag;
+	}
+
+	public void removePushVelocity(float x) {
+		Vector2 vel = body.getLinearVelocity();
+		vel.x -= x;
+		body.setLinearVelocity(vel);
+	}
+
+	public Body getBody() {
+		return body;
+	}
+
+	public void kill() {
+		state = State.DEAD;
 	}
 }

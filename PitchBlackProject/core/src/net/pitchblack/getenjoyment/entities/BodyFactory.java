@@ -32,7 +32,7 @@ public class BodyFactory {
 	    // creation of fixture
 	    FixtureDef fixtureDef = new FixtureDef();
 	    fixtureDef.shape = shape;
-	    fixtureDef.density = 1f;
+	    fixtureDef.density = 1.1f;
 	    fixtureDef.friction = 0f;
 	    body.createFixture(fixtureDef);  // sets fixture
 	    

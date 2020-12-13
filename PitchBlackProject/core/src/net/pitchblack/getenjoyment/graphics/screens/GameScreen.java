@@ -2,6 +2,7 @@ package net.pitchblack.getenjoyment.graphics.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -34,16 +35,24 @@ public class GameScreen implements Screen {
 		pbManager.loadTextures();
 		pbManager.loadMaps();
 		
+<<<<<<< Updated upstream
 		Texture playerTexture = pbManager.get(PBAssetManager.playerTexture);
 		Texture fogTexture = pbManager.get(PBAssetManager.fogTexture);
+=======
+		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
+>>>>>>> Stashed changes
 		
-		// will be client game eventually
+		// will be client game eventually for client
 		gameWorld = new GameWorld(
-				pbManager.get(PBAssetManager.map0),
+				pbManager.getAsset(PBAssetManager.map0),
 				playerTexture.getWidth(),
 				playerTexture.getHeight(),
+<<<<<<< Updated upstream
 				fogTexture.getWidth(),
 				fogTexture.getHeight()
+=======
+				pbManager
+>>>>>>> Stashed changes
 				);
 		
 		gameRenderer = new GameRenderer(gameWorld, pbManager, playerTexture);	
@@ -65,15 +74,17 @@ public class GameScreen implements Screen {
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
 		gameWorld.update(delta);
+		
 		client.updateServer(delta);
 		gameRenderer.render(delta);
-		
+				
 	}
 
 	@Override
 	public void resize(int width, int height) {
 		Viewport v = gameRenderer.getViewport();
 		v.update(width, height, true);
+
 	}
 
 	@Override

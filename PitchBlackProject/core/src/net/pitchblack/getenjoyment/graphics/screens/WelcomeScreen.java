@@ -40,7 +40,7 @@ public class WelcomeScreen implements Screen {
 		
 		stage.addActor(table);  // gives stage the things to draw
 		
-		Skin skin = parent.getAssetManager().get(PBAssetManager.menuSkin);
+		Skin skin = parent.getAssetManager().getAsset(PBAssetManager.menuSkin);
 		TextButton newGame = new TextButton("New Game", skin);
 		TextButton exit = new TextButton("Exit", skin);
 		

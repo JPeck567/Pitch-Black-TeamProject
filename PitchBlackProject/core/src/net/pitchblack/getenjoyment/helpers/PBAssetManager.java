@@ -1,6 +1,7 @@
 package net.pitchblack.getenjoyment.helpers;
 
 import java.nio.MappedByteBuffer;
+import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetDescriptor;
@@ -28,10 +29,14 @@ public class PBAssetManager {
     public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("textures/player.png", Texture.class);
     public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("textures/fog.png", Texture.class);
     
-    private static final String map0Path = "maps/map0.tmx";  // need to manually load parameters and class 
+    private static final String map0Path = "maps/map00.tmx";  // need to manually load parameters and class, if parameters are needed
     public static final AssetDescriptor<TiledMap> map0 = new AssetDescriptor<TiledMap>(map0Path, TiledMap.class);
+    private static final String map1Path = "maps/map01.tmx";  // need to manually load parameters and class, if parameters are needed
+    public static final AssetDescriptor<TiledMap> map1 = new AssetDescriptor<TiledMap>(map1Path, TiledMap.class);
+    private static final String map2Path = "maps/map02.tmx";  // need to manually load parameters and class, if parameters are needed
+    public static final AssetDescriptor<TiledMap> map2 = new AssetDescriptor<TiledMap>(map2Path, TiledMap.class);
 	
-    private static final String[] mapArray = {map0Path};
+    private static final String[] mapArray = {map0Path, map1Path, map2Path};
     
     public PBAssetManager() {
     	manager = new AssetManager();
@@ -60,8 +65,31 @@ public class PBAssetManager {
     	manager.finishLoading();
     }
     
-    public <T> T get(AssetDescriptor<T> desc) {
+    public <T> T getAsset(AssetDescriptor<T> desc) {
     	return manager.get(desc);
+    }
+    
+    public HashMap<Integer, TiledMap> getMaps(){
+    	HashMap<Integer, TiledMap> mapMap = new HashMap<Integer, TiledMap>();
+    	for(int i = 0; i < mapArray.length; i++) {
+    		mapMap.put(i, getMap(i)); 
+    	}
+    	
+    	return mapMap;
+    }
+    
+    private TiledMap getMap(int mapNum) {
+    	switch (mapNum) {
+			case 0:
+				return getAsset(map0);
+			case 1:
+				return getAsset(map1);
+			case 2:
+				return getAsset(map2);
+			default:
+				System.out.println("INVALID MAP!");
+				return getAsset(map0);
+    	}
     }
     
     public void dispose() {

@@ -3,11 +3,13 @@ package net.pitchblack.getenjoyment.logic;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -31,22 +33,32 @@ import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 public class GameWorld {
 	
 	public static final float PPM = 32; // pixels per meter
+<<<<<<< Updated upstream
 	public static final float START_POS_X = 16f;
 	public static final float START_POS_Y = (32f * 5f);
+=======
+	public static final float START_POS_X = 1f * PPM;
+	public static final float START_POS_Y = 16f * PPM;
+>>>>>>> Stashed changes
 	public static final int SPEED_MODIFIER = 0;
 	public static final Vector2 GRAVITY_VECT = new Vector2(0, -9.81f);  // so downwards at 9.81px per second
 	public static int TILE_DIM;
 	public static final String PLAYER_USER_DATA = "player";
 	public static final String MAP_USER_DATA = "mapCollision";
 	public static final String FOG_USER_DATA = "fog";
-	
+	public static final int INITIAL_NUMBER_OF_MAPS = 3;
+	public final float MAP_WIDTH_PX;
+	public final float MAP_HEIGHT_PX;
 	
 	private World physWorld;
 	private BodyFactory bodyFactory;
-	private ArrayList<Body> mapCollisionBodies;
 	
 	private TiledMap map;
-	private HashMap<Vector2, Body> mapBody;
+	private HashMap<Integer, TiledMap> mapsMap;  // stores all the loaded maps
+	private HashMap<Integer, ArrayList<Body>> mapsCollisionBodiesMap;  // stores bodies for each map
+	private ArrayList<Integer> gameMapSequence;  // the maps selection for the game initially
+	private Random random;
+	
 	private float playerWidth, playerHeight;
 	private Player player;
 	private Fog fog;
@@ -58,7 +70,15 @@ public class GameWorld {
 	
 	private CollisionHandler collisionHandler;
 	
+<<<<<<< Updated upstream
 	public GameWorld(TiledMap map, int playerWidth, int playerHeight, int fogWidth, int fogHeight) {
+=======
+	public GameWorld(TiledMap map, int playerWidth, int playerHeight, PBAssetManager pbAssetManager) {
+		MapProperties prop = map.getProperties();
+		MAP_WIDTH_PX = ((float) prop.get("width", Integer.class)) * PPM;
+		MAP_HEIGHT_PX = ((float) prop.get("height", Integer.class)) * PPM;
+		
+>>>>>>> Stashed changes
 		this.playerWidth = playerWidth;
 		this.playerHeight = playerHeight;
 		
@@ -70,17 +90,23 @@ public class GameWorld {
 		
 		bodyFactory = BodyFactory.getInstance(physWorld);
 		
-		mapCollisionBodies = MapBodyFactory.getCollisionBodies(map, physWorld);
-		this.map = map;
-		//TiledMapTileLayer collisionLayer = (TiledMapTileLayer) map.getLayers().get("collision");
-		//TILE_DIM = ((TiledMapTileLayer) map.getLayers().get("collision")).getTileHeight();
-		//collisionLayer.get
+		mapsMap = pbAssetManager.getMaps();
 		
+		gameMapSequence = new ArrayList<Integer>();
+		gameMapSequence.add(0); // starting map
 		
+		random = new Random();
+		
+		mapsCollisionBodiesMap = new HashMap<Integer, ArrayList<Body>>();
+		mapSetup();
+		//mapCollisionBodies = MapBodyFactory.getCollisionBodies(map, physWorld, 1);
+		//this.map = map;
+			
 		players = new HashMap<String, Player>();
 		playerCount = 0;
+		
 		// will be in loop for 4 players
-		// player body
+		// player body + class
 		player = createPlayer();
 		Player player2 = createPlayer();
 		
@@ -90,12 +116,41 @@ public class GameWorld {
 		otherPlayers = new HashMap<String, Vector2>();
 	}
 	
+	private void mapSetup() {
+		// will be random
+		int numberOfMaps = mapsMap.size();
+		for(int i = 0; i < INITIAL_NUMBER_OF_MAPS; i++) {
+			gameMapSequence.add(getRandomMapNum()); 
+		}
+		
+		for(int i = 0; i < gameMapSequence.size() ; i++ ) {  // cycles through the map sequence. i is the seq number of the map
+			appendMap(gameMapSequence.get(i), i + 1); // +1 as i starts at 0
+			//TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
+			//mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, i + 1));
+		}
+		
+	}
+
 	public void update(float delta) {
 		physWorld.step(delta, 6, 2);
 		
 		// in server, updates all players
 		player.update(delta);
+<<<<<<< Updated upstream
 		fog.update(delta, playerCount);
+=======
+		
+		if(player.getX() > gameMapSequence.size() * MAP_WIDTH_PX) {
+			appendMap(0, gameMapSequence.size() + 1);
+		}
+		
+		// also delete bodies before the fog
+		if(player.getY() < 0) {
+			player.kill();
+			physWorld.destroyBody(player.getBody());
+			playerCount--;
+		}
+>>>>>>> Stashed changes
 	}
 	
 	public Player createPlayer() {
@@ -107,11 +162,28 @@ public class GameWorld {
 	    return p;
 	}
 	
+<<<<<<< Updated upstream
 	public Fog createFog() {
 		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
 		fogBody.setLinearVelocity(0, 0); //  - (fogWidth * .75f ) -(fogWidth * 2f)
 		Fog f = new Fog(fogBody, fogWidth, fogHeight);
 		return f;
+=======
+	private void appendMap(int mapNumber, int position) {  // position starts from 1
+		TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
+		mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, position));
+	}
+	
+	public int getRandomMapNum() {
+		int numberOfMaps = mapsMap.size();
+		int mapNo = random.nextInt(numberOfMaps);
+		
+		while(mapNo == 0) {
+			mapNo = random.nextInt(numberOfMaps);
+		}
+		
+		return mapNo;
+>>>>>>> Stashed changes
 	}
 	
 	public void addPlayer(String id, Object o) {
@@ -154,8 +226,14 @@ public class GameWorld {
 	public World getWorld() {
 		return physWorld;
 	}
+<<<<<<< Updated upstream
 
 	public Fog getFog() {
 		return fog;
+=======
+	
+	public ArrayList<Integer> getMapSequence(){
+		return gameMapSequence;
+>>>>>>> Stashed changes
 	}
 }

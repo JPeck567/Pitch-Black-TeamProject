@@ -17,9 +17,9 @@ public class CollisionHandler {
 		this.gameWorld = gameWorld;
 	}
 	
-	public boolean isCollisionWithMap(Body body, World world) {
+	public boolean isCollisionWithMap(Body body, World world, int mapNumber) {
 		//MapObjects collisionObjectLayer = gameWorld.getMap().getLayers().get("collisionObjLayer").getObjects();
-		List<Body> collisionBodies = MapBodyFactory.getCollisionBodies(gameWorld.getMap(), world);
+		List<Body> collisionBodies = MapBodyFactory.getCollisionBodies(gameWorld.getMap(), world, mapNumber);
 
 		
 		return false;
