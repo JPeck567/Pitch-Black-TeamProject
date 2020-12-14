@@ -24,7 +24,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 public class Fog {
 
 	private Vector2 position;
-	private static final float SPEED = Player.SPEED * 2.7f;
+	private static final float SPEED = Player.SPEED * 10f;
 	private Texture image;
 	//private EntityType type;
 	private Body body;
@@ -64,7 +64,6 @@ public class Fog {
 //		}		
 	}
 	
-	
 	public void render(SpriteBatch batch) {
 		batch.draw(image, position.x, position.y, width, height);
 	}
@@ -80,5 +79,11 @@ public class Fog {
 	
 	public float getY() {
 		return body.getPosition().y - (height / 2 / GameWorld.PPM);// - (3 / GameWorld.PPM);
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return getX() + "," + getY();
+	}
+	
 }

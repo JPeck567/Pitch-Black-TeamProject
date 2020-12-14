@@ -75,11 +75,11 @@ public class Client {
 			@Override
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
-				try{
+				try {
 					String playerId = data.getString("id");
 					Gdx.app.log("SocketIO", "New Player Connected: " + id);
-					gameWorld.addPlayer(playerId, null);
-				}catch(JSONException e){
+					//gameWorld.addPlayer(playerId, null);
+				} catch(JSONException e){
 					Gdx.app.log("SocketIO", "Player ID Error");
 				}
 			}

@@ -32,40 +32,40 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import net.pitchblack.getenjoyment.entities.Entity;
+import net.pitchblack.getenjoyment.entities.Entity.Type;
+import net.pitchblack.getenjoyment.entities.Entity.State;
 import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 
-// alternative is to use box2D, which seems better but harder? - https://www.gamedevelopment.blog/full-libgdx-game-tutorial-box2d/
-
 public class GameRenderer {
 	public static final float PPM = 32; // pixels per meter
-	private final float MAP_WIDTH;
-	private final float MAP_HEIGHT;
-	//private final float CAMERA_YPOS_PX;
+	public static float MAP_WIDTH;
+	public static float MAP_HEIGHT;
+
 	private GameWorld gameWorld;
+	private int id;
 	
 	private PBAssetManager pbAssetManager;
 		
 	// will need array list of string id's to sprites to update from server
-	private HashMap<String, GraphicsEntity> entities;
+	private HashMap<String, Entity> entities;
 	
-	private Player player;  // replace w/ class for just pos + state
-	private Fog fog;
-	private Sprite playerSprite;
-	private Sprite fogSprite;
+	private Entity player;  // replace w/ class for just pos + state
+	private Entity fog;
+	//private Sprite playerSprite;
+	//private Sprite fogSprite;
 		
 	private OrthographicCamera camera;
 	private Viewport viewport;
 
 	//private ShapeRenderer shapeRenderer;  // draws lines and shapes easily
-	
 
 	private HashMap<Integer, TiledMap> mapMap;
 	private ArrayList<Integer> gameMaps;
 	private OrthogonalTiledMapRenderer mapRenderer;
-	
 
 	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
@@ -73,19 +73,16 @@ public class GameRenderer {
 
 	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture) {
 		this.gameWorld = gameWorld;
+		id = 0;
 		this.pbAssetManager = pbAssetManager;
 		
 		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
 		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
 		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM,  camera);
-
-
-
 		
 		// get all maps
 		mapMap = pbAssetManager.getMaps();
 		
-
 		// map creation
 		//Integer[] ints = {0, 0, 0, 0};
 		//List<Integer> initialMaps = Arrays.asList(ints);
@@ -113,14 +110,15 @@ public class GameRenderer {
 		mapRenderer.setView(camera);
 		batcher.setProjectionMatrix(camera.combined);
 		
-		player = gameWorld.getPlayer("0");
-		fog = gameWorld.getFog();
+		entities = new HashMap<String, Entity>();
+		//player = gameWorld.getPlayer("0");
+		fog = new Entity(Type.FOG, null, null, pbAssetManager);
 	
-		this.playerSprite = new Sprite(playerTexture);
-		this.playerSprite.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
+		//this.playerSprite = new Sprite(playerTexture);
+		//this.playerSprite.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
 		
-		this.fogSprite = new Sprite(pbAssetManager.getAsset(PBAssetManager.fogTexture));
-		this.fogSprite.setBounds(0, 0, 192 / PPM, MAP_HEIGHT); // no / by ppm, as it is * by ppm too
+		//this.fogSprite = new Sprite(pbAssetManager.getAsset(PBAssetManager.fogTexture));
+		//this.fogSprite.setBounds(0, 0, 192 / PPM, MAP_HEIGHT); // no / by ppm, as it is * by ppm too
 		
 		debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true); 
 		
@@ -132,15 +130,20 @@ public class GameRenderer {
 //		camera.update();
 //		mapRenderer.setView(camera);
 //		batcher.setProjectionMatrix(camera.combined);
-
+		
+		loadPlayerEntities();
 	}
 
 	public void render(float delta) {
+		// sets entity data
+		addData(gameWorld.getPlayerData());
+		
 		// move player texture
-		playerSprite.setPosition(player.getX(), player.getY());
+		//player.setPosition(player.getX(), player.getY());
+		System.out.println(player.getState());
 		
 		// control camera here
-		camera.position.set(playerSprite.getX(), playerSprite.getY(), 0);
+		camera.position.set(player.getX(), player.getY(), 0);
 			// camera x is too far right
 			if(camera.position.x - (camera.viewportWidth * 0.5f) <= 0) {  // left coords
 				camera.position.set(camera.viewportWidth * .5f, camera.position.y, 0);
@@ -162,21 +165,18 @@ public class GameRenderer {
 				mapRenderer.setView(camera);
 				batcher.setProjectionMatrix(camera.combined);
 			}
-
-		
-		
-		playerSprite.setPosition(player.getX(), player.getY());
-		fogSprite.setPosition(fog.getX(), fog.getY());
-
+			
+		// move fog
+		//fogSprite.setPosition(fog.getX(), fog.getY());
 
 		// start rendering here
-
-		
 		// Black background is drawn which prevents flickering.
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
 		Vector3 camVec = camera.position.cpy();
+		
+		gameMaps = gameWorld.getMapSequence();
 		
 		for(int mapNumber : gameMaps) {
 			if((int) mapRenderer.getMap().getProperties().get("mapNumber") != mapNumber) {
@@ -200,24 +200,67 @@ public class GameRenderer {
 
 		
 		batcher.begin();
-		playerSprite.draw(batcher);
-		fogSprite.draw(batcher);
+		//playerSprite.draw(batcher);
+		for(String id : entities.keySet()) {
+			entities.get(id).draw(batcher);
+		}
+		fog.draw(batcher);
 		
 		//batcher.draw(playerTexture, player.getX(), player.getY());
 		// other player entities
-		for(Vector2 vect2 : (gameWorld.getOtherPlayers()).values()) {
-			if(vect2 != null) {
-				batcher.draw(playerSprite, vect2.x, vect2.y);
-			}	
-		}
+//		for(Vector2  vect2 : (gameWorld.getOtherPlayers()).values()) {
+//			if(vect2 != null) {
+//				batcher.draw(playerSprite, vect2.x, vect2.y);
+//			}	
+//		}
 		
 		batcher.end();
 		
 		debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}
 	
+	private void loadPlayerEntities() {
+		for(int i = 0; i < 4; i++) {
+			entities.put(Integer.toString(i), new Entity(Type.PLAYER, Integer.toString(i), State.STANDING, pbAssetManager));
+		}
+		
+		player = entities.get(Integer.toString(id));
+	}
+	
+	private void addData(String data) {
+		String[] dataArray = data.split("/n");
+		
+		String fogDataEntry = dataArray[dataArray.length - 1];  // 0: x, 1: y
+		dataArray[dataArray.length - 1] = null;
+		String[] fogData = fogDataEntry.split(",");
+		fog.setPosition(Float.parseFloat(fogData[0]), Float.parseFloat(fogData[1]));
+		
+		for(String dataEntry : dataArray) {
+			if(dataEntry != null) {  // 0: id, 1: x, 2: y, 3: state, 4: moveLeft, 5: moveRight
+				String[] playerData = dataEntry.split(",");
+				Entity e = entities.get(playerData[0]);
+				if(!State.valueOf(playerData[3]).equals(State.DEAD)) {
+					e.setPosition(Float.parseFloat(playerData[1]), Float.parseFloat(playerData[2]));
+					e.setState(State.valueOf(playerData[3]));
+					e.setMovement(Boolean.parseBoolean(playerData[4]), Boolean.parseBoolean(playerData[5]));
+				} else {
+					if(entities.containsKey(playerData[0])) {
+						e.setState(State.valueOf(playerData[3]));
+						entities.remove(playerData[0]);
+						
+					}
+					
+				}
+			}
+		}
+	}
+
 	public void addMapToSequence(int mapNumber) {
 		gameMaps.add(mapNumber);
+	}
+	
+	public void addEntity(String id, Type type, State state) {
+		entities.put(id, new Entity(type, id, state, pbAssetManager));
 	}
 	
 	public OrthographicCamera getCamera() {
@@ -226,5 +269,13 @@ public class GameRenderer {
 
 	public Viewport getViewport() {
 		return viewport;
+	}
+
+	public void keyDown(int keycode) {
+		gameWorld.keyDown(id, keycode);
+	}
+
+	public void keyUp(int keycode) {
+		gameWorld.keyUp(id, keycode);
 	}
 }

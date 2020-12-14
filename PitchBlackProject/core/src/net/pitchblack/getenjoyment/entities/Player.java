@@ -31,6 +31,7 @@ public class Player {
 	private Vector2 position;
 	private Vector2 velocity;
 	private Body body;
+	private final int id;
 	
 	private float height;
 	private float width;
@@ -53,7 +54,8 @@ public class Player {
 		  DEAD
 		}
 	
-	public Player(Body body, float height, float width) {
+	public Player(int id, Body body, float height, float width) {
+		this.id = id;
 		this.height = height;
 		this.width = width;
 		
@@ -73,21 +75,23 @@ public class Player {
 		float oldY = position.y;
 		float oldX = position.x;
 		
-		if(body.getLinearVelocity().y < 0 && jumps != 0) {
-			state = State.DESCENDING;
-		}
-		
-		//System.out.println(pushState);
-		//System.out.print(" " + state);
-		System.out.println(body.getPosition().toString());
-		
-		if(movementLeft && body.getLinearVelocity().x > -TERMINAL_VELOCITY) {
-			// if pushing, divide by 2
-			body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/-50f) : SPEED_VECTOR.cpy().scl(-1), body.getWorldCenter(), true);
-		}
-		
-		if(movementRight && body.getLinearVelocity().x < TERMINAL_VELOCITY) {
-			body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/50f) : SPEED_VECTOR, body.getWorldCenter(), true);
+		if(state != State.DEAD) {
+			if(body.getLinearVelocity().y < 0 && jumps != 0) {
+				state = State.DESCENDING;
+			}
+			
+			//System.out.println(pushState);
+			//System.out.print(" " + state);
+			//System.out.println(body.getPosition().toString());
+			
+			if(movementLeft && body.getLinearVelocity().x > -TERMINAL_VELOCITY) {
+				// if pushing, divide by 2
+				body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/-50f) : SPEED_VECTOR.cpy().scl(-1), body.getWorldCenter(), true);
+			}
+			
+			if(movementRight && body.getLinearVelocity().x < TERMINAL_VELOCITY) {
+				body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/50f) : SPEED_VECTOR, body.getWorldCenter(), true);
+			}
 		}
 	}
 
@@ -95,7 +99,7 @@ public class Player {
 	public void keyDown(int keycode) {
 		switch(keycode) {
 			case Keys.A:
-				System.out.println("A Down");
+				//System.out.println("A Down");
 				movementLeft = true;
 				//velocity.x += -SPEED;
 				//Vector2 velA = body.getLinearVelocity();
@@ -104,7 +108,7 @@ public class Player {
 				//body.setLinearVelocity(body.getLinearVelocity().y - SPEED, body.getLinearVelocity().y);
 				break;
 			case Keys.D:
-				System.out.println("D Down");
+				//System.out.println("D Down");
 				movementRight= true;
 				//velocity.x += SPEED;
 				//Vector2 velD = body.getLinearVelocity();
@@ -114,7 +118,7 @@ public class Player {
 				//body.applyLinearImpulse(new Vector2(SPEED, 0), body.getWorldCenter(), true);
 				break;
 			case Keys.SPACE:
-				System.out.println("Space Down");
+				//System.out.println("Space Down");
 // 				if(state == State.STANDING) {  // so cannot keep jumping
 //					velocity.y += JUMP_VELOCITY;
 //					state = State.ASCENDING;
@@ -141,7 +145,7 @@ public class Player {
 	public void keyUp(int keycode) {
 		switch(keycode) {
 			case Keys.A:  // same as d
-				System.out.println("A Up");
+				//System.out.println("A Up");
 				Vector2 vel1 = body.getLinearVelocity();
 				vel1.x = 0;
 				body.setLinearVelocity(vel1);
@@ -152,7 +156,7 @@ public class Player {
 //				body.setLinearVelocity(0, body.getLinearVelocity().y);
 //				break;
 			case Keys.D:
-				System.out.println("D Up");
+				//System.out.println("D Up");
 				//velocity.x += -SPEED;
 				Vector2 vel2 = body.getLinearVelocity();
 				vel2.x = 0;
@@ -198,8 +202,18 @@ public class Player {
 	public Body getBody() {
 		return body;
 	}
+	
+	public int getID() {
+		return id;
+	}
 
 	public void kill() {
 		state = State.DEAD;
+	}
+	
+	@Override
+	public String toString() {
+		return id + "," + getX() + "," + getY() + "," + 
+			   state + "," + movementLeft + "," + movementRight;
 	}
 }

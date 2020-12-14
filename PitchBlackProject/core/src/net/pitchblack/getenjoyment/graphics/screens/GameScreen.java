@@ -35,10 +35,8 @@ public class GameScreen implements Screen {
 		pbManager.loadTextures();
 		pbManager.loadMaps();
 		
-
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
-		Texture fogTexture = pbManager.getAsset(PBAssetManager.fogTexture);
-		
+
 		// will be client game eventually for client
 		gameWorld = new GameWorld(
 				pbManager.getAsset(PBAssetManager.map0),
@@ -48,7 +46,7 @@ public class GameScreen implements Screen {
 				);
 		
 		gameRenderer = new GameRenderer(gameWorld, pbManager, playerTexture);	
-		inputHandler = new InputHandler(gameWorld);
+		inputHandler = new InputHandler(gameRenderer);
 		
 		client = new Client(gameWorld);
 		
@@ -74,6 +72,9 @@ public class GameScreen implements Screen {
 	public void resize(int width, int height) {
 		Viewport v = gameRenderer.getViewport();
 		v.update(width, height, true);
+		
+		gameRenderer.getCamera().viewportHeight = v.getWorldHeight();
+		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();		
 
 	}
 
