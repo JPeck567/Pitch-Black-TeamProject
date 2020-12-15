@@ -32,6 +32,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import net.pitchblack.getenjoyment.client.Client;
+import net.pitchblack.getenjoyment.client.Client.RenderState;
 import net.pitchblack.getenjoyment.entities.Entity;
 import net.pitchblack.getenjoyment.entities.Entity.Type;
 import net.pitchblack.getenjoyment.entities.Entity.State;
@@ -39,15 +41,16 @@ import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
+import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
+import net.pitchblack.getenjoyment.helpers.SoundManager;
 
 public class GameRenderer {
 	public static final float PPM = 32; // pixels per meter
 	public static float MAP_WIDTH;
 	public static float MAP_HEIGHT;
 
-	private GameWorld gameWorld;
-	private int id;
-	
+	private Client client;
+	private String id;
 	private PBAssetManager pbAssetManager;
 		
 	// will need array list of string id's to sprites to update from server
@@ -71,10 +74,9 @@ public class GameRenderer {
 	private Box2DDebugRenderer debugRenderer;
 
 
-	public GameRenderer(GameWorld gameWorld, PBAssetManager pbAssetManager, Texture playerTexture) {
-		this.gameWorld = gameWorld;
-		id = 0;
+	public GameRenderer(Client client, PBAssetManager pbAssetManager) {
 		this.pbAssetManager = pbAssetManager;
+		this.client = client;
 		
 		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
 		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
@@ -87,9 +89,9 @@ public class GameRenderer {
 		//Integer[] ints = {0, 0, 0, 0};
 		//List<Integer> initialMaps = Arrays.asList(ints);
 		//map = pbAssetManager.getAsset(PBAssetManager.map0);
-		gameMaps = gameWorld.getMapSequence();
+		//gameMaps = gameWorld.getMapSequence();
 		
-		TiledMap firstMap = mapMap.get(gameMaps.get(0));
+		TiledMap firstMap = mapMap.get(0);
 		MapProperties prop = firstMap.getProperties();
 		
 		MAP_WIDTH = ((float) prop.get("width", Integer.class));
@@ -131,16 +133,19 @@ public class GameRenderer {
 //		mapRenderer.setView(camera);
 //		batcher.setProjectionMatrix(camera.combined);
 		
-		loadPlayerEntities();
+		//loadPlayerEntities();
 	}
 
 	public void render(float delta) {
 		// sets entity data
-		addData(gameWorld.getPlayerData());
+		//addData(gameWorld.getPlayerData());
 		
 		// move player texture
 		//player.setPosition(player.getX(), player.getY());
-		System.out.println(player.getState());
+		//System.out.println(player.getState());
+		if(player.getState() == State.DEAD) {
+			client.setState(RenderState.LOSE);
+		}
 		
 		// control camera here
 		camera.position.set(player.getX(), player.getY(), 0);
@@ -176,7 +181,7 @@ public class GameRenderer {
 		
 		Vector3 camVec = camera.position.cpy();
 		
-		gameMaps = gameWorld.getMapSequence();
+		//gameMaps = gameWorld.getMapSequence();
 		
 		for(int mapNumber : gameMaps) {
 			if((int) mapRenderer.getMap().getProperties().get("mapNumber") != mapNumber) {
@@ -216,42 +221,62 @@ public class GameRenderer {
 		
 		batcher.end();
 		
-		debugRenderer.render(gameWorld.getWorld(), camera.combined);
+		//debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}
 	
-	private void loadPlayerEntities() {
-		for(int i = 0; i < 4; i++) {
-			entities.put(Integer.toString(i), new Entity(Type.PLAYER, Integer.toString(i), State.STANDING, pbAssetManager));
+	public void loadEntities(String idList) {
+		for(String pID : idList.split("/n")) {
+			entities.put(pID, new Entity(Type.PLAYER, pID, State.STANDING, pbAssetManager));
 		}
-		
-		player = entities.get(Integer.toString(id));
+		id = client.getID();
+		player = entities.get(id);
 	}
 	
-	private void addData(String data) {
+	public void addPlayerData(String data) {
 		String[] dataArray = data.split("/n");
 		
-		String fogDataEntry = dataArray[dataArray.length - 1];  // 0: x, 1: y
-		dataArray[dataArray.length - 1] = null;
-		String[] fogData = fogDataEntry.split(",");
-		fog.setPosition(Float.parseFloat(fogData[0]), Float.parseFloat(fogData[1]));
+//		String fogDataEntry = dataArray[dataArray.length - 1];  // 0: x, 1: y
+//		dataArray[dataArray.length - 1] = null;
+//		String[] fogData = fogDataEntry.split(",");
+//		fog.setPosition(Float.parseFloat(fogData[0]), Float.parseFloat(fogData[1]));	
 		
 		for(String dataEntry : dataArray) {
-			if(dataEntry != null) {  // 0: id, 1: x, 2: y, 3: state, 4: moveLeft, 5: moveRight
+			if(dataEntry != null) {  // 0: id, 1: x, 2: y, 3: state, 4: moveLeft, 5: moveRight, 6: jumped
 				String[] playerData = dataEntry.split(",");
 				Entity e = entities.get(playerData[0]);
 				if(!State.valueOf(playerData[3]).equals(State.DEAD)) {
-					e.setPosition(Float.parseFloat(playerData[1]), Float.parseFloat(playerData[2]));
+					float f1 = Float.parseFloat(playerData[1]);
+					float f2 = Float.parseFloat(playerData[2]);
+						e.setPosition(f1, f2);
+					
+					if((e.getState() == State.STANDING && State.valueOf(playerData[3]) == State.ASCENDING) || 
+							(e.getState() == State.DESCENDING && State.valueOf(playerData[3]) == State.ASCENDING)) {
+							SoundManager.getInstance().play(PitchBlackSound.JUMP);
+					}
+					
 					e.setState(State.valueOf(playerData[3]));
 					e.setMovement(Boolean.parseBoolean(playerData[4]), Boolean.parseBoolean(playerData[5]));
 				} else {
 					if(entities.containsKey(playerData[0])) {
 						e.setState(State.valueOf(playerData[3]));
 						entities.remove(playerData[0]);
-						
 					}
 					
 				}
 			}
+		}
+	}
+	
+	public void addFogData(String fogData) {
+		String[] data = fogData.split(",");
+		fog.setPosition(Float.parseFloat(data[0]), Float.parseFloat(data[1]));
+	}
+	
+	public void addMapData(String mapData) {
+		String[] data = mapData.split("/n");
+		gameMaps = new ArrayList<Integer>();
+		for(String map : data) {
+			gameMaps.add(Integer.parseInt(map));
 		}
 	}
 
@@ -272,10 +297,19 @@ public class GameRenderer {
 	}
 
 	public void keyDown(int keycode) {
-		gameWorld.keyDown(id, keycode);
+		if(player.getState() != State.DEAD) {
+			client.keyDown(keycode);
+		}
 	}
 
 	public void keyUp(int keycode) {
-		gameWorld.keyUp(id, keycode);
+		if(player.getState() != State.DEAD) {
+			client.keyUp(keycode);
+		}
+	}
+
+	public void setID(String id) {
+		this.id = id;
+		
 	}
 }

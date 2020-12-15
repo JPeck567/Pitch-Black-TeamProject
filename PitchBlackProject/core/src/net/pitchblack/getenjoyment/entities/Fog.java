@@ -24,7 +24,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 public class Fog {
 
 	private Vector2 position;
-	private static final float SPEED = Player.SPEED * 10f;
+	private static final float SPEED = Player.SPEED * 5f;
 	private Texture image;
 	//private EntityType type;
 	private Body body;
@@ -34,11 +34,10 @@ public class Fog {
 	private int playersLeft = 4;
 	
 	
-	
 	public Fog(Body body, float width, float height) {
 		this.body = body;
 		this.body.setLinearVelocity(SPEED, 0);
-		
+		body.setSleepingAllowed(false);
 		//this.position = new Vector2(x, y);
 		//image = new Texture("fog.png");	
 		this.width = width;

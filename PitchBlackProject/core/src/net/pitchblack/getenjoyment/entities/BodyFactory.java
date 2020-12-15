@@ -31,6 +31,7 @@ public class BodyFactory {
 	    
 	    // creation of fixture
 	    FixtureDef fixtureDef = new FixtureDef();
+	    
 	    fixtureDef.shape = shape;
 	    fixtureDef.density = 1.1f;
 	    fixtureDef.friction = 0f;
@@ -45,7 +46,6 @@ public class BodyFactory {
 	    shape.dispose();
 	    
 	    body.setUserData(userData);
-	    
 	    return body;
 	}
 	

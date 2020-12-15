@@ -24,6 +24,7 @@ public class Player {
 	public static final float SPEED = 1.5f;
 
 	public static final Vector2 SPEED_VECTOR = new Vector2(SPEED, 0);
+	public static final Vector2 PUSH_SPEED_VECTOR = new Vector2(SPEED / 20, 0);
 	public static final float JUMP_FORCE = 5.5f;
 	public static final float TERMINAL_VELOCITY = 10f;
 	private static final int JUMP_LIMIT = 1000; // 2
@@ -31,8 +32,8 @@ public class Player {
 	private Vector2 position;
 	private Vector2 velocity;
 	private Body body;
-	private final int id;
-	
+	private final String id;
+
 	private float height;
 	private float width;
 	private Rectangle boundRect;
@@ -42,6 +43,9 @@ public class Player {
 	private int jumps;  // number of jumps, capped at JUMP_LIMIT
 	private boolean movementLeft;
 	private boolean movementRight;
+	private boolean jumped;
+	
+	private float time;
 	
 	private TiledMapTileLayer collisionLayer; // in server, will update so often if player moves to different map 
 	
@@ -54,7 +58,7 @@ public class Player {
 		  DEAD
 		}
 	
-	public Player(int id, Body body, float height, float width) {
+	public Player(String id, Body body, float height, float width) {
 		this.id = id;
 		this.height = height;
 		this.width = width;
@@ -69,6 +73,9 @@ public class Player {
 		pushState = false;
 		movementLeft = false;
 		movementRight = false;
+		jumped = false;
+		
+		time = 0;
 	}
 
 	public void update(float delta) {
@@ -86,11 +93,11 @@ public class Player {
 			
 			if(movementLeft && body.getLinearVelocity().x > -TERMINAL_VELOCITY) {
 				// if pushing, divide by 2
-				body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/-50f) : SPEED_VECTOR.cpy().scl(-1), body.getWorldCenter(), true);
+				body.applyLinearImpulse(pushState ? PUSH_SPEED_VECTOR.scl(-1) : SPEED_VECTOR.cpy().scl(-1), body.getWorldCenter(), true);
 			}
 			
 			if(movementRight && body.getLinearVelocity().x < TERMINAL_VELOCITY) {
-				body.applyLinearImpulse(pushState ? SPEED_VECTOR.cpy().scl(1/50f) : SPEED_VECTOR, body.getWorldCenter(), true);
+				body.applyLinearImpulse(pushState ? PUSH_SPEED_VECTOR : SPEED_VECTOR, body.getWorldCenter(), true);
 			}
 		}
 	}
@@ -203,7 +210,7 @@ public class Player {
 		return body;
 	}
 	
-	public int getID() {
+	public String getID() {
 		return id;
 	}
 
@@ -214,6 +221,6 @@ public class Player {
 	@Override
 	public String toString() {
 		return id + "," + getX() + "," + getY() + "," + 
-			   state + "," + movementLeft + "," + movementRight;
+			   state + "," + movementLeft + "," + movementRight ;
 	}
 }

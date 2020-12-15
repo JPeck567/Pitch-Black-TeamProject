@@ -12,7 +12,10 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import net.pitchblack.getenjoyment.client.Client;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
+import net.pitchblack.getenjoyment.helpers.PreferencesManager;
 import net.pitchblack.getenjoyment.helpers.InputHandler;
+import net.pitchblack.getenjoyment.helpers.MusicManager;
+import net.pitchblack.getenjoyment.helpers.MusicManager.PitchBlackMusic;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
@@ -38,19 +41,25 @@ public class GameScreen implements Screen {
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
 
 		// will be client game eventually for client
-		gameWorld = new GameWorld(
-				pbManager.getAsset(PBAssetManager.map0),
-				playerTexture.getWidth(),
-				playerTexture.getHeight(),
-				pbManager
-				);
+		//gameWorld = new GameWorld(
+		//		pbManager.getAsset(PBAssetManager.map0),
+		//		playerTexture.getWidth(),
+		//		playerTexture.getHeight(),
+		//		pbManager
+		//		);
 		
-		gameRenderer = new GameRenderer(gameWorld, pbManager, playerTexture);	
+		client = new Client();
+		
+		gameRenderer = new GameRenderer(client, pbManager);	
 		inputHandler = new InputHandler(gameRenderer);
 		
-		client = new Client(gameWorld);
+		client.addRenderer(gameRenderer);
 		
 		Gdx.input.setInputProcessor(inputHandler);
+		
+		MusicManager music = new MusicManager();
+        music.getInstance().play(PitchBlackMusic.GAME);
+        music.setVolume(PreferencesManager.getMusicVolume());
 	}
 
 	@Override
@@ -61,10 +70,11 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
-		gameWorld.update(delta);
+		//gameWorld.update(delta);
 		
-		client.updateServer(delta);
-		gameRenderer.render(delta);
+		client.render(delta);
+		
+		//gameRenderer.render(delta);
 				
 	}
 
