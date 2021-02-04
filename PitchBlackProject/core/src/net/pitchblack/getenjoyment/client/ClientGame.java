@@ -18,7 +18,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class ClientGame extends ApplicationAdapter {
 	private static final float UPDATE_TIME = 1/60f;
-	private static final int PLAYER_MAX = 2;
+	private static final int PLAYER_MAX = 1;
 	private float timer;
 	
 	public enum GameState{

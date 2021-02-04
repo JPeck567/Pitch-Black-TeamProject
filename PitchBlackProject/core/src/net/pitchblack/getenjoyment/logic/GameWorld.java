@@ -336,11 +336,11 @@ public class GameWorld {
 	}
 
 	public boolean finished() {
-		if(alivePlayers.size() == 1) {
-			return true;
-		}
-		return false;
-	}
+        if(deadPlayers.size() - 1> players.size()) {  // if one player alive
+            return true;
+        }
+        return false;
+    }
 	
 	public Player getWinner() {
 		return players.get(alivePlayers.get(0));
