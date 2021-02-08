@@ -1,8 +1,8 @@
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var mysql = require('mysql');
 var playersSocket = [];
-//var playerIDMap = new Map();
 var gameClientSocket;
 
 server.listen(8080, function(){
@@ -10,26 +10,85 @@ server.listen(8080, function(){
 });
 
 io.on('connection', function(socket){
-	//console.log("Player Connected!");
+	console.log("Player Connected!");
 	socket.emit('socketID', { id: socket.id });
 	//socket.emit('getPlayers', players);
 	//socket.broadcast.emit('newPlayer', { id: socket.id });
-	
-	socket.on('gameClientInit', function(){
+
+	socket.on('login', function(data){
+		var connection = mysql.createConnection({
+		  host     : '127.0.0.1',
+		  user     : 'root',
+		  password : '',
+		  database : 'gamedatabase'
+		});
+
+		connection.connect(function(err) {
+		  if (err) {
+		    console.error('Error connecting: ' + err.stack);
+		    return;
+		  }
+		  console.log('Connected as id ' + connection.threadId);
+		});
+
+		var username = data.username;
+		var password = data.password;
+		// using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
+		connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], function (error, results, fields) {
+		  if (error) throw error;
+			if(results == null) { socket.emit('loginAttempt', { successful : false} ); }
+			else if (results.length >= 1) { socket.emit('loginAttempt', { successful : true} ); }
+			else { socket.emit('loginAttempt', { successful : null }); }// if somehow there are neither 0 rows or >1 rows
+		});
+	});
+
+	socket.on('register', function(data){
+		var connection = mysql.createConnection({
+			host     : '127.0.0.1',
+			user     : 'root',
+			password : '',
+			database : 'gamedatabase'
+		});
+
+		connection.connect(function(err) {
+			if (err) {
+				console.error('Error connecting: ' + err.stack);
+				return;
+			}
+			console.log('Connected as id ' + connection.threadId);
+		});
+
+		var username = data.username;
+		var password = data.password;
+		var email = data.email;
+		// using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
+		connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', ['abcd', 'abcd', 'abcd'], function (error, results, fields) {
+		    if (error) {
+					throw error;
+				} else {
+					if(results.affectedRows >= 1) { socket.emit('registerAttempt', { successful : true }); }
+					else if (results.affectedRows < 1) { socket.emit('registerAttempt', { successful : false} ); }
+					else { socket.emit('registerAttempt', { successful : null }); } // if somehow is an error
+			    //console.log(error, results, fields);
+				}
+		});
+	});
+
+	socket.on('gameClientInit', function(){  // the game connects
 		console.log("Game Connected!");
 		gameClientSocket = socket;
 		socket.emit('gameClientAcknowledge');
 	});
 
-	socket.on('playerClientInit', function(){
+	socket.on('playerClientInit', function(){  // a player connects
 		console.log("Player Connected!");
-		playersSocket.push(socket);
+		playersSocket.push(socket);  // add to list of players
 		//playerIDMap.set(socket.id, socket);
 
 		gameClientSocket.emit("newPlayer", { id: socket.id });
 	});
 
-	socket.on('newPlayerAcknowledge', function(data){	
+	socket.on('newPlayerAcknowledge', function(data){
 		var id = data.id;
 		var p;
 		for(p of playersSocket){

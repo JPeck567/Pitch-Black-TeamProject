@@ -151,9 +151,8 @@ public class GameWorld {
 	}
 	
 	private void playingUpdate(float delta) {
-		physWorld.step(delta, 6, 2);
-		
-		
+		physWorld.step(delta, 1, 1);
+
 		// check if map needs extending
 		// find biggest x coord
 		float xCoord = 0;
@@ -166,7 +165,7 @@ public class GameWorld {
 		// check if xCoord is further that the second to last map
 		if(xCoord * PPM > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
 			int pos = gameMapSequence.size() + 1;
-			int mapNo = 2;
+			int mapNo = getRandomMapNum();
 			appendMap(mapNo, pos);
 			gameMapSequence.add(mapNo);
 		}
@@ -195,8 +194,6 @@ public class GameWorld {
 			//System.out.println( i + "," + j);
 		}
 		sweepDeadBodies();
-		
-		
 	}
 	
 	public Player createPlayer(String id) {
@@ -336,7 +333,7 @@ public class GameWorld {
 	}
 
 	public boolean finished() {
-		if(alivePlayers.size() == 1) {
+		if(deadPlayers.size() - 1> players.size()) {  // if one player alive
 			return true;
 		}
 		return false;

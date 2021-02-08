@@ -10,6 +10,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import net.pitchblack.getenjoyment.client.Client;
+import net.pitchblack.getenjoyment.client.Client.RenderState;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.helpers.PreferencesManager;
@@ -31,57 +32,46 @@ public class GameScreen implements Screen {
 	
 	private Client client;
 	
-	public GameScreen(PitchBlackGraphics parent) {
+	public GameScreen(PitchBlackGraphics parent, Client client) {
 		this.parent = parent;
 		
 		PBAssetManager pbManager = parent.pbAssetManager;
 		pbManager.loadTextures();
 		pbManager.loadMaps();
-		
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
-
-		// will be client game eventually for client
-		//gameWorld = new GameWorld(
-		//		pbManager.getAsset(PBAssetManager.map0),
-		//		playerTexture.getWidth(),
-		//		playerTexture.getHeight(),
-		//		pbManager
-		//		);
 		
-		client = new Client();
+		this.client = client;
+		//client.beginConnection();
 		
 		gameRenderer = new GameRenderer(client, pbManager);	
 		inputHandler = new InputHandler(gameRenderer);
 		
-		client.addRenderer(gameRenderer);
+		client.setRenderer(gameRenderer);
+		//client.setState(RenderState.INITIATED);
 		
 		Gdx.input.setInputProcessor(inputHandler);
 		
 		MusicManager music = new MusicManager();
-        music.getInstance().play(PitchBlackMusic.GAME);
+        MusicManager.getInstance().play(PitchBlackMusic.GAME);
         music.setVolume(PreferencesManager.getMusicVolume());
 	}
 
 	@Override
 	public void show() {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
 		//gameWorld.update(delta);
-		
-		client.render(delta);
-		
-		//gameRenderer.render(delta);
-				
+		client.tick(delta);
+		//gameRenderer.render(delta);	
 	}
 
 	@Override
 	public void resize(int width, int height) {
 		Viewport v = gameRenderer.getViewport();
-		v.update(width, height, true);
+		v.update(width, (int) v.getWorldHeight(), true);
 		
 		gameRenderer.getCamera().viewportHeight = v.getWorldHeight();
 		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();		

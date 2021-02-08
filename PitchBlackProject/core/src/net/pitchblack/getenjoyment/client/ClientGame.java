@@ -16,12 +16,12 @@ import io.socket.emitter.Emitter;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-public class ClientGame extends ApplicationAdapter {
-	private static final float UPDATE_TIME = 1/60f;
-	private static final int PLAYER_MAX = 2;
+public class ClientGame {
+	private static final float UPDATE_TIME = 1/30f;
+	private static final int PLAYER_MAX = 1;
 	private float timer;
 	
-	public enum GameState{
+	public enum GameState {
 		INITIATED,
 		IDLE,
 		WAITING,
@@ -45,7 +45,6 @@ public class ClientGame extends ApplicationAdapter {
 		players = new ArrayList<String>();
 		mapCount = gameWorld.getMapSequence().split("/n").length;
 		readyCount = 0;
-		//this.player = gameWorld.getPlayer("0");
 		gameState = GameState.INITIATED;
 		connectSocket();
 		configSocketEvents();
@@ -53,7 +52,7 @@ public class ClientGame extends ApplicationAdapter {
 	
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8080");  // client game on same machine as server, so uses localhost
+			socket = IO.socket("http://localhost:8080");  // client game on same machine as server, so local host
 			socket.connect();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -81,8 +80,7 @@ public class ClientGame extends ApplicationAdapter {
 			@Override
 			public void call(Object... args) {
 				gameState = GameState.WAITING;
-			}
-			
+			}	
 		}).on("newPlayer", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
@@ -156,38 +154,49 @@ public class ClientGame extends ApplicationAdapter {
 //				} catch (JSONException e){
 //				}
 //			}
-
 		
 	public void updateServer(float delta){
 		timer += delta;
-//		if(timer >= UPDATE_TIME) {
-//		System.out.println(gameState);
-		switch(gameState){
-			case INITIATED:
-				socket.emit("gameClientInit");
-				gameState = GameState.IDLE;
-				break;
-			case WAITING:
-				if(players.size() == PLAYER_MAX) {
-					gameState = GameState.READY;
-				}
-				break;
-			case READY:
-				JSONObject idData = new JSONObject();
-				try {
-					String idString = "";
-					for(String id : players) {
-						idString += id + "/n";
+		if(timer >= UPDATE_TIME) {
+			timer = 0;  // reset timer
+			switch(gameState){
+				case INITIATED:
+					socket.emit("gameClientInit");
+					gameState = GameState.IDLE;
+					break;
+				case WAITING:
+					if(players.size() == PLAYER_MAX) {
+						gameState = GameState.READY;
 					}
-					idData.put("playerId", idString);
-				} catch (JSONException e) {
-				}
-				socket.emit("gameReady", idData);
-				gameState = GameState.WAITINGFORPLAYERS;
-				break;
-			case WAITINGFORPLAYERS:
-				if(readyCount == PLAYER_MAX) {
-					gameState = GameState.PLAYING;
+					break;
+				case READY:
+					JSONObject idData = new JSONObject();
+					try {
+						String idString = "";
+						for(String id : players) {
+							idString += id + "/n";
+						}
+						idData.put("playerId", idString);
+					} catch (JSONException e) {
+					}
+					socket.emit("gameReady", idData);
+					gameState = GameState.WAITINGFORPLAYERS;
+					break;
+				case WAITINGFORPLAYERS:
+					if(readyCount == PLAYER_MAX) {
+						gameState = GameState.PLAYING;
+						JSONObject data = new JSONObject();
+						try {
+							data.put("playerData", gameWorld.getPlayerData());
+							data.put("fogData", gameWorld.getFogData());
+							data.put("mapData", gameWorld.getMapSequence().toString());
+						} catch (JSONException e) {
+						}
+						socket.emit("gameStart", data);
+					}
+					break;
+				case PLAYING:
+					gameWorld.update(delta);
 					JSONObject data = new JSONObject();
 					try {
 						data.put("playerData", gameWorld.getPlayerData());
@@ -195,48 +204,31 @@ public class ClientGame extends ApplicationAdapter {
 						data.put("mapData", gameWorld.getMapSequence().toString());
 					} catch (JSONException e) {
 					}
-					socket.emit("gameStart", data);
-				}
-				break;
-			case PLAYING:
-				gameWorld.update(delta);
-				JSONObject data = new JSONObject();
-				try {
-					data.put("playerData", gameWorld.getPlayerData());
-					data.put("fogData", gameWorld.getFogData());
-					data.put("mapData", gameWorld.getMapSequence().toString());
-				} catch (JSONException e) {
-				}
-				socket.emit("gameUpdate", data);
-				
-				if(gameWorld.finished()) {
-					gameState = GameState.FINISH;
-				}
-				break;
-				
-			case FINISH:
-				Player p = gameWorld.getWinner();
-				JSONObject winID = new JSONObject();
-				try {
-					winID.put("id", p.getID());
-				} catch (JSONException e) {
-				}
-				socket.emit("win", winID);
-				break;
+					socket.emit("gameUpdate", data);
+					
+					if(gameWorld.finished()) {
+						gameState = GameState.FINISH;
+					}
+					break;
 			default:
 				break;
+					
+	//			case FINISH:
+	//				Player p = gameWorld.getWinner();
+	//				JSONObject winID = new JSONObject();
+	//				try {
+	//					winID.put("id", p.getID());
+	//				} catch (JSONException e) {
+	//				}
+	//				socket.emit("win", winID);
+	//				break;
+	//			default:
+	//				break;
+		}	
 		}
 	}
-//	}
 	
-	public void render(float delta) {
-		//System.out.println("Heelo");
+	public void tick(float delta) {
 		updateServer(delta);
 	}
-
-	@Override
-	public void dispose() {
-		// TODO Auto-generated method stub
-	}
-	
 }

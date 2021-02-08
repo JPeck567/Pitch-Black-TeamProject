@@ -24,7 +24,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 public class Fog {
 
 	private Vector2 position;
-	private static final float SPEED = Player.SPEED * 5f;
+	private static final float SPEED = Player.SPEED * 3.5f;
 	private Texture image;
 	//private EntityType type;
 	private Body body;

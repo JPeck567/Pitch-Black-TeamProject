@@ -8,57 +8,32 @@ import net.pitchblack.getenjoyment.client.ClientGame;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-public class PitchBlackGame implements ApplicationListener {
+public class PitchBlackGame {
 	public final PBAssetManager pbManager = new PBAssetManager();
+	private Boolean running;
+	private GameWorld gameWorld;
 	public ClientGame gameClient;
 	
 	public PitchBlackGame() {
-	}
-
-	@Override
-	public void create() {
 		pbManager.loadTextures();
 		pbManager.loadMaps();
 		
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
-
-		// will be client game eventually for client
-		GameWorld gameWorld = new GameWorld(
+		
+		running = true;
+		gameWorld = new GameWorld(
 				pbManager.getAsset(PBAssetManager.map0),
 				playerTexture.getWidth(),
 				playerTexture.getHeight(),
 				pbManager
 				);
-		
 		gameClient = new ClientGame(gameWorld);
+		run();
 	}
 
-	@Override
-	public void resize(int width, int height) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void render() {
-		gameClient.render(Gdx.graphics.getDeltaTime());
-	}
-
-	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void dispose() {
-		// TODO Auto-generated method stub
-		
+	private void run() {
+		while(running) {
+			gameClient.tick(Gdx.graphics.getDeltaTime());
+		}
 	}
 }

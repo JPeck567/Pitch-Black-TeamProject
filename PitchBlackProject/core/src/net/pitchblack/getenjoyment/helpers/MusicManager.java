@@ -8,7 +8,6 @@ import com.badlogic.gdx.utils.Disposable;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 public class MusicManager implements Disposable {
-
 	public enum PitchBlackMusic {
 		MENU("sound/Menu_music.mp3"), GAME("sound/Game_music.mp3");
 

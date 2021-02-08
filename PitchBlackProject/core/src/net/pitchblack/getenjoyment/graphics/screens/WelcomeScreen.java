@@ -27,6 +27,7 @@ import net.pitchblack.getenjoyment.helpers.MusicManager.PitchBlackMusic;
 
 
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
 
 public class WelcomeScreen implements Screen {
 	
@@ -52,27 +53,22 @@ public class WelcomeScreen implements Screen {
 		final SoundManager sound = new SoundManager();
 		
 		if(PreferencesManager.isMusicEnabled() == true) {
-		MusicManager.getInstance().play( PitchBlackMusic.MENU);
+			MusicManager.getInstance().play( PitchBlackMusic.MENU);
 		}
+	
+	    Skin skin = new Skin(Gdx.files.internal("skin 4/flat-earth-ui.json"));
 
-		
-	   Skin skin = new Skin(Gdx.files.internal("skin 4/flat-earth-ui.json"));
-	 
-   
-				 
 		TextButton newGame = new TextButton("New Game", skin);
 		TextButton exit = new TextButton("Exit", skin);
 		final TextButton settings = new TextButton("Settings", skin);
 		TextButton lobby = new TextButton("Lobby", skin);
 		TextButton credits = new TextButton("Credits", skin);
 
-		
 		stage.addActor(newGame);
 		stage.addActor(exit);
 		stage.addActor(settings);
 		stage.addActor(lobby);
 		stage.addActor(credits);
-		
 
 		table.row().pad(200, 0, 0, 0); 
 		table.add(newGame).fillX().uniformX();  // adds newGame button and sets it to fill the x axis + to make it uniform w/ other cells
@@ -85,8 +81,6 @@ public class WelcomeScreen implements Screen {
 		table.row();
 		table.add(exit).fillX().uniformX();
 
-
-		
 		exit.addListener(new ChangeListener() {  // adds a new listener for user input in the exit button
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
@@ -94,22 +88,21 @@ public class WelcomeScreen implements Screen {
 			}
 		});
 		
-		
 		newGame.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				parent.setScreen(new GameScreen(parent));
+				parent.changeScreen(Screens.GAME);
 				if(PreferencesManager.isSoundEnabled() == true) {
 					sound.setVolume(PreferencesManager.getSoundVolume());
 					sound.play( PitchBlackSound.CLICK );
-					}
+				}
 			}
 		});
 		
 		settings.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				parent.setScreen(new SettingsScreen(parent));
+				parent.changeScreen(Screens.CREDITS);
 				if(PreferencesManager.isSoundEnabled() == true) {
 					sound.setVolume(PreferencesManager.getSoundVolume());
 					sound.play( PitchBlackSound.CLICK );
@@ -128,7 +121,6 @@ public class WelcomeScreen implements Screen {
 //					}
 //			}
 //		});
-		
 	}
 
 	@Override

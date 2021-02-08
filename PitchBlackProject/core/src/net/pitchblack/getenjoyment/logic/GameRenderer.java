@@ -191,6 +191,8 @@ public class GameRenderer {
 			mapRenderer.render();
 			
 			// bring forward to next map
+			// slightly messy as has to render several times w/ diff camera pos
+			// should remake into one big map with new segments instead
 			camera.translate(-MAP_WIDTH, 0);
 			camera.update();
 			mapRenderer.setView(camera);
@@ -206,6 +208,7 @@ public class GameRenderer {
 		
 		batcher.begin();
 		//playerSprite.draw(batcher);
+		// draw other players
 		for(String id : entities.keySet()) {
 			entities.get(id).draw(batcher);
 		}
@@ -228,7 +231,7 @@ public class GameRenderer {
 		for(String pID : idList.split("/n")) {
 			entities.put(pID, new Entity(Type.PLAYER, pID, State.STANDING, pbAssetManager));
 		}
-		id = client.getID();
+
 		player = entities.get(id);
 	}
 	
@@ -247,8 +250,12 @@ public class GameRenderer {
 				if(!State.valueOf(playerData[3]).equals(State.DEAD)) {
 					float f1 = Float.parseFloat(playerData[1]);
 					float f2 = Float.parseFloat(playerData[2]);
-						e.setPosition(f1, f2);
 					
+					if(e == null){
+						continue;
+					}
+					
+					e.setPosition(f1, f2);
 					if((e.getState() == State.STANDING && State.valueOf(playerData[3]) == State.ASCENDING) || 
 							(e.getState() == State.DESCENDING && State.valueOf(playerData[3]) == State.ASCENDING)) {
 							SoundManager.getInstance().play(PitchBlackSound.JUMP);

@@ -29,6 +29,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
 import net.pitchblack.getenjoyment.helpers.MusicManager;
 import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.helpers.PreferencesManager;
@@ -37,11 +38,11 @@ import net.pitchblack.getenjoyment.helpers.MusicManager.PitchBlackMusic;
 
 public class SettingsScreen implements Screen  {
 	
-	private PitchBlackGraphics parent;
+	private final PitchBlackGraphics parent;
 	private Stage stage;
 	
-	public SettingsScreen(PitchBlackGraphics x) {
-		parent = x;
+	public SettingsScreen(PitchBlackGraphics p) {
+		this.parent = p;
 		stage = new Stage(new ScreenViewport());
 		final SoundManager sound = new SoundManager();
 		final MusicManager music = new MusicManager();
@@ -55,7 +56,6 @@ public class SettingsScreen implements Screen  {
 		Skin skin = new Skin(Gdx.files.internal("skin 4/flat-earth-ui.json"));
 		Skin fontSkin = new Skin (Gdx.files.internal("skin/glassy-ui.json"));
 		
-		
 		Label titleLabel = new Label( "SETTINGS", fontSkin);
 		Label volumeMusicLabel = new Label( "Music Volume", fontSkin);
 		Label volumeSoundLabel = new Label( "Sound Volume", fontSkin);
@@ -68,7 +68,6 @@ public class SettingsScreen implements Screen  {
 		stage.addActor(musicOnOffLabel);
 		stage.addActor(soundOnOffLabel);
 		
-
 		//Sliders
 		final Slider volumeMusicSlider = new Slider( 0f, 1f, 0.25f,false, skin );
 			volumeMusicSlider.setValue(PreferencesManager.getMusicVolume());
@@ -103,7 +102,9 @@ public class SettingsScreen implements Screen  {
 			       	if (enabled == false) {
 			       		PreferencesManager.setMusicEnabled(false);
 			       		MusicManager.stop();
-			       	}	
+			       	} else {
+                        MusicManager.getInstance().play( PitchBlackMusic.MENU);
+                    }
 			       	return false;
 				}
 			});
@@ -130,7 +131,7 @@ public class SettingsScreen implements Screen  {
 			backButton.addListener(new ChangeListener() {
 				@Override
 				public void changed(ChangeEvent event, Actor actor) {
-					parent.setScreen(new WelcomeScreen(parent));
+					parent.changeScreen(Screens.MENU);
 					if(PreferencesManager.isSoundEnabled() == true) {
 						sound.setVolume(PreferencesManager.getSoundVolume());
 						sound.play( PitchBlackSound.CLICK );

@@ -87,7 +87,7 @@ public class PBAssetManager {
 			case 2:
 				return getAsset(map2);
 			default:
-				System.out.println("INVALID MAP!");
+				System.out.println("Invalid Map!");
 				return getAsset(map0);
     	}
     }
