@@ -42,7 +42,7 @@ public class Entity extends Sprite {
 				return pbAssetManager.getAsset(PBAssetManager.playerTexture);
 			case FOG:
 				return pbAssetManager.getAsset(PBAssetManager.fogTexture);
-			default:
+			default:  // should us a placeholder if texture not found
 				return pbAssetManager.getAsset(PBAssetManager.playerTexture);
 		}
 	}

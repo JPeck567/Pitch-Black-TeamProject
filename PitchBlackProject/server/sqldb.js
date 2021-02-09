@@ -14,7 +14,7 @@ connection.connect(function(err) {
   }
   console.log('Connected as id ' + connection.threadId);
 
-  connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', ['abcd', 'abcd', 'abcd'], function (error, results, fields) {
+  connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', ['abd', 'abd', 'abd'], function (error, results, fields) {
     if (error) throw error;
     console.log(error, results, fields);
   });

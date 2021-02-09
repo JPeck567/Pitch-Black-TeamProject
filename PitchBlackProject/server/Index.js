@@ -5,7 +5,7 @@ var mysql = require('mysql');
 var playersSocket = [];
 var gameClientSocket;
 
-server.listen(8080, function(){
+server.listen(8081, function(){
 	console.log("Server is now running...");
 });
 
@@ -35,10 +35,15 @@ io.on('connection', function(socket){
 		var password = data.password;
 		// using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
 		connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], function (error, results, fields) {
-		  if (error) throw error;
+			console.log("login results" + results);
+			if (error) throw error;
 			if(results == null) { socket.emit('loginAttempt', { successful : false} ); }
 			else if (results.length >= 1) { socket.emit('loginAttempt', { successful : true} ); }
 			else { socket.emit('loginAttempt', { successful : null }); }// if somehow there are neither 0 rows or >1 rows
+		});
+
+		connection.end(function(err) {
+  	// The connection is terminated now
 		});
 	});
 
@@ -57,20 +62,26 @@ io.on('connection', function(socket){
 			}
 			console.log('Connected as id ' + connection.threadId);
 		});
-
+		
 		var username = data.username;
 		var password = data.password;
 		var email = data.email;
 		// using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
-		connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', ['abcd', 'abcd', 'abcd'], function (error, results, fields) {
-		    if (error) {
+		connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, password], function (error, results, fields) {
+				console.log("reg results" + results);
+				if (error) {
 					throw error;
 				} else {
+
 					if(results.affectedRows >= 1) { socket.emit('registerAttempt', { successful : true }); }
 					else if (results.affectedRows < 1) { socket.emit('registerAttempt', { successful : false} ); }
 					else { socket.emit('registerAttempt', { successful : null }); } // if somehow is an error
 			    //console.log(error, results, fields);
 				}
+		});
+
+		connection.end(function(err) {
+			// The connection is terminated now
 		});
 	});
 

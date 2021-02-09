@@ -143,6 +143,7 @@ public class GameRenderer {
 		// move player texture
 		//player.setPosition(player.getX(), player.getY());
 		//System.out.println(player.getState());
+		
 		if(player.getState() == State.DEAD) {
 			client.setState(RenderState.LOSE);
 		}

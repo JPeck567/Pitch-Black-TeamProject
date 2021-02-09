@@ -41,7 +41,9 @@ public class GameScreen implements Screen {
 		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
 		
 		this.client = client;
-		//client.beginConnection();
+		client.beginConnection();
+		client.sendRegistration("email", "jorge", "password");
+		client.sendLogin("jorge", "password");
 		
 		gameRenderer = new GameRenderer(client, pbManager);	
 		inputHandler = new InputHandler(gameRenderer);

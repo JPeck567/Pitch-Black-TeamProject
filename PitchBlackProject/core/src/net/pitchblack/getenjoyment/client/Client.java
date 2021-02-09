@@ -57,12 +57,11 @@ public class Client {
 		playing = false;
 		keyUpCode = -1;
 		keyDownCode = -1;
-		connectSocket();
-		configSocketEvents();
 	}
 	
 	public void beginConnection() {
-		
+		connectSocket();
+		configSocketEvents();
 	}
 	
 	public void endConnection() {
@@ -70,7 +69,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8080");
+			socket = IO.socket("http://dc071f9a0423.ngrok.io");
 			socket.connect();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -161,12 +160,15 @@ public class Client {
 				if(loggedInAttempt) {
 					accountState = AccountState.LOGGED_IN;
 					// send logged in message
+					System.out.println("Login");
 				} else if(!loggedInAttempt) {
 					accountState = AccountState.LOGGED_OUT;
 					// send login fail message
+					System.out.println("Login");
 				} else {
 					accountState = AccountState.LOGGED_OUT; 
 					// send error message
+					System.out.println("Login");
 				}
 			}
 		}).on("registerAttempt", new Emitter.Listener() {
@@ -180,8 +182,10 @@ public class Client {
 				
 				if(registrationAttempt) {
 					// send message that account made
+					System.out.println("Register");
 				} else {
 					// error somehow + send message
+					System.out.println("Register");
 				}
 				accountState = AccountState.LOGGED_OUT;
 			}
@@ -301,7 +305,7 @@ public class Client {
 			data.put("username", username);
 			data.put("password", password);
 		} catch(JSONException e) { e.printStackTrace(); }
-		socket.emit("registration", data);
+		socket.emit("register", data);
 		accountState = AccountState.REGISTRATION_ATTEMPTED;
 	}
 
