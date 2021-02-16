@@ -40,6 +40,7 @@ import net.pitchblack.getenjoyment.entities.Entity.State;
 import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
+import net.pitchblack.getenjoyment.graphics.screens.Hud;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.helpers.SoundManager;
@@ -72,6 +73,11 @@ public class GameRenderer {
 
 	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
+	
+	
+	//lines edited  43, 79, 115, 229, 230
+	private Hud hud;
+	
 
 
 	public GameRenderer(Client client, PBAssetManager pbAssetManager) {
@@ -106,11 +112,17 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 		batcher.enableBlending();
 		
+		hud = new Hud(batcher);
+		
+		
 		// initial position
 		camera.position.set(0, camera.viewportHeight / 4, 0);
 		camera.update();
 		mapRenderer.setView(camera);
 		batcher.setProjectionMatrix(camera.combined);
+		
+		
+		
 		
 		entities = new HashMap<String, Entity>();
 		//player = gameWorld.getPlayer("0");
@@ -134,6 +146,9 @@ public class GameRenderer {
 //		batcher.setProjectionMatrix(camera.combined);
 		
 		//loadPlayerEntities();
+		
+		
+		
 	}
 
 	public void render(float delta) {
@@ -211,6 +226,9 @@ public class GameRenderer {
 		}
 		fog.draw(batcher);
 		
+		batcher.setProjectionMatrix(hud.stage.getCamera().combined);
+		
+		
 		//batcher.draw(playerTexture, player.getX(), player.getY());
 		// other player entities
 //		for(Vector2  vect2 : (gameWorld.getOtherPlayers()).values()) {
@@ -220,7 +238,7 @@ public class GameRenderer {
 //		}
 		
 		batcher.end();
-		
+		hud.stage.draw();
 		//debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}
 	
@@ -312,4 +330,12 @@ public class GameRenderer {
 		this.id = id;
 		
 	}
+	
+	public void update(float delta) {
+		hud.update(delta);
+	}
+	
+	
+	
+	
 }

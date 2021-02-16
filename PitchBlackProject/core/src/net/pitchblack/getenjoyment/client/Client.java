@@ -62,6 +62,7 @@ public class Client {
 	
 	public void updateServer(float delta){
 //		timer += dt;
+		gameRenderer.update(delta);
 //		if(timer >= UPDATE_TIME)
 		switch(renderState) {
 			case PLAYING:
