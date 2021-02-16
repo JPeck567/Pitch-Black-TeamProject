@@ -19,6 +19,7 @@ import net.pitchblack.getenjoyment.helpers.MusicManager.PitchBlackMusic;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
+
 public class GameScreen implements Screen {
 	
 	private PitchBlackGraphics parent;
@@ -28,6 +29,8 @@ public class GameScreen implements Screen {
 	private GameWorld gameWorld;
 	private GameRenderer gameRenderer;
 	private InputHandler inputHandler;
+	
+	
 	
 	private Client client;
 	
@@ -60,6 +63,10 @@ public class GameScreen implements Screen {
 		MusicManager music = new MusicManager();
         music.getInstance().play(PitchBlackMusic.GAME);
         music.setVolume(PreferencesManager.getMusicVolume());
+        
+        
+        
+        
 	}
 
 	@Override
@@ -109,6 +116,13 @@ public class GameScreen implements Screen {
 	@Override
 	public void dispose() {
 		pbManager.dispose();
+		
 	}
+	
+	
+	
+	
+	
+	
 
 }

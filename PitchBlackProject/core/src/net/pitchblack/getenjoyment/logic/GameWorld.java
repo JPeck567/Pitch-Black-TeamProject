@@ -78,7 +78,7 @@ public class GameWorld {
 		this.playerWidth = playerWidth;
 		this.playerHeight = playerHeight;
 		
-		this.fogWidth = 192;
+		this.fogWidth = 1950;
 		this.fogHeight = MAP_HEIGHT_PX;
 		
 		physWorld = new World(GRAVITY_VECT, true);  // last param tells world to not simulate inactive bodies (ie two equal forces against each other)
@@ -103,7 +103,9 @@ public class GameWorld {
 		deadPlayers = new ArrayList<String>();
 		toRemove = new ArrayList<String>();
 		playerCount = 0;
-		
+
+
+
 		fog = createFog();
 		
 //		for(int i = 0; i < 4; i++) {
@@ -211,7 +213,7 @@ public class GameWorld {
 	}
 
 	public Fog createFog() {
-		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
+		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -2)/3, fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
 		//fogBody.setLinearVelocity(0, 0);
 		Fog f = new Fog(fogBody, fogWidth, fogHeight);
 		return f;
