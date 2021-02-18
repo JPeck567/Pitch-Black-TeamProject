@@ -25,7 +25,7 @@ public class PBAssetManager {
 	public final AssetManager manager;
 	
 	// TODO: use texture atlas for skin + eventually player sprite sheets
-    public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin/glassy-ui.json", Skin.class, new SkinLoader.SkinParameter("skin/glassy-ui.atlas"));
+    public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.json"));
     public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("textures/player.png", Texture.class);
     public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("textures/fog.png", Texture.class);
     

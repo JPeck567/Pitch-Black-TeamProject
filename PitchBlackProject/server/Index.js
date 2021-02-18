@@ -10,7 +10,7 @@ server.listen(8081, function(){
 });
 
 io.on('connection', function(socket){
-	console.log("Player Connected!");
+	console.log("Client " + socket.id + " Connected!");
 	socket.emit('socketID', { id: socket.id });
 	//socket.emit('getPlayers', players);
 	//socket.broadcast.emit('newPlayer', { id: socket.id });
@@ -62,7 +62,7 @@ io.on('connection', function(socket){
 			}
 			console.log('Connected as id ' + connection.threadId);
 		});
-		
+
 		var username = data.username;
 		var password = data.password;
 		var email = data.email;
@@ -72,7 +72,6 @@ io.on('connection', function(socket){
 				if (error) {
 					throw error;
 				} else {
-
 					if(results.affectedRows >= 1) { socket.emit('registerAttempt', { successful : true }); }
 					else if (results.affectedRows < 1) { socket.emit('registerAttempt', { successful : false} ); }
 					else { socket.emit('registerAttempt', { successful : null }); } // if somehow is an error
@@ -152,33 +151,3 @@ io.on('connection', function(socket){
 		}
 	})
 });
-
-//	socket.on('playerMoved', function(data){
-//	    data.id = socket.id;
-//	    socket.broadcast.emit('playerMoved', data);
-//
-//	    for(var i = 0; i < players.length; i++){
-//	        if(players[i].id == data.id){
-//	            players[i].x = data.x;
-//	            players[i].y = data.y;
-//	        }
-//	    }
-//	});
-
-//	socket.on('disconnect', function(){
-//		console.log("Player Disconnected");
-//		socket.broadcast.emit('playerDisconnected', { id: socket.id });
-//		for(var i = 0; i < players.length; i++){
-//			if(players[i].id == socket.id){
-//				players.splice(i, 1);
-//			}
-//		}
-//	});
-
-	//players.push(new player(socket.id, 0, 0));
-
-//function player(id, x, y){
-//	this.id = id;
-//	this.x = x;
-//	this.y = y;
-//}

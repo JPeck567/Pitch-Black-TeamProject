@@ -42,8 +42,8 @@ public class GameScreen implements Screen {
 		
 		this.client = client;
 		client.beginConnection();
-		client.sendRegistration("email", "jorge", "password");
-		client.sendLogin("jorge", "password");
+		//client.sendRegistration("email", "jorge", "password");
+		//client.sendLogin("jorge", "password");
 		
 		gameRenderer = new GameRenderer(client, pbManager);	
 		inputHandler = new InputHandler(gameRenderer);

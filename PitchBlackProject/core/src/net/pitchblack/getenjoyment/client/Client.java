@@ -8,6 +8,7 @@ import com.badlogic.gdx.Gdx;
 
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 import io.socket.client.IO;
@@ -15,14 +16,13 @@ import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 
 public class Client {
-	
 	private static final float UPDATE_TIME = 1/60f;
 	private float timer;
 	
-	public enum RenderState{
+	public enum RenderState {
 		ACCOUNT,  // logging in / registration
 		INITIATED,  // being game session
-		IDLE, // waiting for other players or other events
+		IDLE, // waiting for any events. does nothing
 		LOADING,  // load entites from given player id's
 		READY,  // finished loading
 		PLAYING,  // ingame
@@ -43,7 +43,8 @@ public class Client {
 	private String id;
 	private Socket socket;
 	private RenderState renderState;
-	private AccountState accountState;
+	public AccountState accountState;
+	private LoginInitiator loginInitiator;
 	private String playerIds;
 	private boolean playing;
 	private int keyUpCode;
@@ -65,11 +66,12 @@ public class Client {
 	}
 	
 	public void endConnection() {
+		socket.close();
 	}
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://dc071f9a0423.ngrok.io");
+			socket = IO.socket("http://localhost:8081");
 			socket.connect();
 		} catch (Exception e) {
 			System.out.println(e);
@@ -96,21 +98,6 @@ public class Client {
 					}
 				}
 				break;
-//			case ACCOUNT:
-//				if(!attemptedLogin) {
-//					JSONObject data = new JSONObject();
-//					try{
-//						data.put("username", "abc");
-//						data.put("password", "abc");
-//					} catch(JSONException e) { e.printStackTrace(); }
-//					socket.emit("login", data);
-//					attemptedLogin = true;
-//				} else {
-//					if(loggedIn) {
-//						System.out.println("logged in :)");
-//					}
-//				}
-//				break;
 			case INITIATED:
 				socket.emit("playerClientInit");
 				renderState = RenderState.IDLE;
@@ -133,8 +120,7 @@ public class Client {
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				Gdx.app.log("SocketIO", "Connected");
-///				player = new Skins(Explorer);
+//				Gdx.app.log("SocketIO", "Connected");
 			}
 		}).on("socketID", new Emitter.Listener() {
 			@Override
@@ -143,8 +129,8 @@ public class Client {
 				try {
 					id = data.getString("id");
 				} catch (JSONException e) { e.printStackTrace(); }
-				Gdx.app.log("SocketIO", "My ID: "+ id);
-				//System.out.println(id);
+				//Gdx.app.log("SocketIO", "My ID: "+ id);
+				System.out.println("SocketIO: Connected with ID:" + id);
 				//gameRenderer.setID(id);
 				//renderState = RenderState.IDLE;
 			}
@@ -157,18 +143,19 @@ public class Client {
 					loggedInAttempt = Boolean.parseBoolean(data.getString("successful"));
 				} catch (JSONException e) { e.printStackTrace(); }
 				
+				loginInitiator.loginResponse(loggedInAttempt);
 				if(loggedInAttempt) {
 					accountState = AccountState.LOGGED_IN;
 					// send logged in message
-					System.out.println("Login");
+					//System.out.println("Login");
 				} else if(!loggedInAttempt) {
 					accountState = AccountState.LOGGED_OUT;
 					// send login fail message
-					System.out.println("Login");
+					//System.out.println("Login Failed");
 				} else {
 					accountState = AccountState.LOGGED_OUT; 
 					// send error message
-					System.out.println("Login");
+					//System.out.println("Login Error");
 				}
 			}
 		}).on("registerAttempt", new Emitter.Listener() {
@@ -180,15 +167,20 @@ public class Client {
 					registrationAttempt = Boolean.parseBoolean(data.getString("successful"));
 				} catch (JSONException e) { e.printStackTrace(); }
 				
+				loginInitiator.registrationResponse(registrationAttempt);
+				
 				if(registrationAttempt) {
 					// send message that account made
-					System.out.println("Register");
+					//System.out.println("Register Successful");
 				} else {
 					// error somehow + send message
-					System.out.println("Register");
+					//System.out.println("Register Unsuccessful");
 				}
+				
 				accountState = AccountState.LOGGED_OUT;
 			}
+
+			
 		}).on("newPlayerAcknowledge", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
@@ -216,9 +208,7 @@ public class Client {
 					gameRenderer.addPlayerData(playerData);
 					gameRenderer.addFogData(fogData);
 					gameRenderer.addMapData(mapData);
-				} catch(JSONException e){
-					Gdx.app.log("SocketIO", "Player ID Error");
-				}
+				} catch(JSONException e) { Gdx.app.log("SocketIO", "Player ID Error"); }
 				renderState = RenderState.PLAYING;
 			}
 		}).on("gameUpdate", new Emitter.Listener() {
@@ -232,9 +222,7 @@ public class Client {
 					gameRenderer.addPlayerData(playerData);
 					gameRenderer.addFogData(fogData);
 					gameRenderer.addMapData(mapData);
-				} catch(JSONException e){
-					Gdx.app.log("SocketIO", "Player ID Error");
-				}
+				} catch(JSONException e){ Gdx.app.log("SocketIO", "Player ID Error");	}
 			}
 		}).on("win", new Emitter.Listener() {
 			@Override
@@ -243,52 +231,13 @@ public class Client {
 			}
 		});
 }
-//		}).on("playerDisconnected", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONObject data = (JSONObject) args[0];
-//				try{
-//					String id = data.getString("id");
-//					gameWorld.removePlayer(id);
-//				}catch(JSONException e){
-//					Gdx.app.log("SocketIO", "Player ID Error");
-//				}
-//			}
-//		}).on("playerMoved", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONObject data = (JSONObject) args[0];
-//				try{
-//					String playerId = data.getString("id");
-//					Double x = data.getDouble("x");
-//					Double y = data.getDouble("y");
-//					gameWorld.movePlayer(playerId, x.floatValue(), y.floatValue());
-//					
-//				} catch(JSONException e){
-//				}
-//			}
-//		}).on("getPlayers",new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONArray objects = (JSONArray) args[0];
-//				try {
-//					for(int i = 0; i < objects.length(); i++) {
-//						gameWorld.movePlayer(objects.getJSONObject(i).getString("id"), 
-//								(float) objects.getJSONObject(i).getDouble("x"),
-//								(float) objects.getJSONObject(i).getDouble("y"));
-//					}
-//				} catch (JSONException e) {
-//
-//				}
-//			}
 
 	public void tick(float delta) {
-		//if(accountState == AccountState.LOGGED_IN) { 
 		updateServer(delta);
-		//}
 	}
 	
-	public void sendLogin(String username, String password) {
+	public void sendLogin(String username, String password, LoginInitiator loginInit) {
+		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
 		try{
 			data.put("username", username);
@@ -298,7 +247,8 @@ public class Client {
 		accountState = AccountState.LOGIN_ATTEMPTED;
 	}
 	
-	public void sendRegistration(String email, String username, String password) {
+	public void sendRegistration(String email, String username, String password, LoginInitiator loginInit) {
+		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
 		try{
 			data.put("email", email);
@@ -327,5 +277,9 @@ public class Client {
 
 	public void setState(RenderState state) {
 		renderState = state;
+	}
+	
+	public static void main(String args[]) {
+		Client c = new Client();
 	}
 }

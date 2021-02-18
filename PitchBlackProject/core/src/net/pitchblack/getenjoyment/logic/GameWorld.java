@@ -152,23 +152,10 @@ public class GameWorld {
 	
 	private void playingUpdate(float delta) {
 		physWorld.step(delta, 1, 1);
-
 		// check if map needs extending
 		// find biggest x coord
+		// done in the loop for updating players
 		float xCoord = 0;
-		for(String id : alivePlayers) {
-			Player p = players.get(id);
-			System.out.println(p);
-			xCoord = (p.getX() > xCoord) ? p.getX() : xCoord;
-		}
-		
-		// check if xCoord is further that the second to last map
-		if(xCoord * PPM > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
-			int pos = gameMapSequence.size() + 1;
-			int mapNo = getRandomMapNum();
-			appendMap(mapNo, pos);
-			gameMapSequence.add(mapNo);
-		}
 		
 		// update fog
 		//fog.update(delta, playerCount);
@@ -177,7 +164,10 @@ public class GameWorld {
 		for(String id : alivePlayers) {
 			
 			Player p = players.get(id);
-
+			
+			// checks if x coord is biggest
+			xCoord = (p.getX() > xCoord) ? p.getX() : xCoord;
+			
 			// death check
 			
 			// below map
@@ -193,6 +183,15 @@ public class GameWorld {
 			//float j = p.getX() - (playerWidth / GameWorld.PPM);
 			//System.out.println( i + "," + j);
 		}
+		
+		// check if xCoord is further that the second to last map
+		if(xCoord * PPM > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
+			int pos = gameMapSequence.size() + 1;
+			int mapNo = getRandomMapNum();
+			appendMap(mapNo, pos);
+			gameMapSequence.add(mapNo);
+		}
+		
 		sweepDeadBodies();
 	}
 	
