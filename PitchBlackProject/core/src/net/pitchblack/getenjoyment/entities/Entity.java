@@ -9,7 +9,7 @@ import net.pitchblack.getenjoyment.logic.GameRenderer;
 public class Entity extends Sprite {
 	private final Type type;
 	private final String id;
-	private State state;  // either ascending, descending or dead
+	private EntityState entityState;  // either ascending, descending or dead
 	private boolean movementLeft;
 	private boolean movementRight;
 	
@@ -18,7 +18,7 @@ public class Entity extends Sprite {
 		FOG
 	}
 	
-	public enum State {
+	public enum EntityState {
 		  ASCENDING,
 		  DESCENDING,
 		  STANDING,
@@ -27,7 +27,7 @@ public class Entity extends Sprite {
 		  DEAD
 		}
 	
-	public Entity(Type type, String id, State moveState, PBAssetManager pbAssetManager) {
+	public Entity(String id, Type type, EntityState moveState, PBAssetManager pbAssetManager) {
 		super(getTextureFromType(type, pbAssetManager));
 		this.id = id;
 		this.type = type;
@@ -42,7 +42,7 @@ public class Entity extends Sprite {
 				return pbAssetManager.getAsset(PBAssetManager.playerTexture);
 			case FOG:
 				return pbAssetManager.getAsset(PBAssetManager.fogTexture);
-			default:  // should us a placeholder if texture not found
+			default:  // should use a placeholder if texture not found
 				return pbAssetManager.getAsset(PBAssetManager.playerTexture);
 		}
 	}
@@ -67,16 +67,16 @@ public class Entity extends Sprite {
 		movementRight = right;
 	}
 	
-	public void setState(State state) {
-		this.state = state;
+	public void setState(EntityState entityState) {
+		this.entityState = entityState;
 	}
 		
 	public Type getType() {
 		return type;
 	}
 
-	public State getState() {
-		return state;
+	public EntityState getState() {
+		return entityState;
 	}
 
 

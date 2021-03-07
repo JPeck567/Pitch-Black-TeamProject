@@ -15,13 +15,15 @@ import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.sql.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.awt.Font;
 import javax.swing.SwingConstants;
 import java.awt.Color;
 import javax.swing.JPasswordField;
 
 public class Registration extends JFrame {
-
+	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 	private JPanel contentPane;
 	private JPasswordField password;
 
@@ -41,6 +43,11 @@ public class Registration extends JFrame {
 //		});
 //	}
 
+	public static boolean validate(String emailStr) {
+        return VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr).find();
+        //return matcher.find();
+	}
+	
 	/**
 	 * Create the frame.
 	 */
@@ -86,8 +93,12 @@ public class Registration extends JFrame {
 //					Class.forName("com.mysql.jdbc.Driver");
 //					Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamedatabase","root","");
 //					PreparedStatement ps = conn.prepareStatement("insert into users(email,username,password) values(?,?,?);");
-					if((!email.getText().equals("") && !username.getText().equals("")) && !password.getText().equals("")) {
-						client.sendRegistration(email.getText(), username.getText(), password.getText(), loginInitiator);
+					String emails = email.getText();
+					if(!validate(emails)) {
+						JOptionPane.showMessageDialog(contentPane, "Invalid email, please try again");
+					} else if ((!email.getText().equals("") && !username.getText().equals("")) && !password.getText().equals("")) {
+						client.emitSendRegistration(email.getText(), username.getText(), password.getText(), loginInitiator);
+						
 					} else {
 						JOptionPane.showMessageDialog(contentPane, "Please ensure all fields are not empty");
 					}//					

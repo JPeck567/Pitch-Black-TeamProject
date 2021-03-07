@@ -11,12 +11,11 @@ import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer.Cell;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;  // powerful! is a 2d vector
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
 import net.pitchblack.getenjoyment.entities.Player.State;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
-import net.pitchblack.getenjoyment.logic.CollisionHandler;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
@@ -40,7 +39,7 @@ public class Player {
 	
 	private State state;
 	private boolean pushState;
-	private int jumps;  // number of jumps, capped at JUMP_LIMIT
+	private int jumps;  // number of jumps taken; it is capped at JUMP_LIMIT
 	private boolean movementLeft;
 	private boolean movementRight;
 	private boolean jumped;

@@ -13,8 +13,6 @@ import com.badlogic.gdx.Screen;
 public class InputHandler implements InputProcessor {
 	private GameRenderer gameRenderer;
 	
-	// for server, send message, then call appropriate method in game world
-	
 	public InputHandler(GameRenderer gameRenderer) {
 		this.gameRenderer = gameRenderer;
 	}

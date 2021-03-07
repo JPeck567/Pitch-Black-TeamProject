@@ -15,7 +15,6 @@ public class LRUCache<K, V>{
     private Map<K,V> cache;
     private CacheEntryRemovedListener<K,V> entryRemovedListener;
 
-
     @SuppressWarnings("serial")
 	public LRUCache(final int maxEntries ){
         cache = new LinkedHashMap<K,V>( maxEntries + 1, .75F, true ) {

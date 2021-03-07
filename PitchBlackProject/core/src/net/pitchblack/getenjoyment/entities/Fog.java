@@ -19,8 +19,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-
-
 public class Fog {
 
 	private Vector2 position;

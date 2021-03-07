@@ -21,13 +21,13 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader.Parameters;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
-public class PBAssetManager {
-	public final AssetManager manager;
+public class PBAssetManager extends AssetManager{  // can't make into singleton, as may corrupt textures in libGDX
+	//public final AssetManager manager;
 	
 	// TODO: use texture atlas for skin + eventually player sprite sheets
     public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.json"));
-    public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("textures/player.png", Texture.class);
-    public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("textures/fog.png", Texture.class);
+    public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("texture/player.png", Texture.class);
+    public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("texture/fog.png", Texture.class);
     
     private static final String map0Path = "maps/map00.tmx";  // need to manually load parameters and class, if parameters are needed
     public static final AssetDescriptor<TiledMap> map0 = new AssetDescriptor<TiledMap>(map0Path, TiledMap.class);
@@ -39,34 +39,34 @@ public class PBAssetManager {
     private static final String[] mapArray = {map0Path, map1Path, map2Path};
     
     public PBAssetManager() {
-    	manager = new AssetManager();
+    	//manager = new AssetManager();
     }
         
     public void loadSkins() { // for ui
-    	manager.load(menuSkin);
-    	manager.finishLoading();
+    	load(menuSkin);
+    	finishLoading();
     }
     
     public void loadTextures() {  // for game
-    	manager.load(playerTexture);
-    	manager.load(fogTexture);
-    	manager.finishLoading();
+    	load(playerTexture);
+    	load(fogTexture);
+    	finishLoading();
     }
     
     public void loadMaps() {
     	//Parameters mapParam = new Parameters();
     	//mapParam.flipY = false;  // needs to have y facing down
     	
-    	manager.setLoader(TiledMap.class, new TmxMapLoader());
+    	setLoader(TiledMap.class, new TmxMapLoader());
     	
     	for(String mapString : mapArray) {
-    		manager.load(mapString, TiledMap.class);
+    		load(mapString, TiledMap.class);
     	}
-    	manager.finishLoading();
+    	finishLoading();
     }
     
     public <T> T getAsset(AssetDescriptor<T> desc) {
-    	return manager.get(desc);
+    	return get(desc);
     }
     
     public HashMap<Integer, TiledMap> getMaps(){
@@ -92,7 +92,7 @@ public class PBAssetManager {
     	}
     }
     
-    public void dispose() {
-    	manager.dispose();
-    }
+//    public void dispose() {
+//    	dispose();
+//    }
 }

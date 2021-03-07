@@ -2,6 +2,7 @@ package net.pitchblack.getenjoyment.logic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -67,16 +68,15 @@ public class GameWorld {
 	private Fog fog;
 	private float playerWidth, playerHeight;
 	private float fogWidth, fogHeight;
-	
-	private CollisionHandler collisionHandler;
 
-	public GameWorld(TiledMap map, int playerWidth, int playerHeight, PBAssetManager pbAssetManager) {
-		MapProperties prop = map.getProperties();
+	public GameWorld(PBAssetManager pbAssetManager) {
+		MapProperties prop = pbAssetManager.getAsset(PBAssetManager.map0).getProperties();
 		MAP_WIDTH_PX = ((float) prop.get("width", Integer.class)) * PPM;
 		MAP_HEIGHT_PX = ((float) prop.get("height", Integer.class)) * PPM;
 
-		this.playerWidth = playerWidth;
-		this.playerHeight = playerHeight;
+		Texture playerTexture = pbAssetManager.getAsset(PBAssetManager.playerTexture);
+		this.playerWidth = playerTexture.getWidth();
+		this.playerHeight = playerTexture.getHeight();
 		
 		this.fogWidth = 192;
 		this.fogHeight = MAP_HEIGHT_PX;
@@ -95,8 +95,6 @@ public class GameWorld {
 		
 		mapsCollisionBodiesMap = new HashMap<Integer, ArrayList<Body>>();
 		mapSetup();
-		//mapCollisionBodies = MapBodyFactory.getCollisionBodies(map, physWorld, 1);
-		//this.map = map;
 		
 		players = new HashMap<String, Player>();
 		alivePlayers = new ArrayList<String>();
@@ -105,10 +103,6 @@ public class GameWorld {
 		playerCount = 0;
 		
 		fog = createFog();
-		
-//		for(int i = 0; i < 4; i++) {
-//			createPlayer();
-//		}
 	}
 	
 	private void mapSetup() {
@@ -117,12 +111,16 @@ public class GameWorld {
 			gameMapSequence.add(getRandomMapNum()); 
 		}
 		
-		//gameMapSequence.add(2);
-		
 		for(int i = 0; i < gameMapSequence.size() ; i++ ) {  // cycles through the map sequence. i is the seq number of the map
 			appendMap(gameMapSequence.get(i), i + 1); // +1 as i starts at 0
 			//TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
 			//mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, i + 1));
+		}
+	}
+	
+	public void setupPlayers(List<String> playerList) {
+		for(String name : playerList) {
+			createPlayer(name);
 		}
 	}
 	
@@ -169,7 +167,6 @@ public class GameWorld {
 			xCoord = (p.getX() > xCoord) ? p.getX() : xCoord;
 			
 			// death check
-			
 			// below map
 			if(p.getY() < 0) {
 				toRemove.add(id);
@@ -191,7 +188,6 @@ public class GameWorld {
 			appendMap(mapNo, pos);
 			gameMapSequence.add(mapNo);
 		}
-		
 		sweepDeadBodies();
 	}
 	
@@ -251,10 +247,6 @@ public class GameWorld {
 		toRemove.clear();
 	}
 	
-	public void addPlayer(String id, Object o) {
-		players.put(id, null);
-	}
-	
 	public boolean isPlayerNull(String id) {
 		return players.get(id) == null;
 	}
@@ -272,7 +264,6 @@ public class GameWorld {
 		for(String id : players.keySet()) {
 			playerData += players.get(id).toString() + "/n";
 		}
-		
 		return playerData;
 	}
 	
@@ -293,11 +284,11 @@ public class GameWorld {
 		return (Map<String, Vector2>) players.clone();
 	}
 	
-	public void keyUp(String id, int keycode) {
+	private void keyUp(String id, int keycode) {
 		players.get(id).keyUp(keycode);
 	}
 	
-	public void keyDown(String id, int keycode) {  // will have param for player id
+	private void keyDown(String id, int keycode) {  // will have param for player id
 		players.get(id).keyDown(keycode);
 	}
 
@@ -332,7 +323,7 @@ public class GameWorld {
 	}
 
 	public boolean finished() {
-		if(deadPlayers.size() - 1> players.size()) {  // if one player alive
+		if(deadPlayers.size() - 1 > players.size()) {  // if one player alive
 			return true;
 		}
 		return false;

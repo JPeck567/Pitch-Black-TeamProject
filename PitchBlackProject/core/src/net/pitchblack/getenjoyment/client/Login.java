@@ -92,7 +92,7 @@ public class Login extends JFrame {
 //						JOptionPane.showMessageDialog(null,"Incorrect Username and Password");
 //				    con.close();
 					client.beginConnection();
-					client.sendLogin(username.getText(), password.getText(), loginInit);
+					client.emitSendLogin(username.getText(), password.getText(), loginInit);
 				} catch(Exception e) { throw e; }
 			}
 		});

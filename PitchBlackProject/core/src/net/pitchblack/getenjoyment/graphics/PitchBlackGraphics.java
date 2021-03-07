@@ -15,8 +15,10 @@ import net.pitchblack.getenjoyment.client.Client;
 import net.pitchblack.getenjoyment.client.Login;
 import net.pitchblack.getenjoyment.client.Registration;
 import net.pitchblack.getenjoyment.client.Client.AccountState;
+import net.pitchblack.getenjoyment.client.Client.ClientState;
 //import net.pitchblack.getenjoyment.graphics.screens.CreditsScreen;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
+import net.pitchblack.getenjoyment.graphics.screens.LobbyScreen;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator.WindowType;
 import net.pitchblack.getenjoyment.graphics.screens.SettingsScreen;
@@ -38,11 +40,12 @@ public class PitchBlackGraphics extends Game {
 	
 	private LoginInitiator loginInit;
 	private WelcomeScreen welcomeScreen;
+	private LobbyScreen lobbyScreen;
 	private GameScreen gameScreen;
 	private SettingsScreen settingsScreen;
 	//private CreditsScreen creditsScreen;
 	private Client client;
-
+	
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
 	
 	public PitchBlackGraphics(){
@@ -52,8 +55,8 @@ public class PitchBlackGraphics extends Game {
 
 	@Override
 	public void create() {
-//		changeScreen(Screens.MENU);
-//		screen.hide();
+		client.setClientState(ClientState.ACCOUNT);
+		client.beginConnection();
 		new Thread(new Runnable() {
 			   @Override
 			   public void run() {
@@ -62,13 +65,6 @@ public class PitchBlackGraphics extends Game {
 				  loginInit.setWindow(WindowType.OPTIONS);
 			   }
 			}).start();
-//		Gdx.app.postRunnable(new Runnable() {
-//	         @Override
-//	         public void run() {
-//	        	
-//	         }
-//	      });
-		//changeScreen(Screens.MENU);
 	}
 
 	public void changeScreen(Screens screen) {
@@ -78,6 +74,12 @@ public class PitchBlackGraphics extends Game {
 					welcomeScreen = new WelcomeScreen(this, client);
 				}
 				this.setScreen(welcomeScreen);
+				break;
+			case LOBBY:
+				if (lobbyScreen == null) {
+					lobbyScreen = new LobbyScreen(this, client);
+				}
+				this.setScreen(lobbyScreen);
 				break;
 			case GAME:
 				if (gameScreen == null) {
@@ -106,9 +108,16 @@ public class PitchBlackGraphics extends Game {
 		super.setScreen(screen);
 	}
 	
+	public GameScreen getGameScreen() {
+		if (gameScreen == null) {
+			gameScreen = new GameScreen(this, client);
+		}
+		return gameScreen;
+	}
+	
 	@Override
 	public void render() {
-		if(client.accountState == AccountState.LOGGED_IN) {
+		if(client.getAccountState() == AccountState.LOGGED_IN) {
 			super.render();	
 		}
 	}

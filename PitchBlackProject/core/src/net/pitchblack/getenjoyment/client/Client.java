@@ -1,13 +1,22 @@
 package net.pitchblack.getenjoyment.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
+import net.pitchblack.getenjoyment.graphics.screens.LobbyScreen;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
 import net.pitchblack.getenjoyment.logic.GameWorld;
@@ -15,14 +24,18 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 
+
 public class Client {
 	private static final float UPDATE_TIME = 1/60f;
 	private float timer;
+	private String username;
+	private String currentRoom;
 	
-	public enum RenderState {
+	public enum ClientState {
 		ACCOUNT,  // logging in / registration
+		LOBBY, // in lobby
 		INITIATED,  // being game session
-		IDLE, // waiting for any events. does nothing
+		IDLE, // does nothing
 		LOADING,  // load entites from given player id's
 		READY,  // finished loading
 		PLAYING,  // ingame
@@ -37,13 +50,17 @@ public class Client {
 		REGISTRATION_ATTEMPTED,
 		LOGGED_OUT
 	}
-
-	private GameRenderer gameRenderer;
+	
+	// TODO: replace these w/ currentScreen field
+	private LobbyScreen lobbyScreen;
+	private GameScreen gameScreen;
+	
 	private Player player;
 	private String id;
 	private Socket socket;
-	private RenderState renderState;
-	public AccountState accountState;
+	private Boolean isConnected;
+	private ClientState clientState;
+	private AccountState accountState;
 	private LoginInitiator loginInitiator;
 	private String playerIds;
 	private boolean playing;
@@ -52,7 +69,8 @@ public class Client {
 	
 	public Client() {
 		//this.player = gameRenderer.getPlayer();
-		renderState = RenderState.IDLE;
+		isConnected = false;
+		clientState = ClientState.IDLE;
 		accountState = AccountState.LOGGED_OUT;
 		playerIds = "";
 		playing = false;
@@ -67,48 +85,56 @@ public class Client {
 	
 	public void endConnection() {
 		socket.close();
+		isConnected = false;
 	}
 
 	private void connectSocket() {
 		try {
 			socket = IO.socket("http://localhost:8081");
 			socket.connect();
+			isConnected = true;
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 	}
 	
 	public void updateServer(float delta){
-//		timer += dt;
-//		if(timer >= UPDATE_TIME)
-		switch(renderState) {
-			case PLAYING:
-				gameRenderer.render(delta);
-				if(keyUpCode != -1 || keyDownCode != -1) {
-					JSONObject data = new JSONObject();
-					try{
-						data.put("id", id);
-						data.put("keyUp", keyUpCode);
-						data.put("keyDown", keyDownCode);
-						keyUpCode = -1;
-						keyDownCode = -1;
-						socket.emit("keyPress", data);
-					} catch(JSONException e){
-						Gdx.app.log("SOCKET.IO", "Data Update Error");
-					}
-				}
-				break;
+		switch(clientState) {
 			case INITIATED:
 				socket.emit("playerClientInit");
-				renderState = RenderState.IDLE;
+				clientState = ClientState.IDLE;
 				break;
 			case LOADING:
-				gameRenderer.loadEntities(playerIds);
-				renderState = RenderState.READY;
+				//gameScreen.loadEntities(playerIds);
+				// TODO: check if player clicks ready button after data loaded OR better to have lobby call a client method to do work below
+				if(lobbyScreen.ready()) {
+					JSONObject data = new JSONObject();
+					try {
+						data.put("username", username)
+							.put("room", currentRoom);
+					} catch(JSONException e) { e.printStackTrace(); }
+					
+					socket.emit("playerReady", data);
+				}
+				clientState = ClientState.IDLE;
 				break;
-			case READY:
-				socket.emit("playerReady");
-				renderState = RenderState.IDLE;
+//			case READY:
+//				//socket.emit("playerReady");
+//				clientState = ClientState.IDLE;
+			case PLAYING:
+				if(keyUpCode != -1 || keyDownCode != -1) {  // if either button pressed
+					JSONObject data = new JSONObject();
+					try {
+						data.put("username", username)
+							.put("room", currentRoom)
+							.put("keyUp", keyUpCode)
+							.put("keyDown", keyDownCode);
+						keyUpCode = -1;
+						keyDownCode = -1;
+						socket.emit("gameKeyPress", data);
+					} catch(JSONException e){ e.printStackTrace(); }
+				}
+				break;
 			case WIN:
 			case LOSE:
 		default:
@@ -129,7 +155,6 @@ public class Client {
 				try {
 					id = data.getString("id");
 				} catch (JSONException e) { e.printStackTrace(); }
-				//Gdx.app.log("SocketIO", "My ID: "+ id);
 				System.out.println("SocketIO: Connected with ID:" + id);
 				//gameRenderer.setID(id);
 				//renderState = RenderState.IDLE;
@@ -139,23 +164,20 @@ public class Client {
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
 				boolean loggedInAttempt = false;
+				String username = null;
+				String message = null;
 				try {
-					loggedInAttempt = Boolean.parseBoolean(data.getString("successful"));
+					loggedInAttempt = data.getBoolean("successful");
+					username = data.getString("username");
+					message = data.getString("message");
 				} catch (JSONException e) { e.printStackTrace(); }
 				
-				loginInitiator.loginResponse(loggedInAttempt);
+				loginInitiator.loginResponse(loggedInAttempt, message);
 				if(loggedInAttempt) {
 					accountState = AccountState.LOGGED_IN;
-					// send logged in message
-					//System.out.println("Login");
-				} else if(!loggedInAttempt) {
-					accountState = AccountState.LOGGED_OUT;
-					// send login fail message
-					//System.out.println("Login Failed");
+					Client.this.username = username;
 				} else {
-					accountState = AccountState.LOGGED_OUT; 
-					// send error message
-					//System.out.println("Login Error");
+					accountState = AccountState.LOGGED_OUT;
 				}
 			}
 		}).on("registerAttempt", new Emitter.Listener() {
@@ -163,80 +185,146 @@ public class Client {
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
 				boolean registrationAttempt = false;
+				String message = null;
 				try {
-					registrationAttempt = Boolean.parseBoolean(data.getString("successful"));
+					registrationAttempt = data.getBoolean("successful");
+					message = data.getString("message");
 				} catch (JSONException e) { e.printStackTrace(); }
 				
-				loginInitiator.registrationResponse(registrationAttempt);
-				
-				if(registrationAttempt) {
-					// send message that account made
-					//System.out.println("Register Successful");
-				} else {
-					// error somehow + send message
-					//System.out.println("Register Unsuccessful");
-				}
-				
+				loginInitiator.registrationResponse(registrationAttempt, message);
+//				if(registrationAttempt) {
+//					// TODO: send message that account made
+//					//System.out.println("Register Successful");
+//				} else if(!registrationAttempt) {
+//					// TODO: error somehow + send message
+//					//System.out.println("Register Unsuccessful");
+//				}
 				accountState = AccountState.LOGGED_OUT;
 			}
-
-			
-		}).on("newPlayerAcknowledge", new Emitter.Listener() {
-			@Override
-			public void call(Object... args) {
-				renderState = RenderState.IDLE;
-			}
-		}).on("gameReady", new Emitter.Listener() {
+		}).on("lobbyRoomResponse", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
-				String pIds = "";
+				boolean inLobby = false;
 				try {
-					pIds = data.getString("playerId");
-				} catch(JSONException e) { }
-				playerIds = pIds;
-				renderState = RenderState.LOADING;
+					inLobby = data.getBoolean("inLobby");
+				} catch(JSONException e) { e.printStackTrace(); }
+				if(inLobby) {
+					clientState = ClientState.LOBBY;
+				}  // if not don't change state, and message lobby not conn. so go back
 			}
-		}).on("gameStart", new Emitter.Listener() {
+		}).on("roomList", new Emitter.Listener() {
+			public void call(Object... args) {
+				String roomUsers = null;
+				HashMap<String, Object> roomUsersMap = null;
+				JSONObject data = (JSONObject) args[0];
+				try {
+					roomUsers = data.getString("roomUsers");
+					roomUsersMap = new ObjectMapper().readValue(roomUsers, HashMap.class);  // uses jackson depedency to easily turn json to java map
+				} catch(JSONException | JsonProcessingException e) { e.printStackTrace(); }
+				// convert JSON string to Java Map
+				lobbyScreen.addRoomData(roomUsersMap);// TODO: then send message to lobby screen with rooms
+				//System.out.println(roomUsersMap.toString());
+			}
+		}).on("newPlayerToRoom", new Emitter.Listener() {
+			public void call(Object... args) {
+				String username = null;
+				String room = null;
+				JSONObject data = (JSONObject) args[0];
+				try {
+					room = data.getString("room");
+					username = data.getString("username");
+				} catch(JSONException e) { e.printStackTrace(); }
+				lobbyScreen.addNewPlayer(username, room);	// TODO: then send message to lobby screen with new player in room
+			}
+				
+//		}).on("joinedLobbyResponse", new Emitter.Listener() {
+//			public void call(Object... args) {
+//				Boolean response = false;
+//				JSONObject data = (JSONObject) args[0];
+//				try {
+//					response = data.getBoolean("response");
+//				} catch(JSONException e) { e.printStackTrace(); }
+//				
+//				if(response) {
+//					clientState = ClientState.LOBBY;
+//				} else {
+//					// TODO: tell lobby error
+//				}
+//			}	
+		}).on("joinRoomResponse", new Emitter.Listener() {
+			public void call(Object... args) {
+				boolean response = false;
+				String room = null;
+				String message = null;
+				JSONObject data = (JSONObject) args[0];
+				try {
+					response = data.getBoolean("response");
+					room = data.getString("room");
+					message = data.getString("message");
+				} catch(JSONException e) { e.printStackTrace(); }
+				if(response) {
+					currentRoom = room;
+					lobbyScreen.joinSuccess(room, message);
+					// TODO: send message to lobby about joining room
+				}
+				
+			}
+		}).on("gameSetup", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
+				String playerData = null;
+				String fogData = null;
+				String mapData = null;
 				try {
-					String playerData = data.getString("playerData");
-					String fogData = data.getString("fogData");
-					String mapData = data.getString("mapData");
-					gameRenderer.addPlayerData(playerData);
-					gameRenderer.addFogData(fogData);
-					gameRenderer.addMapData(mapData);
-				} catch(JSONException e) { Gdx.app.log("SocketIO", "Player ID Error"); }
-				renderState = RenderState.PLAYING;
+					playerData = data.getString("playerData");
+					fogData = data.getString("fogData");
+					mapData = data.getString("mapData");
+				} catch(JSONException e) { e.printStackTrace(); }
+				
+				gameScreen = lobbyScreen.getGameScreen();
+				gameScreen.setupRenderer(playerData, fogData, mapData);
+				clientState = ClientState.LOADING;
+			}
+		}).on("gameCountdown", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				//TODO: alert lobby to countdown
+			}		
+		}).on("gameBegin", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				clientState = ClientState.PLAYING;
 			}
 		}).on("gameUpdate", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
+				String playerData = null;
+				String fogData = null;
+				String mapData = null;
 				try {
-					String playerData = data.getString("playerData");
-					String fogData = data.getString("fogData");
-					String mapData = data.getString("mapData");
-					gameRenderer.addPlayerData(playerData);
-					gameRenderer.addFogData(fogData);
-					gameRenderer.addMapData(mapData);
-				} catch(JSONException e){ Gdx.app.log("SocketIO", "Player ID Error");	}
+					playerData = data.getString("playerData");
+					fogData = data.getString("fogData");
+					mapData = data.getString("mapData");
+				} catch(JSONException e) { e.printStackTrace(); }
+				
+				gameScreen.addGameData(playerData, fogData, mapData);
 			}
 		}).on("win", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				renderState = RenderState.WIN;
+				clientState = ClientState.WIN;
 			}
 		});
-}
+	}
 
 	public void tick(float delta) {
 		updateServer(delta);
 	}
 	
-	public void sendLogin(String username, String password, LoginInitiator loginInit) {
+	public void emitSendLogin(String username, String password, LoginInitiator loginInit) {
 		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
 		try{
@@ -247,7 +335,7 @@ public class Client {
 		accountState = AccountState.LOGIN_ATTEMPTED;
 	}
 	
-	public void sendRegistration(String email, String username, String password, LoginInitiator loginInit) {
+	public void emitSendRegistration(String email, String username, String password, LoginInitiator loginInit) {
 		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
 		try{
@@ -258,28 +346,66 @@ public class Client {
 		socket.emit("register", data);
 		accountState = AccountState.REGISTRATION_ATTEMPTED;
 	}
-
-	public void setRenderer(GameRenderer gameRenderer) {
-		this.gameRenderer = gameRenderer;
+	
+	public void emitJoinLobby() {
+		JSONObject data = new JSONObject();
+		try{
+			data.put("username", username);
+		} catch(JSONException e) { e.printStackTrace(); }
+		socket.emit("joinLobby", data);
 	}
-
+	
+	public void emitJoinRoomRequest(String room) {
+		JSONObject data = new JSONObject();
+		try{
+			data.put("username", username);
+			data.put("room", room);
+		} catch(JSONException e) { e.printStackTrace(); }
+		socket.emit("joinRoomRequest", data);
+	}
+	
+	public void emitGetRooms() {
+		socket.emit("getRooms");
+	}
+	
 	public void keyDown(int keycode) {
 		keyDownCode = keycode;
 	}
-
+	
 	public void keyUp(int keycode) {
 		keyUpCode = keycode;
 	}
 
-	public String getID() {
-		return id;
+	public void setGameScreen(GameScreen gameScreen) {
+		this.gameScreen = gameScreen;
 	}
 
-	public void setState(RenderState state) {
-		renderState = state;
+	public void setLobbyScreen(LobbyScreen lobbyScreen) {
+		this.lobbyScreen = lobbyScreen;
+	}
+	
+	public String getUsername() {
+		return username;
+	}
+
+	public void setClientState(ClientState clientState) {
+		this.clientState = clientState;
+	}
+	
+	public void setAccountState(AccountState accountState) {
+		this.accountState = accountState;
+	}
+	
+	public AccountState getAccountState() {
+		return accountState;
 	}
 	
 	public static void main(String args[]) {
 		Client c = new Client();
 	}
+
+	public boolean isInLobby() {
+		return clientState == ClientState.LOBBY;
+	}
+
 }

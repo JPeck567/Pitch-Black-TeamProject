@@ -64,10 +64,10 @@ public class WelcomeScreen implements Screen {
 		final SoundManager sound = new SoundManager();
 		
 		if(PreferencesManager.isMusicEnabled() == true) {
-			MusicManager.getInstance().play( PitchBlackMusic.MENU);
+			MusicManager.getInstance().play(PitchBlackMusic.MENU);
 		}
 	
-	    Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));//parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
+	    Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json")); // TODO: Inconsistent & has error sometimes - parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
 
 		newGame = new TextButton("New Game", skin);
 		exit = new TextButton("Exit", skin);
@@ -103,6 +103,17 @@ public class WelcomeScreen implements Screen {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				parent.changeScreen(Screens.GAME);
+				if(PreferencesManager.isSoundEnabled() == true) {
+					sound.setVolume(PreferencesManager.getSoundVolume());
+					sound.play( PitchBlackSound.CLICK );
+				}
+			}
+		});
+		
+		lobby.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				parent.changeScreen(Screens.LOBBY);
 				if(PreferencesManager.isSoundEnabled() == true) {
 					sound.setVolume(PreferencesManager.getSoundVolume());
 					sound.play( PitchBlackSound.CLICK );
@@ -150,10 +161,9 @@ public class WelcomeScreen implements Screen {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);  // clears screen each frame
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
-		if(client.accountState != AccountState.LOGGED_IN) {
+		if(client.getAccountState() != AccountState.LOGGED_IN) {
 			setButtonTouchable(Touchable.disabled);
 		}
-		
 		
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.act();

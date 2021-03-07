@@ -12,6 +12,7 @@ import net.pitchblack.getenjoyment.client.Login;
 import net.pitchblack.getenjoyment.client.LoginOptions;
 import net.pitchblack.getenjoyment.client.Registration;
 import net.pitchblack.getenjoyment.client.Client.AccountState;
+import net.pitchblack.getenjoyment.client.Client.ClientState;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
 
@@ -32,7 +33,7 @@ public class LoginInitiator {
 	public LoginInitiator(PitchBlackGraphics p, Client client) {
 		parent = p;
 		this.client = client;
-		client.beginConnection();
+		//client.beginConnection();
 		registrationWindow = new Registration(client, this);
 		loginWindow = new Login(client, this);
 		optionWindow = new LoginOptions(this);
@@ -42,6 +43,7 @@ public class LoginInitiator {
 		if(activeWindow != null) {
 			activeWindow.setVisible(false);
 		}
+		
 		switch(windowType) {
 			case OPTIONS:
 				activeWindow = optionWindow;
@@ -56,45 +58,39 @@ public class LoginInitiator {
 		activeWindow.setVisible(true);
 	}
 	
-	public void loginResponse(boolean res) {
-		System.out.println(res);
-		client.endConnection();
+	public void loginResponse(boolean res, String message) {
+		JOptionPane.showMessageDialog(activeWindow, message);
 		
-		if(res) {
-			JOptionPane.showMessageDialog(activeWindow, "Login Successful");
+		if(res) {  // if correct login
 			activeWindow.setVisible(false);
-			dispose();
-			// post a Runnable to the rendering thread that processes the result
+			disposeWindows();
+			//send an action to happen in the rendering thread to process after rendering. without, will executeg in the jframe thread, where no reference to parent, which is a render class 
 			Gdx.app.postRunnable(new Runnable() {
 				@Override
 				public void run() {
-					if(client.accountState == AccountState.LOGGED_IN) {
-						parent.changeScreen(Screens.MENU); // parent.getScreen().show();
+					if(client.getAccountState() == AccountState.LOGGED_IN) {
+						//client.endConnection();
+						parent.changeScreen(Screens.MENU);
+						client.setClientState(ClientState.IDLE);
 					}
 				}
 			});
-		} else {
-			// failed and go back to option screen
-			JOptionPane.showMessageDialog(activeWindow, "Login Unsuccessful");
+		} else {  // wrong login, go back to options
 			setWindow(WindowType.OPTIONS);
 		}
 	}
 	
-	public void registrationResponse(boolean res) {
-		System.out.println(res);
-		client.endConnection();
+	public void registrationResponse(boolean res, String message) {
+		JOptionPane.showMessageDialog(activeWindow, message);
 		
-		if(res) {
-			JOptionPane.showMessageDialog(activeWindow, "Registration Successful");
+		if(res) {  // if true, swap windows	
 			setWindow(WindowType.OPTIONS);
-		} else {
-			JOptionPane.showMessageDialog(activeWindow, "Registration Unsuccessful");
 		}
 	}
 	
 	// make jframe to show login or registraion window
 	
-	private void dispose() {
+	private void disposeWindows() {
 		optionWindow.dispose();
 		loginWindow.dispose();
 		registrationWindow.dispose();

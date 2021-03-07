@@ -10,7 +10,7 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import net.pitchblack.getenjoyment.client.Client;
-import net.pitchblack.getenjoyment.client.Client.RenderState;
+import net.pitchblack.getenjoyment.client.Client.ClientState;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.helpers.PreferencesManager;
@@ -25,8 +25,7 @@ public class GameScreen implements Screen {
 	private PitchBlackGraphics parent;
 	
 	private PBAssetManager pbManager;
-	
-	private GameWorld gameWorld;
+
 	private GameRenderer gameRenderer;
 	private InputHandler inputHandler;
 	
@@ -38,17 +37,15 @@ public class GameScreen implements Screen {
 		PBAssetManager pbManager = parent.pbAssetManager;
 		pbManager.loadTextures();
 		pbManager.loadMaps();
-		Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
+		//Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
 		
 		this.client = client;
-		client.beginConnection();
-		//client.sendRegistration("email", "jorge", "password");
-		//client.sendLogin("jorge", "password");
+		//client.beginConnection();
 		
 		gameRenderer = new GameRenderer(client, pbManager);	
 		inputHandler = new InputHandler(gameRenderer);
 		
-		client.setRenderer(gameRenderer);
+		//client.setGameScreen(this);
 		//client.setState(RenderState.INITIATED);
 		
 		Gdx.input.setInputProcessor(inputHandler);
@@ -56,6 +53,14 @@ public class GameScreen implements Screen {
 		MusicManager music = new MusicManager();
         MusicManager.getInstance().play(PitchBlackMusic.GAME);
         music.setVolume(PreferencesManager.getMusicVolume());
+	}
+	
+	public void setupRenderer(String playerData, String fogData, String mapData) {
+		gameRenderer.setupData(playerData, fogData, mapData);
+	}
+	
+	public void addGameData(String playerData, String fogData, String mapData) {
+		gameRenderer.addGameData(playerData, fogData, mapData);
 	}
 
 	@Override
@@ -67,7 +72,7 @@ public class GameScreen implements Screen {
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
 		//gameWorld.update(delta);
 		client.tick(delta);
-		//gameRenderer.render(delta);	
+		gameRenderer.render(delta);	
 	}
 
 	@Override
