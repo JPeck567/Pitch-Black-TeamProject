@@ -1,11 +1,12 @@
 package net.pitchblack.getenjoyment.graphics.screens;
 
 import java.util.HashMap;
-import java.util.Map;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 
 import net.pitchblack.getenjoyment.client.Client;
+import net.pitchblack.getenjoyment.client.Client.ClientState;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 public class LobbyScreen implements Screen {
@@ -17,10 +18,11 @@ public class LobbyScreen implements Screen {
 		this.parent = parent; // TODO: if leaving lobby, let client know
 		this.client = client;
 		roomMap = new HashMap<String, Object>();
-		
-		client.setLobbyScreen(this);
 
-		//client.emitGetRooms();
+		client.emitPlayerClientInit();
+
+		client.emitGetRooms();
+
 		client.emitJoinRoomRequest("1");
 	}
 
@@ -30,16 +32,17 @@ public class LobbyScreen implements Screen {
 
 	@Override
 	public void render(float delta) {
-		if (client.isInLobby()) {
-			// render screen
-		} else {
-			// render room
-		}
+
+//		if (client.isInLobby()) {
+//			// render screen
+//		} else {
+//			// render room
+//		}
 
 	}
 
-	public GameScreen getGameScreen() {
-		return parent.getGameScreen();
+	public void setupGameScreen(final String playerData, final String fogData, final String mapData) {
+
 	}
 
 	@Override
@@ -68,7 +71,7 @@ public class LobbyScreen implements Screen {
 	}
 	
 	public void joinSuccess(String room, String message) {
-		System.out.println(room + message);
+		System.out.println(message + " to room " + room);
 	}
 	
 	public void addNewPlayer(String username, String room) {
@@ -78,4 +81,7 @@ public class LobbyScreen implements Screen {
 	public boolean ready() {
 		return true;
 	}
+
+
+
 }

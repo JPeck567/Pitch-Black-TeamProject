@@ -3,11 +3,12 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const mysql = require('mysql');
 const LOBBYROOM = 'lobby';
-//var gameClientSocket;
+
 var playerNameSocketMap = new Map();  // could use object - {}. used as game uses names to refer to socket
 var socketIDToPlayerName = new Map();  // used so can get users from rooms as rooms refers to users by socket id
-// for game
+
 var roomNames = ['1', '2', '3', '4', '5'];
+var gameClientSocket;
 
 
 server.listen(8081, function(){
@@ -43,7 +44,7 @@ io.on('connection', function(socket){
 				if (error) {
 					console.log(error);
 					socket.emit('registerAttempt', { successful : true, message : error.name + ": " + error.message });
-				} else if(results == null) { socket.emit('loginAttempt', { successful : false, username : null, message : 'Login unsuccessful - please check your username and/or password are correct'} );
+				} else if (results.length == 0) { socket.emit('loginAttempt', { successful : false, username : null, message : 'Login unsuccessful - please check your username and/or password are correct'} );
 				} else if (results.length >= 1) { socket.emit('loginAttempt', { successful : true, username : username, message : 'Login successful!'} );
 				}
 			});
@@ -120,9 +121,9 @@ io.on('connection', function(socket){
 	});
 
 	socket.on('playerClientInit', function(data){  // a player connects
-		console.log('Player Connected!');
+		console.log('Player ' + data.username + ' Connected!');
 		playerNameSocketMap.set(data.username, socket);
-		socketIDtoPlayerName.set(socket.id, data.username);
+		socketIDToPlayerName.set(socket.id, data.username);
 	});
 
 	socket.on('joinLobby', function(data){  // confirms client in in lobby. message acts as confirmation, w/ 'inLobby' verifying if join or leaving
@@ -138,7 +139,7 @@ io.on('connection', function(socket){
 	socket.on('getRooms', function(){
 		var roomClientList = {};
 
-		for(roomID in roomNames){
+		for(let roomID in roomNames){
 			var room = io.sockets.adapter.rooms[roomID]; // list of connected socket ids in socket property
 			var nameList = [];
 
@@ -153,7 +154,7 @@ io.on('connection', function(socket){
 	});
 
 	socket.on('joinRoomRequest', function(data){  // client requests to join room
-		gameClientSocket.emit('requestJoinRoom', {username : playerNameSocketMap.get(data.username), room : data.room})
+		gameClientSocket.emit('joinRoomRequest', {username : data.username, room : data.room});
 	});
 
 	socket.on('joinRoomResponse', function(data){  // game responds if room is full or not
@@ -162,7 +163,7 @@ io.on('connection', function(socket){
 			clientSocket.join(data.room);  // join room
 			clientSocket.to(LOBBYROOM).emit('newPlayerToRoom', {username : data.username, room : data.room});  // sends to all clients in lobby that player connected to room
 		}
-		clientSocket.emit('joinedRoomResponse', data);  // tell client response of room join
+		clientSocket.emit('joinRoomResponse', data);  // tell client response of room join
 	});
 
 	socket.on('gameSetup', function(data){ // game client sends data over to setup entites in client
@@ -179,14 +180,14 @@ io.on('connection', function(socket){
 
 	socket.on('gameBegin', function(data){  // game client starts game, notif players
 		socket.to(data.room).emit('gameBegin');
-	})
+	});
 
 	socket.on('gameUpdate', function(data){
 		socket.to(data.room).emit('gameUpdate', {playerData : data.playerData, fogData : data.fogData, mapData : data.mapData});
-	})
+	});
 
 	socket.on('gameKeyPress', function(data){
 		gameClientSocket.emit('gameKeyPress', data)
-	})
+	});
 
 });

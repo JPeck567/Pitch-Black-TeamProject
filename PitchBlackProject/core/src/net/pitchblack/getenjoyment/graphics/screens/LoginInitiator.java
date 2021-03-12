@@ -64,7 +64,7 @@ public class LoginInitiator {
 		if(res) {  // if correct login
 			activeWindow.setVisible(false);
 			disposeWindows();
-			//send an action to happen in the rendering thread to process after rendering. without, will executeg in the jframe thread, where no reference to parent, which is a render class 
+			//send an action to happen in the rendering thread to process after rendering. without, will execute in the jframe thread, where no reference to parent, which is a render class
 			Gdx.app.postRunnable(new Runnable() {
 				@Override
 				public void run() {
@@ -96,13 +96,4 @@ public class LoginInitiator {
 		registrationWindow.dispose();
 		activeWindow.dispose();
 	}
-	
-	public static void main(String args[]) {
-		//PitchBlackGraphics parent = new PitchBlackGraphics();
-		Client c = new Client();
-		LoginInitiator lgn = new LoginInitiator(null,c);
-		//lgn.setWindow(false);  // login
-	}
-
-
 }

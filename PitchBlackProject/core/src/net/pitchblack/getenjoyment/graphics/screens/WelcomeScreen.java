@@ -55,7 +55,7 @@ public class WelcomeScreen implements Screen {
 		stage.draw();  // draws items held within it, ie buttons
 
 		Table table = new Table();
-		table.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("background/background.png"))));
+		table.setBackground(new TextureRegionDrawable(new TextureRegion(parent.pbAssetManager.getAsset(PBAssetManager.menuBackground))));
 		table.setFillParent(true);
 		table.setDebug(false);
 		
@@ -67,7 +67,7 @@ public class WelcomeScreen implements Screen {
 			MusicManager.getInstance().play(PitchBlackMusic.MENU);
 		}
 	
-	    Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json")); // TODO: Inconsistent & has error sometimes - parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
+	    Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.menuSkin); //new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json")); // TODO: Inconsistent & has error sometimes - parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
 
 		newGame = new TextButton("New Game", skin);
 		exit = new TextButton("Exit", skin);
@@ -124,7 +124,7 @@ public class WelcomeScreen implements Screen {
 		settings.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				parent.changeScreen(Screens.CREDITS);
+				parent.changeScreen(Screens.SETTINGS);
 				if(PreferencesManager.isSoundEnabled() == true) {
 					sound.setVolume(PreferencesManager.getSoundVolume());
 					sound.play( PitchBlackSound.CLICK );
@@ -152,8 +152,6 @@ public class WelcomeScreen implements Screen {
 	@Override
 	public void show() {
 		Gdx.input.setInputProcessor(stage);
-		//batch = new SpriteBatch();
-		//title = new Texture(Gdx.files.internal("title.png"));
 	}
 	
 	@Override

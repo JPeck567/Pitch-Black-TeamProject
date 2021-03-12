@@ -26,26 +26,35 @@ public class Registration extends JFrame {
 	public static final Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 	private JPanel contentPane;
 	private JPasswordField password;
+/**
+	/**
+	 * Launch the application.
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Registration frame = new Registration(new Client());
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	Class.forName("com.mysql.jdbc.Driver");
+	Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamedatabase","root","");
+	PreparedStatement ps = conn.prepareStatement("insert into users(email,username,password) values(?,?,?);");
+	int x = ps.executeUpdate();
+	if(x > 0) {
+		System.out.println("Registration successful");
+		JOptionPane.showMessageDialog(contentPane, "Registration successful");
+	}else {
+		System.out.println("Registration Failed");
+	}
+*/
 
-//	/**
-//	 * Launch the application.
-//	 */
-//	public static void main(String[] args) {
-//		EventQueue.invokeLater(new Runnable() {
-//			public void run() {
-//				try {
-//					Registration frame = new Registration(new Client());
-//					frame.setVisible(true);
-//				} catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		});
-//	}
-
-	public static boolean validate(String emailStr) {
+	public static boolean validateEmail(String emailStr) {
         return VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr).find();
-        //return matcher.find();
 	}
 	
 	/**
@@ -90,29 +99,19 @@ public class Registration extends JFrame {
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-//					Class.forName("com.mysql.jdbc.Driver");
-//					Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamedatabase","root","");
-//					PreparedStatement ps = conn.prepareStatement("insert into users(email,username,password) values(?,?,?);");
-					String emails = email.getText();
-					if(!validate(emails)) {
-						JOptionPane.showMessageDialog(contentPane, "Invalid email, please try again");
-					} else if ((!email.getText().equals("") && !username.getText().equals("")) && !password.getText().equals("")) {
-						client.emitSendRegistration(email.getText(), username.getText(), password.getText(), loginInitiator);
-						
+					String emailText = email.getText();
+					if ((!emailText.equals("") && !username.getText().equals("")) && !password.getText().equals("")) {
+						if(!validateEmail(emailText)) {
+							JOptionPane.showMessageDialog(contentPane, "Invalid email, please try again");
+						} else {
+							client.emitSendRegistration(email.getText(), username.getText(), password.getText(), loginInitiator);
+						}
 					} else {
 						JOptionPane.showMessageDialog(contentPane, "Please ensure all fields are not empty");
-					}//					
-//					int x = ps.executeUpdate();
-//					if(x > 0) {
-//						System.out.println("Registration successful");
-//						JOptionPane.showMessageDialog(contentPane, "Registration successful");
-//					}else {
-//						System.out.println("Registration Failed");
-//					}
-
-				}catch(Exception e1) {
+					}
+				} catch(Exception e1) {
 					System.out.println(e1);
-					JOptionPane.showMessageDialog(contentPane, "Registration Failed");
+					JOptionPane.showMessageDialog(contentPane, "An error has occured - registration Failed");
 				}
 			}
 		});
@@ -129,6 +128,5 @@ public class Registration extends JFrame {
 		password = new JPasswordField();
 		password.setBounds(20, 284, 298, 29);
 		contentPane.add(password);
-		
 	}
 }

@@ -60,9 +60,8 @@ public class InputHandler implements InputProcessor {
 	}
 
 	@Override
-	public boolean scrolled(int amount) {
-		// TODO Auto-generated method stub
+	public boolean scrolled(float amountX, float amountY) {
 		return false;
 	}
-	
+
 }

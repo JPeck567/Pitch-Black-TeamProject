@@ -39,7 +39,7 @@ public class GameOverScreen implements Screen {
 		
 		stage.addActor(table);
 		
-		Skin skin = new Skin(Gdx.files.internal("skin 4/flat-earth-ui.json"));
+		Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
 		final TextButton backButton = new TextButton("Back", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
 		
 		backButton.addListener(new ChangeListener() {
@@ -74,7 +74,6 @@ public class GameOverScreen implements Screen {
 
 	@Override
 	public void resize(int width, int height) {
-		// TODO Auto-generated method stub
 		stage.getViewport().update(width, height, true);	
 	}
 

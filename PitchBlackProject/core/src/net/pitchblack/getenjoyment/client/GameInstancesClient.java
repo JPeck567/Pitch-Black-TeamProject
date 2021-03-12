@@ -2,75 +2,73 @@ package net.pitchblack.getenjoyment.client;
 
 import java.util.HashMap;
 
+import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.Gdx;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.badlogic.gdx.Gdx;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import net.pitchblack.getenjoyment.client.GameInstance.GameState;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGame;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-public class GameInstancesClient {
-	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
-	private float timer;
+public class GameInstancesClient implements ApplicationListener {
+	private static final int UPDATE_TIME = 33;  // 33 milliseconds or 1/30th of a second therefore 60 times a second.
+	private long timer;
+	private long lastTime;
 	private Socket socket;
 	private String id;
-	
-	private final PBAssetManager pbAssetManager;
+
+	public final PBAssetManager pbAssetManager;
 	private HashMap<String, GameInstance> instanceMap;  // room name mapped to instance
 
 	public GameInstancesClient() {
 		pbAssetManager = new PBAssetManager();
-		pbAssetManager.loadTextures();
-		pbAssetManager.loadMaps();
-		
+		//makeInstances();
+		connectSocket();
+		configSocketEvents();
+	}
+
+	private void makeInstances(){
 		instanceMap = new HashMap<String, GameInstance>();
 		instanceMap.put("1", getGameInstance("1"));
 		instanceMap.put("2", getGameInstance("2"));
 		instanceMap.put("3", getGameInstance("3"));
 		instanceMap.put("4", getGameInstance("4"));
 		instanceMap.put("5", getGameInstance("5"));
-		
-		connectSocket();
-		configSocketEvents();
 	}
 	
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8080");  // game is on same machine as server, so localhost
+			socket = IO.socket("http://localhost:8081");  // game is on same machine as server, so localhost
 			socket.connect();
 		} catch (Exception e) {
-			System.out.println(e);
+			e.printStackTrace();
 		}
 	}
-	
-	private void run() {
-		long timeAtLastLoop = System.currentTimeMillis();
-		while(true) {
-			float delta = timeAtLastLoop - System.currentTimeMillis();  // time passed since last loop call
-			timer += delta;
-			
-			if(timer >= UPDATE_TIME) {  // if enough time passed, run game instances
-				timer = 0;
-				timeAtLastLoop = System.currentTimeMillis();
-				for(GameInstance gameInstance : instanceMap.values()) {
-					gameInstance.tick(timer);
-				}
-				
-			}
+
+	public static void main(String[] args){
+		GameInstancesClient c = new GameInstancesClient();
+
+		while(true){
+			c.run(Gdx.graphics.getDeltaTime());
 		}
-	}	
+
+	}
+
+
+	private void run(float delta) {
+		for(GameInstance gameInstance : instanceMap.values()) {
+				gameInstance.tick(delta);
+			}
+	}
 	
-	public void configSocketEvents() {
+	private void configSocketEvents() {
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				System.out.println("Connected to localhost:8080");
+				System.out.println("Connected to localhost:8081");
 			}
 		}).on("socketID", new Emitter.Listener() {  // if connected to server, run instances
 			@Override
@@ -86,9 +84,9 @@ public class GameInstancesClient {
 				System.out.println("SocketIO: My ID: " + id);
 				GameInstancesClient.this.id = id;
 				socket.emit("gameClientInit");
-				run();
+				//GameInstancesClient.this.run();
 			}
-		}).on("requestJoinRoom", new Emitter.Listener() {
+		}).on("joinRoomRequest", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
 				String username = null;
@@ -99,8 +97,7 @@ public class GameInstancesClient {
 					room = data.getString("room");
 					//socket.emit("newPlayerAcknowledge", idData);
 				} catch(JSONException e) { e.printStackTrace(); }
-				
-				instanceMap.get(room).addPlayerToRoom(username);
+				GameInstancesClient.this.instanceMap.get(room).addPlayerToRoom(username);
 			}
 		}).on("playerReady", new Emitter.Listener() {
 			@Override
@@ -113,7 +110,7 @@ public class GameInstancesClient {
 					room = data.getString("room");
 				} catch(JSONException e) { e.printStackTrace(); }
 				
-				instanceMap.get(room).addToReadyCount();
+				GameInstancesClient.this.instanceMap.get(room).addToReadyCount();
 			}
 		}).on("gameKeyPress", new Emitter.Listener() {
 			@Override
@@ -130,21 +127,20 @@ public class GameInstancesClient {
 					keyDown = data.getString("keyDown");
 				} catch(JSONException e){ e.printStackTrace(); }
 				
-				instanceMap.get(room).gameKeyPress(username, keyUp, keyDown);
+				GameInstancesClient.this.instanceMap.get(room).gameKeyPress(username, keyUp, keyDown);
 			}
 		});
 	}	
 
-	public void emitJoinedRoomResponse(boolean response, String username, String roomName, String message) {
+	public void emitJoinRoomResponse(boolean response, String username, String roomName, String message) {
 		JSONObject data = new JSONObject();
 		try {
 			data.put("response", response)
 				.put("username", username)
 				.put("room", roomName)
 				.put("message", message);
-		} catch (JSONException e) {
-		}
-		socket.emit("joinedRoomResponse", data);
+		} catch (JSONException e) { e.printStackTrace(); }
+		socket.emit("joinRoomResponse", data);
 	}
 	
 	public void emitGameSetup(String roomName,String playerData, String fogData, String mapData) {
@@ -198,4 +194,43 @@ public class GameInstancesClient {
 	}
 
 
+	@Override
+	public void create() {
+		pbAssetManager.loadTextures();
+		pbAssetManager.loadMaps();
+		makeInstances();
+	}
+
+	@Override
+	public void resize(int width, int height) {
+
+	}
+
+	@Override
+	public void render() {
+		long nowTime = System.currentTimeMillis();
+		float delta = (nowTime - lastTime); // difference in milliseconds
+		timer += delta;
+		if(timer >= UPDATE_TIME) {
+			// System.out.println(timer);
+			run(delta);
+			timer = 0;
+		}
+		lastTime = System.currentTimeMillis();
+	}
+
+	@Override
+	public void pause() {
+
+	}
+
+	@Override
+	public void resume() {
+
+	}
+
+	@Override
+	public void dispose() {
+
+	}
 }

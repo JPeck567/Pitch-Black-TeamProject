@@ -24,7 +24,7 @@ public class PitchBlackGame {
 		
 		running = true;
 		gameWorld = new GameWorld(pbManager);
-		gameClient = new GameInstance(null, null, null);
+		//gameClient = new GameInstance(null, null, null);
 		//run();
 	}
 

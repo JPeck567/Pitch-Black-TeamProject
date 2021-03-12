@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.graphics.screens.LobbyScreen;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
@@ -30,7 +31,7 @@ public class Client {
 	private float timer;
 	private String username;
 	private String currentRoom;
-	
+
 	public enum ClientState {
 		ACCOUNT,  // logging in / registration
 		LOBBY, // in lobby
@@ -52,8 +53,9 @@ public class Client {
 	}
 	
 	// TODO: replace these w/ currentScreen field
-	private LobbyScreen lobbyScreen;
-	private GameScreen gameScreen;
+	private PitchBlackGraphics parent;
+	//private LobbyScreen lobbyScreen;
+	//private GameScreen gameScreen;
 	
 	private Player player;
 	private String id;
@@ -62,18 +64,15 @@ public class Client {
 	private ClientState clientState;
 	private AccountState accountState;
 	private LoginInitiator loginInitiator;
-	private String playerIds;
-	private boolean playing;
 	private int keyUpCode;
 	private int keyDownCode;
 	
-	public Client() {
+	public Client(PitchBlackGraphics parent) {
+		this.parent = parent;
 		//this.player = gameRenderer.getPlayer();
 		isConnected = false;
 		clientState = ClientState.IDLE;
 		accountState = AccountState.LOGGED_OUT;
-		playerIds = "";
-		playing = false;
 		keyUpCode = -1;
 		keyDownCode = -1;
 	}
@@ -100,14 +99,14 @@ public class Client {
 	
 	public void updateServer(float delta){
 		switch(clientState) {
-			case INITIATED:
-				socket.emit("playerClientInit");
-				clientState = ClientState.IDLE;
-				break;
+//			case INITIATED:
+//				socket.emit("playerClientInit");
+//				clientState = ClientState.IDLE;
+//				break;
 			case LOADING:
 				//gameScreen.loadEntities(playerIds);
 				// TODO: check if player clicks ready button after data loaded OR better to have lobby call a client method to do work below
-				if(lobbyScreen.ready()) {
+				if(parent.isLobbyScreenReady()) {
 					JSONObject data = new JSONObject();
 					try {
 						data.put("username", username)
@@ -116,7 +115,7 @@ public class Client {
 					
 					socket.emit("playerReady", data);
 				}
-				clientState = ClientState.IDLE;
+				//clientState = ClientState.IDLE;
 				break;
 //			case READY:
 //				//socket.emit("playerReady");
@@ -146,7 +145,7 @@ public class Client {
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-//				Gdx.app.log("SocketIO", "Connected");
+				System.out.println("Connected to localhost:8081");
 			}
 		}).on("socketID", new Emitter.Listener() {
 			@Override
@@ -192,13 +191,6 @@ public class Client {
 				} catch (JSONException e) { e.printStackTrace(); }
 				
 				loginInitiator.registrationResponse(registrationAttempt, message);
-//				if(registrationAttempt) {
-//					// TODO: send message that account made
-//					//System.out.println("Register Successful");
-//				} else if(!registrationAttempt) {
-//					// TODO: error somehow + send message
-//					//System.out.println("Register Unsuccessful");
-//				}
 				accountState = AccountState.LOGGED_OUT;
 			}
 		}).on("lobbyRoomResponse", new Emitter.Listener() {
@@ -216,14 +208,14 @@ public class Client {
 		}).on("roomList", new Emitter.Listener() {
 			public void call(Object... args) {
 				String roomUsers = null;
-				HashMap<String, Object> roomUsersMap = null;
+				HashMap roomUsersMap = null;
 				JSONObject data = (JSONObject) args[0];
 				try {
 					roomUsers = data.getString("roomUsers");
-					roomUsersMap = new ObjectMapper().readValue(roomUsers, HashMap.class);  // uses jackson depedency to easily turn json to java map
+					roomUsersMap = new ObjectMapper().readValue(roomUsers, HashMap.class);  // uses jackson dependency to easily turn json to java map
 				} catch(JSONException | JsonProcessingException e) { e.printStackTrace(); }
 				// convert JSON string to Java Map
-				lobbyScreen.addRoomData(roomUsersMap);// TODO: then send message to lobby screen with rooms
+				parent.addLobbyRoomData(roomUsersMap);// TODO: then send message to lobby screen with rooms
 				//System.out.println(roomUsersMap.toString());
 			}
 		}).on("newPlayerToRoom", new Emitter.Listener() {
@@ -235,7 +227,7 @@ public class Client {
 					room = data.getString("room");
 					username = data.getString("username");
 				} catch(JSONException e) { e.printStackTrace(); }
-				lobbyScreen.addNewPlayer(username, room);	// TODO: then send message to lobby screen with new player in room
+				parent.addLobbyNewPlayer(username, room);	// TODO: then send message to lobby screen with new player in room
 			}
 				
 //		}).on("joinedLobbyResponse", new Emitter.Listener() {
@@ -265,10 +257,9 @@ public class Client {
 				} catch(JSONException e) { e.printStackTrace(); }
 				if(response) {
 					currentRoom = room;
-					lobbyScreen.joinSuccess(room, message);
+					parent.lobbyJoinRoomSuccess(room, message);
 					// TODO: send message to lobby about joining room
 				}
-				
 			}
 		}).on("gameSetup", new Emitter.Listener() {
 			@Override
@@ -282,10 +273,9 @@ public class Client {
 					fogData = data.getString("fogData");
 					mapData = data.getString("mapData");
 				} catch(JSONException e) { e.printStackTrace(); }
-				
-				gameScreen = lobbyScreen.getGameScreen();
-				gameScreen.setupRenderer(playerData, fogData, mapData);
 				clientState = ClientState.LOADING;
+				parent.setupGameScreen(playerData, fogData, mapData);
+
 			}
 		}).on("gameCountdown", new Emitter.Listener() {
 			@Override
@@ -295,6 +285,7 @@ public class Client {
 		}).on("gameBegin", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
+				parent.postRunnableChangeScreen(Screens.GAME);
 				clientState = ClientState.PLAYING;
 			}
 		}).on("gameUpdate", new Emitter.Listener() {
@@ -310,7 +301,7 @@ public class Client {
 					mapData = data.getString("mapData");
 				} catch(JSONException e) { e.printStackTrace(); }
 				
-				gameScreen.addGameData(playerData, fogData, mapData);
+				parent.addGameData(playerData, fogData, mapData);
 			}
 		}).on("win", new Emitter.Listener() {
 			@Override
@@ -347,6 +338,16 @@ public class Client {
 		accountState = AccountState.REGISTRATION_ATTEMPTED;
 	}
 	
+	public void emitPlayerClientInit() {
+		JSONObject data = new JSONObject();
+		try{
+			data.put("username", username);
+		} catch(JSONException e) { e.printStackTrace(); }
+		socket.emit("playerClientInit", data);
+		System.out.println("Sent Player Init");
+		clientState = ClientState.IDLE;
+	}
+	
 	public void emitJoinLobby() {
 		JSONObject data = new JSONObject();
 		try{
@@ -376,14 +377,6 @@ public class Client {
 		keyUpCode = keycode;
 	}
 
-	public void setGameScreen(GameScreen gameScreen) {
-		this.gameScreen = gameScreen;
-	}
-
-	public void setLobbyScreen(LobbyScreen lobbyScreen) {
-		this.lobbyScreen = lobbyScreen;
-	}
-	
 	public String getUsername() {
 		return username;
 	}
@@ -391,6 +384,8 @@ public class Client {
 	public void setClientState(ClientState clientState) {
 		this.clientState = clientState;
 	}
+
+	public boolean isPlaying() { return clientState == ClientState.PLAYING; }
 	
 	public void setAccountState(AccountState accountState) {
 		this.accountState = accountState;
@@ -398,10 +393,6 @@ public class Client {
 	
 	public AccountState getAccountState() {
 		return accountState;
-	}
-	
-	public static void main(String args[]) {
-		Client c = new Client();
 	}
 
 	public boolean isInLobby() {

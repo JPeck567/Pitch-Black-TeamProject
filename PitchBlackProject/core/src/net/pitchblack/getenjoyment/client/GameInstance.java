@@ -18,6 +18,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameInstance {
 	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
+	private static final int COUNTDOWN_INTERVAL = 5000;  // in milliseconds
 	private static final int PLAYER_MAX = 1;
 	private final String roomName;
 	private float timer;
@@ -42,78 +43,24 @@ public class GameInstance {
 	private String id;
 
 	
-	public GameInstance(String roomName, GameWorld gameWorld, GameInstancesClient gameClient) {
+	public GameInstance(String roomName, GameWorld gameWorld, GameInstancesClient instanceClient) {
+		this.instanceClient = instanceClient;
 		this.roomName = roomName;
 		this.gameWorld = gameWorld;
 		players = new ArrayList<String>();
 		mapCount = gameWorld.getMapSequence().split("/n").length;
 		readyCount = 0;
-		gameState = GameState.INITIATED;
+		gameState = GameState.WAITING;
 	}
-		
-//	public void configSocketEvents(){
-//		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				Gdx.app.log("SocketIO", "Connected");
-//			}
-//		}).on("socketID", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONObject data = (JSONObject) args[0];
-//				try {
-//					id = data.getString("id");
-//					Gdx.app.log("SocketIO", "My ID: "+ id);
-//				} catch(JSONException e){
-//					Gdx.app.log("SocketIO", "ID Error");
-//				}
-//			}
-//		}).on("gameClientAcknowledge", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				gameState = GameState.WAITING;
-//			}	
-//		}).on("newPlayer", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONObject data = (JSONObject) args[0];
-//				try {
-//					String playerId = data.getString("id");
-//					players.add(playerId);
-//					Gdx.app.log("SocketIO", "New Player Connected: " + id);
-//					gameWorld.createPlayer(playerId);
-//					JSONObject idData = new JSONObject();
-//					idData.put("id", playerId);
-//					socket.emit("newPlayerAcknowledge", idData);
-//				} catch(JSONException e) {
-//					Gdx.app.log("SocketIO", "Player ID Error");
-//				}
-//			}
-//		}).on("playerReady", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				readyCount++;
-//			}
-//		}).on("keyPress", new Emitter.Listener() {
-//			@Override
-//			public void call(Object... args) {
-//				JSONObject data = (JSONObject) args[0];
-//				try {
-//					String id = data.getString("id");
-//					String keyUp = data.getString("keyUp");
-//					String keyDown = data.getString("keyDown");
-//					gameWorld.keyPress(id, keyUp, keyDown);
-//				} catch(JSONException e) {
-//					Gdx.app.log("SocketIO", "Player ID Error");
-//				}
-//			}
-//		});
-//	}
-	
+
 	public void updateServer(float timePassed){
+		//System.out.println(gameState);
 		switch(gameState){
+
 			case WAITING:
+
 				if(players.size() == PLAYER_MAX) {
+
 					gameWorld.setupPlayers(players);
 										
 					instanceClient.emitGameSetup(roomName, gameWorld.getPlayerData(), gameWorld.getFogData(), gameWorld.getMapSequence());
@@ -126,7 +73,6 @@ public class GameInstance {
 					 * 3. DONE when 4 clients ready, send message to begin in 5 seconds
 					 * 4. after 5 sec, server side, send message to begin game!
 					 */
-					
 					timer = 0;
 				}
 				break;
@@ -137,8 +83,10 @@ public class GameInstance {
 				gameState = GameState.COUNTDOWN;
 				break;
 			case COUNTDOWN:
+				// System.out.println(timer + ": " + timePassed);
+				// System.out.println("GameInstanceTimer: " + timer);
 				timer += timePassed;
-				if(timer >= 5000) {  // 5 seconds
+				if(timer >= COUNTDOWN_INTERVAL) {  // 5 seconds
 					instanceClient.emitGameBegin(roomName);
 					gameState = GameState.PLAYING;
 				}
@@ -172,14 +120,14 @@ public class GameInstance {
 	
 	public void addPlayerToRoom(String username) {
 		if(players.size() < PLAYER_MAX) {
-			if(!players.contains(username)) {
-				instanceClient.emitJoinedRoomResponse(false, username, roomName, "Player already in room");
+			if(players.contains(username)) {
+				instanceClient.emitJoinRoomResponse(false, username, roomName, "Player already in room");
 			} else {
-				instanceClient.emitJoinedRoomResponse(true, username, roomName, "");
+				instanceClient.emitJoinRoomResponse(true, username, roomName, "Player joined successfully");
 				players.add(username);
 			}
 		} else {
-			instanceClient.emitJoinedRoomResponse(false, username, roomName, "Room full!");
+			instanceClient.emitJoinRoomResponse(false, username, roomName, "Room full!");
 		}
 	}
 	

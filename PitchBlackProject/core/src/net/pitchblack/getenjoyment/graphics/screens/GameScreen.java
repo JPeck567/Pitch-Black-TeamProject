@@ -35,8 +35,6 @@ public class GameScreen implements Screen {
 		this.parent = parent;
 		
 		PBAssetManager pbManager = parent.pbAssetManager;
-		pbManager.loadTextures();
-		pbManager.loadMaps();
 		//Texture playerTexture = pbManager.getAsset(PBAssetManager.playerTexture);
 		
 		this.client = client;
@@ -70,9 +68,7 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
-		//gameWorld.update(delta);
-		client.tick(delta);
-		gameRenderer.render(delta);	
+		gameRenderer.render(delta);
 	}
 
 	@Override
@@ -105,7 +101,6 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void dispose() {
-		pbManager.dispose();
+		pbManager.manager.dispose();
 	}
-
 }

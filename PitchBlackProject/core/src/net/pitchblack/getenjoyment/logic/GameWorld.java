@@ -303,7 +303,7 @@ public class GameWorld {
 	public String getMapSequence(){
 		String mapSeq = "";
 		for(int i : gameMapSequence) {
-			mapSeq += i + "/n";
+			mapSeq += i + ",";
 		}
 		
 		return mapSeq;

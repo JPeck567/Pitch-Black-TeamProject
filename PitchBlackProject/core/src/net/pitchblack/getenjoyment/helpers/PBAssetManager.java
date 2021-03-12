@@ -9,6 +9,7 @@ import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
 import com.badlogic.gdx.assets.loaders.TextureLoader;
+import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -21,52 +22,52 @@ import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader.Parameters;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
-public class PBAssetManager extends AssetManager{  // can't make into singleton, as may corrupt textures in libGDX
-	//public final AssetManager manager;
+public class PBAssetManager{  // can't make into singleton, as may corrupt textures in libGDX
+	public final AssetManager manager;
 	
 	// TODO: use texture atlas for skin + eventually player sprite sheets
-    public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.json"));
+    public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.atlas"));
+    public static final AssetDescriptor<Texture> menuBackground = new AssetDescriptor<Texture>("background/background.png", Texture.class);
     public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("texture/player.png", Texture.class);
     public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("texture/fog.png", Texture.class);
     
     private static final String map0Path = "maps/map00.tmx";  // need to manually load parameters and class, if parameters are needed
     public static final AssetDescriptor<TiledMap> map0 = new AssetDescriptor<TiledMap>(map0Path, TiledMap.class);
-    private static final String map1Path = "maps/map01.tmx";  // need to manually load parameters and class, if parameters are needed
+    private static final String map1Path = "maps/map01.tmx";
     public static final AssetDescriptor<TiledMap> map1 = new AssetDescriptor<TiledMap>(map1Path, TiledMap.class);
-    private static final String map2Path = "maps/map02.tmx";  // need to manually load parameters and class, if parameters are needed
+    private static final String map2Path = "maps/map02.tmx";
     public static final AssetDescriptor<TiledMap> map2 = new AssetDescriptor<TiledMap>(map2Path, TiledMap.class);
 	
     private static final String[] mapArray = {map0Path, map1Path, map2Path};
-    
+
     public PBAssetManager() {
-    	//manager = new AssetManager();
+    	manager = new AssetManager();
     }
         
-    public void loadSkins() { // for ui
-    	load(menuSkin);
-    	finishLoading();
+    public void loadMenuAssets() {
+    	manager.load(menuSkin);
+    	manager.load(menuBackground);
+    	manager.finishLoading();
     }
     
-    public void loadTextures() {  // for game
-    	load(playerTexture);
-    	load(fogTexture);
-    	finishLoading();
+    public void loadTextures() {
+    	manager.load(playerTexture);
+    	manager.load(fogTexture);
+    	manager.finishLoading();
     }
     
     public void loadMaps() {
-    	//Parameters mapParam = new Parameters();
-    	//mapParam.flipY = false;  // needs to have y facing down
-    	
-    	setLoader(TiledMap.class, new TmxMapLoader());
+    	manager.setLoader(TiledMap.class, new TmxMapLoader());
     	
     	for(String mapString : mapArray) {
-    		load(mapString, TiledMap.class);
+    		manager.load(mapString, TiledMap.class);
     	}
-    	finishLoading();
+    	manager.finishLoading();
     }
     
     public <T> T getAsset(AssetDescriptor<T> desc) {
-    	return get(desc);
+    	//return (T) Gdx.files.internal(desc.fileName); 
+    	return manager.get(desc);
     }
     
     public HashMap<Integer, TiledMap> getMaps(){

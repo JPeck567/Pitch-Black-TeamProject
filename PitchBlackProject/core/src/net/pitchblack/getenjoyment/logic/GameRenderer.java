@@ -151,7 +151,8 @@ public class GameRenderer {
 		// control camera here
 		camera.position.set(clientPlayer.getX(), clientPlayer.getY(), 0);
 		// camera x is too far right
-		if (camera.position.x - (camera.viewportWidth * 0.5f) <= 0) { // left coords
+
+/*		if (camera.position.x - (camera.viewportWidth * 0.5f) <= 0) { // left coords
 			camera.position.set(camera.viewportWidth * .5f, camera.position.y, 0);
 			camera.update();
 			mapRenderer.setView(camera);
@@ -170,10 +171,7 @@ public class GameRenderer {
 			camera.update();
 			mapRenderer.setView(camera);
 			batcher.setProjectionMatrix(camera.combined);
-		}
-
-		// move fog
-		// fogSprite.setPosition(fog.getX(), fog.getY());
+		}*/
 
 		// start rendering here
 		// Black background is drawn which prevents flickering.
@@ -184,6 +182,7 @@ public class GameRenderer {
 
 		// gameMaps = gameWorld.getMapSequence();
 
+        // map rendering
 		for (int mapNumber : gameMaps) {
 			if ((int) mapRenderer.getMap().getProperties().get("mapNumber") != mapNumber) {
 				// if the map loaded into the render is not the one needed to be rendered in
@@ -208,20 +207,11 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 
 		batcher.begin();
-		// playerSprite.draw(batcher);
-		// draw other players
+
 		for (String id : entities.keySet()) {
 			entities.get(id).draw(batcher);
 		}
 		fog.draw(batcher);
-
-		// batcher.draw(playerTexture, player.getX(), player.getY());
-		// other player entities
-//		for(Vector2  vect2 : (gameWorld.getOtherPlayers()).values()) {
-//			if(vect2 != null) {
-//				batcher.draw(playerSprite, vect2.x, vect2.y);
-//			}	
-//		}
 
 		batcher.end();
 
@@ -303,7 +293,7 @@ public class GameRenderer {
 	}
 
 	public void addMapData(String mapData) {
-		String[] data = mapData.split("/n");
+		String[] data = mapData.split(",");
 		gameMaps = new ArrayList<Integer>();
 		for (String map : data) {
 			gameMaps.add(Integer.parseInt(map));

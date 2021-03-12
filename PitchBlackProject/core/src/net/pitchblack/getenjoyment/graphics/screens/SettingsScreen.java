@@ -53,7 +53,7 @@ public class SettingsScreen implements Screen  {
 		table.setDebug(false);
 		
 		stage.addActor(table);
-		Skin skin = new Skin(Gdx.files.internal("skin 4/flat-earth-ui.json"));
+		Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
 		Skin fontSkin = new Skin (Gdx.files.internal("skin/glassy-ui.json"));
 		
 		Label titleLabel = new Label( "SETTINGS", fontSkin);

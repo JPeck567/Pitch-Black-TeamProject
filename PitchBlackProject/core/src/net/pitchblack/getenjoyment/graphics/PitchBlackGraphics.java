@@ -1,6 +1,7 @@
 package net.pitchblack.getenjoyment.graphics;
 
 import java.awt.EventQueue;
+import java.util.HashMap;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
@@ -29,38 +30,43 @@ import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 
 public class PitchBlackGraphics extends Game {
 	public static final String LOG = "PitchBlack";
-	
+
+
 	public enum Screens{
 		MENU,
 		LOBBY,
 		GAME,
 		SETTINGS,
-		CREDITS
+		CREDITS;
+
 	}
-	
 	private LoginInitiator loginInit;
+
 	private WelcomeScreen welcomeScreen;
 	private LobbyScreen lobbyScreen;
 	private GameScreen gameScreen;
 	private SettingsScreen settingsScreen;
 	//private CreditsScreen creditsScreen;
 	private Client client;
-	
+
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
-	
+
 	public PitchBlackGraphics(){
-		//pbAssetManager.loadSkins();
-		client = new Client();
+		client = new Client(this);
 	}
 
 	@Override
 	public void create() {
+		// Load assets first
+		pbAssetManager.loadTextures();
+		pbAssetManager.loadMaps();
+		pbAssetManager.loadMenuAssets();
 		client.setClientState(ClientState.ACCOUNT);
 		client.beginConnection();
 		new Thread(new Runnable() {
 			   @Override
 			   public void run() {
-			      // occurs asynchronously to the rendering thread
+			      // occurs asynchronously to the rendering thread. menu not rendered until logged in
 			      loginInit = new LoginInitiator(PitchBlackGraphics.this, client);
 				  loginInit.setWindow(WindowType.OPTIONS);
 			   }
@@ -102,23 +108,65 @@ public class PitchBlackGraphics extends Game {
 			break;
 		}
 	}
-
 	@Override
 	public void setScreen(Screen screen) {
 		super.setScreen(screen);
 	}
-	
-	public GameScreen getGameScreen() {
-		if (gameScreen == null) {
-			gameScreen = new GameScreen(this, client);
+	public void addLobbyRoomData(HashMap roomUsersMap) {
+		if(lobbyScreen != null){
+			lobbyScreen.addRoomData(roomUsersMap);
 		}
-		return gameScreen;
 	}
-	
+	public void addLobbyNewPlayer(String username, String room) {
+		if(lobbyScreen != null) {
+			lobbyScreen.addNewPlayer(username, room);
+		}
+	}
+
+	public void lobbyJoinRoomSuccess(String room, String message) {
+		if(lobbyScreen != null){
+			lobbyScreen.joinSuccess(room, message);
+		}
+	}
+
+	public boolean isLobbyScreenReady() {
+		if(lobbyScreen == null){
+			return false;
+		}
+		return lobbyScreen.ready();
+	}
+
+	public void setupGameScreen(final String playerData, final String fogData, final String mapData) {
+		Gdx.app.postRunnable(new Runnable() {
+			@Override
+			public void run() {
+				if (gameScreen == null) {
+					gameScreen = new GameScreen(PitchBlackGraphics.this, client);;
+				}
+				gameScreen.setupRenderer(playerData, fogData, mapData);
+				client.setClientState(ClientState.READY);
+			}
+		});
+	}
+
+	public void addGameData(String playerData, String fogData, String mapData) {
+		gameScreen.addGameData(playerData, fogData, mapData);
+	}
+
+	public void postRunnableChangeScreen(final Screens screen) {
+		Gdx.app.postRunnable(new Runnable() {
+			@Override
+			public void run() {
+				changeScreen(screen);
+			}
+		});
+	}
+
 	@Override
 	public void render() {
 		if(client.getAccountState() == AccountState.LOGGED_IN) {
-			super.render();	
+			client.tick(Gdx.graphics.getDeltaTime());
+			super.render();
 		}
 	}
 }
