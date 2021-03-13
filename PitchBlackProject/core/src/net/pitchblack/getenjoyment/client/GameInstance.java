@@ -18,7 +18,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameInstance {
 	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
-	private static final int COUNTDOWN_INTERVAL = 5000;  // in milliseconds
+	private static final int COUNTDOWN_INTERVAL = 5; // in seconds
 	private static final int PLAYER_MAX = 1;
 	private final String roomName;
 	private float timer;

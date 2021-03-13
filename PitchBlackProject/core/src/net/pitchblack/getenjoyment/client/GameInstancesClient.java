@@ -14,7 +14,7 @@ import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameInstancesClient implements ApplicationListener {
-	private static final int UPDATE_TIME = 33;  // 33 milliseconds or 1/30th of a second therefore 60 times a second.
+	private static final int UPDATE_TIME = (1 / 60) / 1000;  // 66.666 recurring milliseconds or 1/60th of a second therefore 60 times a second.
 	private long timer;
 	private long lastTime;
 	private Socket socket;
@@ -213,10 +213,11 @@ public class GameInstancesClient implements ApplicationListener {
 		timer += delta;
 		if(timer >= UPDATE_TIME) {
 			// System.out.println(timer);
-			run(delta);
+			run(delta / 1000); // convert to seconds, as per Gdx.graphics.getDeltaTime();
 			timer = 0;
 		}
 		lastTime = System.currentTimeMillis();
+
 	}
 
 	@Override

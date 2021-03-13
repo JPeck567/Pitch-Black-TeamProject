@@ -69,16 +69,18 @@ public class GameScreen implements Screen {
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
 		gameRenderer.render(delta);
+//		if(client.isPlaying()){
+//
+//		}
 	}
 
 	@Override
 	public void resize(int width, int height) {
 		Viewport v = gameRenderer.getViewport();
-		v.update(width, (int) v.getWorldHeight(), true);
-		
-		gameRenderer.getCamera().viewportHeight = v.getWorldHeight();
-		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();		
+		v.update(width, height, true);
 
+		gameRenderer.getCamera().viewportHeight = v.getWorldHeight();
+		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();
 	}
 
 	@Override
@@ -103,4 +105,5 @@ public class GameScreen implements Screen {
 	public void dispose() {
 		pbManager.manager.dispose();
 	}
+
 }

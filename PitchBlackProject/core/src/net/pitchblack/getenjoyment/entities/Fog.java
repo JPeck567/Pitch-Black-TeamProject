@@ -41,35 +41,7 @@ public class Fog {
 		this.width = width;
 		this.height = height;		
 	}
-	
-	
-	public void update(float deltaTime, int playersLeft) {		
-		
-//		//only runs if players are left
-//		if(playersLeft > 0) {
-//			//runs a timer every 50 milliseconds
-//			//which then uses the moveX method to move the fog along
-//			Timer slowdown = new Timer();
-//			slowdown.schedule(new TimerTask(){
-//			    @Override
-//			    public void run() {
-//			       //0.8 can be changed to a higher or lower value to change the speed of the fog
-//			       moveX(speed * 0.8f);
-//			    }
-//			}, 0, 50);	
-//			
-//		}		
-	}
-	
-	public void render(SpriteBatch batch) {
-		batch.draw(image, position.x, position.y, width, height);
-	}
-	
-	
-	public void moveX(float amount) {
-		this.position.x += amount;
-	}
-	
+
 	public float getX() {
 		return body.getPosition().x - (width / 2 / GameWorld.PPM);// + (3 / GameWorld.PPM);
 	}

@@ -125,31 +125,12 @@ public class GameWorld {
 	}
 	
 	public void update(float delta) {
-		playingUpdate(delta);
-		
-		// it breaks fog collision if I use a switch case????
-//		switch(gameState){
-//		case PLAYING:
-//			playingUpdate(delta);
-//			break;
-//		case WAITING:
-////			for(int i = 0; i < 4; i++) {
-////				createPlayer();
-////			}
-//			if(players.size() == 4) {
-//				gameState = GameState.READY;
-//			}
-//			break;
-//		case READY:
-//			gameState = GameState.PLAYING;
-//			break;
-//		case FINISH:
-//			break;
-//		}
-	}
-	
+        playingUpdate(delta);
+    }
+
 	private void playingUpdate(float delta) {
-		physWorld.step(delta, 1, 1);
+		physWorld.step(delta, 8, 3);
+
 		// check if map needs extending
 		// find biggest x coord
 		// done in the loop for updating players
@@ -160,18 +141,18 @@ public class GameWorld {
 
 		// update players
 		for(String id : alivePlayers) {
-			
 			Player p = players.get(id);
 			
 			// checks if x coord is biggest
-			xCoord = (p.getX() > xCoord) ? p.getX() : xCoord;
+			xCoord = Math.max(p.getX(), xCoord);
 			
-			// death check
-			// below map
+			// death check //
+
+            // is fallen out of map
 			if(p.getY() < 0) {
 				toRemove.add(id);
-			// at fog
-			} else if (fog.getX() + (fogWidth / GameWorld.PPM) >= p.getX() - (playerWidth / GameWorld.PPM)) {
+			// caught by fog. should use collision of box2d but is kinematic body???
+			} else if (fog.getX() + (fogWidth / PPM) >= p.getX() - (playerWidth / PPM)) {
 				toRemove.add(id);
 			} else {
 				p.update(delta);
@@ -204,9 +185,7 @@ public class GameWorld {
 
 	public Fog createFog() {
 		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
-		//fogBody.setLinearVelocity(0, 0);
-		Fog f = new Fog(fogBody, fogWidth, fogHeight);
-		return f;
+        return new Fog(fogBody, fogWidth, fogHeight);
 	}
 
 	private void appendMap(int mapNumber, int position) {  // position starts from 1

@@ -76,7 +76,7 @@
 275,269,271,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,275,267,273,275,273,275,267,275,275,267,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,271,269,275,275,275,269,271
 </data>
  </layer>
- <objectgroup id="4" name="collisionObjLayer" visible="0">
+ <objectgroup id="4" name="collisionObjLayer">
   <object id="2" x="0" y="512" width="96" height="32"/>
   <object id="3" x="96" y="480" width="64" height="32"/>
   <object id="4" x="160" y="448" width="32" height="32"/>

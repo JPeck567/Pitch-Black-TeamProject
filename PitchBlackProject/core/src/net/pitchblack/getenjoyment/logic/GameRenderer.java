@@ -75,13 +75,21 @@ public class GameRenderer {
 
 	public GameRenderer(Client client, PBAssetManager pbAssetManager) {
 		this.pbAssetManager = pbAssetManager;
+
 		this.client = client;
 		this.username = client.getUsername();
-		
-		this.camera = new OrthographicCamera();  // this camera allows a 3d plane to be projected onto a since 2d plane
-		//camera.setToOrtho(true, Gdx.graphics.getWidth() / GameWorld.PPM , Gdx.graphics.getHeight() / GameWorld.PPM);  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
-		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM,  camera);
-		
+
+		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM);
+		camera = new OrthographicCamera(viewport.getWorldWidth(), viewport.getWorldWidth());  // this camera allows a 3d plane to be projected onto a since 2d plane
+		viewport.setCamera(camera);
+
+		// initial position
+		// camera.position.set(0, 0, 0);
+		// camera.update();
+
+		//camera.setToOrtho(true, viewport.getWorldWidth(), viewport.getWorldWidth());
+		//camera.setToOrtho(false, viewport.getWorldWidth() , viewport.getWorldHeight());  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
+
 		// get all maps
 		mapMap = pbAssetManager.getMaps();
 		
@@ -101,15 +109,10 @@ public class GameRenderer {
 		
 		mapRenderer = new OrthogonalTiledMapRenderer(firstMap, 1 / PPM); // map + scaling
 		mapRenderer.setView(camera);
-		
+
 		batcher = new SpriteBatch();
 		batcher.setProjectionMatrix(camera.combined);
 		batcher.enableBlending();
-		
-		// initial position
-		camera.position.set(0, camera.viewportHeight / 4, 0);
-		camera.update();
-		mapRenderer.setView(camera);
 		batcher.setProjectionMatrix(camera.combined);
 		
 		entities = new HashMap<String, Entity>();
@@ -137,22 +140,19 @@ public class GameRenderer {
 	}
 
 	public void render(float delta) {
-		// sets entity data
-		// addData(gameWorld.getPlayerData());
-
-		// move player texture
-		// player.setPosition(player.getX(), player.getY());
-		// System.out.println(player.getState());
-
 		if (clientPlayer.getState() == EntityState.DEAD) {
 			client.setClientState(ClientState.LOSE);
 		}
 
-		// control camera here
-		camera.position.set(clientPlayer.getX(), clientPlayer.getY(), 0);
-		// camera x is too far right
+		//System.out.println("camera: " + camera.position.toString());
+		//System.out.println("x: " + clientPlayer.getX() + " y: " + clientPlayer.getY());
+		System.out.println("Fog x: " + fog.getX() + " | Fog y: " + fog.getY());
 
-/*		if (camera.position.x - (camera.viewportWidth * 0.5f) <= 0) { // left coords
+//		// control camera here
+		camera.position.set(clientPlayer.getX(), clientPlayer.getY(), 0);
+
+		// camera x is too far right
+		if (camera.position.x - (camera.viewportWidth * 0.5f) <= 0) { // left coords
 			camera.position.set(camera.viewportWidth * .5f, camera.position.y, 0);
 			camera.update();
 			mapRenderer.setView(camera);
@@ -171,7 +171,7 @@ public class GameRenderer {
 			camera.update();
 			mapRenderer.setView(camera);
 			batcher.setProjectionMatrix(camera.combined);
-		}*/
+		}
 
 		// start rendering here
 		// Black background is drawn which prevents flickering.
@@ -182,7 +182,6 @@ public class GameRenderer {
 
 		// gameMaps = gameWorld.getMapSequence();
 
-        // map rendering
 		for (int mapNumber : gameMaps) {
 			if ((int) mapRenderer.getMap().getProperties().get("mapNumber") != mapNumber) {
 				// if the map loaded into the render is not the one needed to be rendered in
@@ -193,7 +192,7 @@ public class GameRenderer {
 
 			// bring forward to next map
 			// slightly messy as has to render several times w/ diff camera pos
-			// should remake into one big map with new segments instead
+			// should remake into one big map with new segments added on instead
 			camera.translate(-MAP_WIDTH, 0);
 			camera.update();
 			mapRenderer.setView(camera);
@@ -207,12 +206,10 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 
 		batcher.begin();
-
 		for (String id : entities.keySet()) {
 			entities.get(id).draw(batcher);
 		}
 		fog.draw(batcher);
-
 		batcher.end();
 
 		// debugRenderer.render(gameWorld.getWorld(), camera.combined);
