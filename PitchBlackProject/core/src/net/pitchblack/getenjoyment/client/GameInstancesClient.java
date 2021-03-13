@@ -54,14 +54,12 @@ public class GameInstancesClient implements ApplicationListener {
 		while(true){
 			c.run(Gdx.graphics.getDeltaTime());
 		}
-
 	}
-
 
 	private void run(float delta) {
 		for(GameInstance gameInstance : instanceMap.values()) {
-				gameInstance.tick(delta);
-			}
+			gameInstance.tick(delta);
+		}
 	}
 	
 	private void configSocketEvents() {

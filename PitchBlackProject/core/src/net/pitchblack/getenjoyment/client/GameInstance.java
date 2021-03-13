@@ -19,7 +19,7 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 public class GameInstance {
 	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
 	private static final int COUNTDOWN_INTERVAL = 5; // in seconds
-	private static final int PLAYER_MAX = 1;
+	private static final int PLAYER_MAX = 2;
 	private final String roomName;
 	private float timer;
 	
@@ -41,7 +41,6 @@ public class GameInstance {
 	private Player player;
 	private GameState gameState;
 	private String id;
-
 	
 	public GameInstance(String roomName, GameWorld gameWorld, GameInstancesClient instanceClient) {
 		this.instanceClient = instanceClient;

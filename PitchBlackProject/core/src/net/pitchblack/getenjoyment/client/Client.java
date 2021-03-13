@@ -89,7 +89,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8081");
+			socket = IO.socket("https://754afc1ff645.ngrok.io/"); //"http://localhost:8081");
 			socket.connect();
 			isConnected = true;
 		} catch (Exception e) {
