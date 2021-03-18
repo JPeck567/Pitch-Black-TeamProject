@@ -1,31 +1,25 @@
 package net.pitchblack.getenjoyment.helpers;
 
-import com.badlogic.gdx.Input.Keys;
-
-import net.pitchblack.getenjoyment.entities.Player;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
-import net.pitchblack.getenjoyment.logic.GameRenderer;
-import net.pitchblack.getenjoyment.logic.GameWorld;
+import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.Screen;
 
 public class InputHandler implements InputProcessor {
-	private GameRenderer gameRenderer;
+	private GameScreen gameScreen;
 	
-	public InputHandler(GameRenderer gameRenderer) {
-		this.gameRenderer = gameRenderer;
+	public InputHandler(GameScreen gameScreen) {
+		this.gameScreen = gameScreen;
 	}
 
 	@Override
 	public boolean keyDown(int keycode) {
-		gameRenderer.keyDown(keycode);
+		gameScreen.keyDown(keycode);
 		return true; // to show key press has been handled
 	}
 
 	@Override
 	public boolean keyUp(int keycode) {
-		gameRenderer.keyUp(keycode);
+		gameScreen.keyUp(keycode);
 		return true; // to show key press has been handled
 	}
 
@@ -59,14 +53,14 @@ public class InputHandler implements InputProcessor {
 		return false;
 	}
 
-	@Override
-	public boolean scrolled(int amount) {
-		return false;
-	}
-
 //	@Override
-//	public boolean scrolled(float amountX, float amountY) {
+//	public boolean scrolled(int amount) {
 //		return false;
 //	}
+
+	@Override
+	public boolean scrolled(float amountX, float amountY) {
+		return false;
+	}
 
 }

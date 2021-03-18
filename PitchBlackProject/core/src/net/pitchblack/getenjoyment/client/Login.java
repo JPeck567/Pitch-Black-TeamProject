@@ -79,7 +79,13 @@ public class Login extends JFrame {
 		JButton btnLogin = new JButton("Login");
 		btnLogin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				try {
+				client.emitSendLogin(username.getText(), password.getText(), loginInit);
+			}
+		});
+		btnLogin.setBounds(10, 279, 89, 23);
+		contentPane.add(btnLogin);
+	}
+}
 //					Class.forName("com.mysql.jdbc.Driver");
 //					Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamedatabase","root","");
 //					Statement stmt = con.createStatement();
@@ -88,14 +94,6 @@ public class Login extends JFrame {
 //					ResultSet rs = stmt.executeQuery(sql);
 //					if(rs.next())
 //						JOptionPane.showMessageDialog(null,"Login Successful");
-//					else 
+//					else
 //						JOptionPane.showMessageDialog(null,"Incorrect Username and Password");
 //				    con.close();
-					client.emitSendLogin(username.getText(), password.getText(), loginInit);
-				} catch(Exception e) { throw e; }
-			}
-		});
-		btnLogin.setBounds(10, 279, 89, 23);
-		contentPane.add(btnLogin);
-	}
-}

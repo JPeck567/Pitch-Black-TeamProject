@@ -2,6 +2,8 @@ package net.pitchblack.getenjoyment.client;
 
 import java.util.ArrayList;
 
+import com.badlogic.gdx.Game;
+import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,60 +19,57 @@ import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameInstance {
+	public static final int PLAYER_MAX = 1;
 	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
 	private static final int COUNTDOWN_INTERVAL = 5; // in seconds
-	private static final int PLAYER_MAX = 2;
 	private final String roomName;
 	private float timer;
-	
-	public enum GameState {
+
+
+
+    public enum GameState {
 		INITIATED,
 		IDLE,
 		WAITING,  // waiting for PLAYER_MAX players to join
 		READY,  // checking if all clients loaded data and ready
 		COUNTDOWN,
 		PLAYING,
-		FINISH,
-	}
-	
+		FINISH;
+    }
 	private GameInstancesClient instanceClient;
-	private GameWorld gameWorld;
-	private ArrayList<String> players;
-	private int mapCount;
-	private int readyCount;
-	private Player player;
-	private GameState gameState;
-	private String id;
-	
-	public GameInstance(String roomName, GameWorld gameWorld, GameInstancesClient instanceClient) {
+
+    private GameWorld gameWorld;
+    private ArrayList<String> players;
+    private ArrayList<String> recentlyDied;
+    private Player player;
+    private GameState gameState;
+    private String id;
+    private int readyCount;
+
+	public GameInstance(String roomName, PBAssetManager pbAssetManager, GameInstancesClient instanceClient) {
 		this.instanceClient = instanceClient;
 		this.roomName = roomName;
-		this.gameWorld = gameWorld;
+		this.gameWorld =  new GameWorld(pbAssetManager, this);
 		players = new ArrayList<String>();
-		mapCount = gameWorld.getMapSequence().split("/n").length;
-		readyCount = 0;
+		recentlyDied = new ArrayList<String>();
 		gameState = GameState.WAITING;
+		readyCount = 0;
 	}
 
 	public void updateServer(float timePassed){
-		//System.out.println(gameState);
 		switch(gameState){
-
 			case WAITING:
-
 				if(players.size() == PLAYER_MAX) {
 
 					gameWorld.setupPlayers(players);
-										
 					instanceClient.emitGameSetup(roomName, gameWorld.getPlayerData(), gameWorld.getFogData(), gameWorld.getMapSequence());
-					
 					gameState = GameState.READY;
-					
+
 					/*
-					 * 1. DONE when full, send data
-					 * 2. DONE have client load + have player click ready button
-					 * 3. DONE when 4 clients ready, send message to begin in 5 seconds
-					 * 4. after 5 sec, server side, send message to begin game!
+					 * 1. when full, send data
+					 * 2. have client load + have player click ready button
+					 * 3. when 4 clients ready, send message to begin in 5 seconds
+					 * 4. after 5 sec, server side, send message to begin game & start game sim
 					 */
 					timer = 0;
 				}
@@ -82,8 +81,6 @@ public class GameInstance {
 				gameState = GameState.COUNTDOWN;
 				break;
 			case COUNTDOWN:
-				// System.out.println(timer + ": " + timePassed);
-				// System.out.println("GameInstanceTimer: " + timer);
 				timer += timePassed;
 				if(timer >= COUNTDOWN_INTERVAL) {  // 5 seconds
 					instanceClient.emitGameBegin(roomName);
@@ -92,31 +89,27 @@ public class GameInstance {
 				break;
 			case PLAYING:
 				gameWorld.update(timePassed);
-
 				instanceClient.emitGameUpdate(roomName, gameWorld.getPlayerData(), gameWorld.getFogData(), gameWorld.getMapSequence());
-				
+
+				if(recentlyDied.size() > 0){
+				    instanceClient.emitRemoveFromRoom(roomName, recentlyDied);
+				    recentlyDied.clear();
+                }
+
 				if(gameWorld.finished()) {
 					gameState = GameState.FINISH;
 				}
-				
+
 				break;
+			case FINISH:
+				String winnerName = (PLAYER_MAX > 1) ? gameWorld.getWinner() : ""; // if playing with others, get winner
+				instanceClient.emitGameFinish(roomName, winnerName);
+				instanceClient.emitResetRoom(roomName);
 			default:
 				break;
-					
-		}	
-	}	
-	//			case FINISH:
-	//				Player p = gameWorld.getWinner();
-	//				JSONObject winID = new JSONObject();
-	//				try {
-	//					winID.put("id", p.getID());
-	//				} catch (JSONException e) {
-	//				}
-	//				socket.emit("win", winID);
-	//				break;
-	//			default:
-	//				break;
-	
+		}
+	}
+
 	public void addPlayerToRoom(String username) {
 		if(players.size() < PLAYER_MAX) {
 			if(players.contains(username)) {
@@ -126,19 +119,37 @@ public class GameInstance {
 				players.add(username);
 			}
 		} else {
-			instanceClient.emitJoinRoomResponse(false, username, roomName, "Room full!");
+		    if(gameState == GameState.PLAYING){
+                instanceClient.emitJoinRoomResponse(false, username, roomName, "Game is in progress!");
+            } else {
+                instanceClient.emitJoinRoomResponse(false, username, roomName, "Room full!");
+
+            }
 		}
 	}
-	
+
 	public void addToReadyCount() {
 		readyCount++;
 	}
-	
+
 	public void tick(float timePassed) {
 		updateServer(timePassed);
 	}
 
 	public void gameKeyPress(String username, String keyUp, String keyDown) {
-		gameWorld.keyPress(username, keyUp, keyDown);
+		if(gameState == GameState.PLAYING) {
+			gameWorld.keyPress(username, keyUp, keyDown);
+		}
+	}
+
+    public void addToRecentlyDied(ArrayList<String> diedArray) {
+        recentlyDied.addAll(diedArray);
+    }
+
+	private void refreshInstance(){
+		gameWorld.refreshWorld();
+		players.clear();
+		readyCount = 0;
+		gameState = GameState.WAITING;
 	}
 }

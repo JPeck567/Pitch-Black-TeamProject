@@ -19,8 +19,6 @@ public class LobbyScreen implements Screen {
 		this.client = client;
 		roomMap = new HashMap<String, Object>();
 
-		client.emitPlayerClientInit();
-
 		client.emitGetRooms();
 
 		client.emitJoinRoomRequest("1");
@@ -70,8 +68,12 @@ public class LobbyScreen implements Screen {
 		System.out.println(roomMap.toString());
 	}
 	
-	public void joinSuccess(String room, String message) {
-		System.out.println(message + " to room " + room);
+	public void joinRoomResponse(Boolean joined, String room, String message) {
+		if(joined){
+			System.out.println(message);
+		} else {
+			System.out.println(message);
+		}
 	}
 	
 	public void addNewPlayer(String username, String room) {

@@ -1,9 +1,11 @@
 package net.pitchblack.getenjoyment.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -11,7 +13,6 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
-import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class GameInstancesClient implements ApplicationListener {
 	private static final int UPDATE_TIME = (1 / 60) / 1000;  // 66.666 recurring milliseconds or 1/60th of a second therefore 60 times a second.
@@ -20,12 +21,11 @@ public class GameInstancesClient implements ApplicationListener {
 	private Socket socket;
 	private String id;
 
-	public final PBAssetManager pbAssetManager;
+	private final PBAssetManager pbAssetManager;
 	private HashMap<String, GameInstance> instanceMap;  // room name mapped to instance
 
 	public GameInstancesClient() {
 		pbAssetManager = new PBAssetManager();
-		//makeInstances();
 		connectSocket();
 		configSocketEvents();
 	}
@@ -156,7 +156,7 @@ public class GameInstancesClient implements ApplicationListener {
 	public void emitGameCountdown() {
 		socket.emit("gameCountdown");
 	}
-	
+
 	public void emitGameBegin(String roomName) {
 		JSONObject data = new JSONObject();
 		try {
@@ -164,7 +164,7 @@ public class GameInstancesClient implements ApplicationListener {
 		} catch (JSONException e) { e.printStackTrace(); }
 		socket.emit("gameBegin", data);
 	}
-		
+
 	public void emitGameUpdate(String roomName, String playerData, String fogData, String mapData) {
 		JSONObject data = new JSONObject();
 		try {
@@ -175,22 +175,47 @@ public class GameInstancesClient implements ApplicationListener {
 		} catch (JSONException e) { e.printStackTrace(); }
 		socket.emit("gameUpdate", data);
 	}
-		
+
+	public void emitGameFinish(String roomName, String winnerName) {
+		JSONObject data = new JSONObject();
+		try{
+			data.put("room", roomName)
+				.put("winnerName", winnerName);  // if null, do json null
+		} catch (JSONException e) { e.printStackTrace(); }
+		socket.emit("gameFinish", data);
+	}
+
+    public void emitRemoveFromRoom(String room, ArrayList<String> recentlyDied) {
+        JSONObject data = new JSONObject();
+        try{
+            data.put("room", room)
+                .put("diedArray", new JSONArray().put(recentlyDied));
+        } catch (JSONException e) { e.printStackTrace(); }
+        socket.emit("removeFromRoom", data);
+    }
+
+	public void emitResetRoom(String roomName) {
+		JSONObject data = new JSONObject();
+		try{
+			data.put("room", roomName);
+		} catch (JSONException e) { e.printStackTrace(); }
+		socket.emit("resetRoom", data);
+	}
+
 	private GameInstance getGameInstance(String room) {
 		GameInstance instance = instanceMap.get(room);
-		
-		if(instance == null) {  // no instance exists, so add new one
+
+		if(instance == null) {  // no instance exists, so make new one
 			instance = createGameInstance(room);
 			instanceMap.put(room, instance);
 		}
 
 		return instance;
 	}
-	
-	private GameInstance createGameInstance(String room) {
-		return new GameInstance(room, new GameWorld(pbAssetManager), this);
-	}
 
+	private GameInstance createGameInstance(String room) {
+		return new GameInstance(room, pbAssetManager, this);
+	}
 
 	@Override
 	public void create() {
@@ -200,9 +225,7 @@ public class GameInstancesClient implements ApplicationListener {
 	}
 
 	@Override
-	public void resize(int width, int height) {
-
-	}
+	public void resize(int width, int height) {	}
 
 	@Override
 	public void render() {

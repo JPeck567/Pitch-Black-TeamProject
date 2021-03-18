@@ -3,16 +3,8 @@ package net.pitchblack.getenjoyment.desktop;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
-import com.badlogic.gdx.backends.headless.HeadlessFiles;
-import com.badlogic.gdx.backends.headless.HeadlessNativesLoader;
-import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
-import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import com.badlogic.gdx.backends.lwjgl.LwjglFiles;
-import com.badlogic.gdx.backends.lwjgl.LwjglNativesLoader;
 import com.badlogic.gdx.graphics.GL20;
 import net.pitchblack.getenjoyment.client.GameInstancesClient;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGame;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 
 import static org.mockito.Mockito.mock;
 

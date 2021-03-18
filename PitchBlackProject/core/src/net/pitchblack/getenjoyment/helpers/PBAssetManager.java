@@ -28,6 +28,8 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
 	// TODO: use texture atlas for skin + eventually player sprite sheets
     public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.atlas"));
     public static final AssetDescriptor<Texture> menuBackground = new AssetDescriptor<Texture>("background/background.png", Texture.class);
+    public static final AssetDescriptor<Texture> gameOverBackground = new AssetDescriptor<Texture>("background/gameOverBackGround.png", Texture.class);
+	public static final AssetDescriptor<Texture> winBackground = new AssetDescriptor<Texture>("background/winScreenBackground.png", Texture.class);
     public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("texture/player.png", Texture.class);
     public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("texture/fog.png", Texture.class);
     
@@ -47,6 +49,8 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     public void loadMenuAssets() {
     	manager.load(menuSkin);
     	manager.load(menuBackground);
+    	manager.load(gameOverBackground);
+    	manager.load(winBackground);
     	manager.finishLoading();
     }
     
@@ -66,7 +70,6 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     }
     
     public <T> T getAsset(AssetDescriptor<T> desc) {
-    	//return (T) Gdx.files.internal(desc.fileName); 
     	return manager.get(desc);
     }
     
@@ -75,7 +78,6 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     	for(int i = 0; i < mapArray.length; i++) {
     		mapMap.put(i, getMap(i)); 
     	}
-    	
     	return mapMap;
     }
     

@@ -19,7 +19,7 @@ allprojects {
     version = '1.0'
     ext {
         appName = "pitch-black"
-        gdxVersion = '1.9.11'
+        gdxVersion = '1.9.14'
     }
 
     repositories {
@@ -34,20 +34,18 @@ allprojects {
 project(":desktop") {
     apply plugin: "java-library"
 
-
     dependencies {
         implementation project(":core")
         api "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
         api "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
         api "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
-        api  "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
+        api "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
         api "org.mockito:mockito-all:1.9.5"
     }
 }
 
 project(":core") {
     apply plugin: "java-library"
-    
 
     dependencies {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"

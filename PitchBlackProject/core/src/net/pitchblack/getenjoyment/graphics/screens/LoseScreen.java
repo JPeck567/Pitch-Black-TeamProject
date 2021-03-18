@@ -17,36 +17,33 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
-import net.pitchblack.getenjoyment.helpers.MusicManager;
-import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
-import net.pitchblack.getenjoyment.helpers.PreferencesManager;
-import net.pitchblack.getenjoyment.helpers.SoundManager;
+import net.pitchblack.getenjoyment.helpers.*;
 
-public class GameOverScreen implements Screen {
+public class LoseScreen implements Screen {
 	private PitchBlackGraphics parent;
 	private Stage stage;
 
-	public GameOverScreen(PitchBlackGraphics x) {
-		parent = x;
+	public LoseScreen(PitchBlackGraphics p) {
+		parent = p;
 		stage = new Stage(new ScreenViewport());
 		final SoundManager sound = new SoundManager();
 		final MusicManager music = new MusicManager();
 		
 		Table table = new Table();
-		table.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("background/gameOverBackGround.png"))));
+		table.setBackground(new TextureRegionDrawable(new TextureRegion(parent.pbAssetManager.getAsset(PBAssetManager.gameOverBackground))));
 		table.setFillParent(true);
 		table.setDebug(false);
 		
 		stage.addActor(table);
 		
-		Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
-		final TextButton backButton = new TextButton("Back", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
+		Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
+		final TextButton backButton = new TextButton("Back to Menu", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
 		
 		backButton.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				parent.changeScreen(Screens.MENU);
-				if(PreferencesManager.isSoundEnabled() == true) {
+				if(PreferencesManager.isSoundEnabled()) {
 					sound.setVolume(PreferencesManager.getSoundVolume());
 					sound.play( PitchBlackSound.CLICK );
 				}

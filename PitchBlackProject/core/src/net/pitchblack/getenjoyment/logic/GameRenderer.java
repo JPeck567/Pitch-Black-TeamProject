@@ -40,6 +40,7 @@ import net.pitchblack.getenjoyment.entities.Entity.EntityState;
 import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
+import net.pitchblack.getenjoyment.graphics.screens.GameScreen.GameState;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.helpers.SoundManager;
@@ -49,6 +50,7 @@ public class GameRenderer {
 	public static float MAP_WIDTH;
 	public static float MAP_HEIGHT;
 
+	private GameScreen gameScreen;
 	private Client client;
 	private String username;
 	private PBAssetManager pbAssetManager;
@@ -56,7 +58,7 @@ public class GameRenderer {
 	// will need array list of string id's to sprites to update from server
 	private HashMap<String, Entity> entities;
 
-	private Entity clientPlayer; // replace w/ class for just pos + state
+	private Entity clientPlayer;
 	private Entity fog;
 	// private Sprite playerSprite;
 	// private Sprite fogSprite;
@@ -73,7 +75,8 @@ public class GameRenderer {
 	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
 
-	public GameRenderer(Client client, PBAssetManager pbAssetManager) {
+	public GameRenderer(GameScreen gameScreen, Client client, PBAssetManager pbAssetManager) {
+	    this.gameScreen = gameScreen;
 		this.pbAssetManager = pbAssetManager;
 
 		this.client = client;
@@ -83,75 +86,59 @@ public class GameRenderer {
 		camera = new OrthographicCamera(viewport.getWorldWidth(), viewport.getWorldWidth());  // this camera allows a 3d plane to be projected onto a since 2d plane
 		viewport.setCamera(camera);
 
-		// initial position
-		// camera.position.set(0, 0, 0);
-		// camera.update();
-
-		//camera.setToOrtho(true, viewport.getWorldWidth(), viewport.getWorldWidth());
-		//camera.setToOrtho(false, viewport.getWorldWidth() , viewport.getWorldHeight());  // to use orthographic projection (true), width and height - which are half of screen = scaled down 2x
-
 		// get all maps
 		mapMap = pbAssetManager.getMaps();
-		
-		// map creation
-		//Integer[] ints = {0, 0, 0, 0};
-		//List<Integer> initialMaps = Arrays.asList(ints);
-		//map = pbAssetManager.getAsset(PBAssetManager.map0);
-		//gameMaps = gameWorld.getMapSequence();
-		
+
+		// placeholder to get properties + to setup map renderer with something
 		TiledMap firstMap = mapMap.get(0);
 		MapProperties prop = firstMap.getProperties();
 		
 		MAP_WIDTH = ((float) prop.get("width", Integer.class));
 		MAP_HEIGHT = ((float) prop.get("height", Integer.class));
-		
-		//CAMERA_YPOS_PX = ((viewport.getWorldHeight() / 2) + 50) * PPM;
-		
+
 		mapRenderer = new OrthogonalTiledMapRenderer(firstMap, 1 / PPM); // map + scaling
 		mapRenderer.setView(camera);
 
 		batcher = new SpriteBatch();
 		batcher.setProjectionMatrix(camera.combined);
-		batcher.enableBlending();
+		batcher.enableBlending();  // to enable transparency for images I think
 		batcher.setProjectionMatrix(camera.combined);
 		
 		entities = new HashMap<String, Entity>();
-		//player = gameWorld.getPlayer("0");
-		//fog = new Entity(Type.FOG, null, null, pbAssetManager);
-	
-		//this.playerSprite = new Sprite(playerTexture);
-		//this.playerSprite.setBounds(0, 0, playerTexture.getWidth() / PPM, playerTexture.getHeight() / PPM);
-		
-		//this.fogSprite = new Sprite(pbAssetManager.getAsset(PBAssetManager.fogTexture));
-		//this.fogSprite.setBounds(0, 0, 192 / PPM, MAP_HEIGHT); // no / by ppm, as it is * by ppm too
-		
-		debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true); 
-		
-		// initial position
-		//camera.position.set(viewport.getWorldWidth() / 2, (viewport.getWorldHeight() / 2), 0);// - (50 / PPM)
-		//camera.update();
-		
-//		camera.position.set(camera.viewportHeight / 4, camera.viewportHeight / 4, 0);
-//		camera.update();
-//		mapRenderer.setView(camera);
-//		batcher.setProjectionMatrix(camera.combined);
-		
-		//loadPlayerEntities();
+
+		//debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true);
 	}
 
 	public void render(float delta) {
-		if (clientPlayer.getState() == EntityState.DEAD) {
-			client.setClientState(ClientState.LOSE);
+	    /// SCREEN CONTROL ///
+		if(clientPlayer.isDead()){
+			gameScreen.setGameState(GameState.LOSE);
 		}
 
-		//System.out.println("camera: " + camera.position.toString());
-		//System.out.println("x: " + clientPlayer.getX() + " y: " + clientPlayer.getY());
-		System.out.println("Fog x: " + fog.getX() + " | Fog y: " + fog.getY());
+		/// CAMERA CONTROL ///
+		controlCamera();
 
-//		// control camera here
+		/// RENDERING ///
+		Gdx.gl.glClearColor(0, 0, 0, 0);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		batcher.begin();
+
+		renderMaps();
+
+		for (String id : entities.keySet()) {
+			entities.get(id).draw(batcher);
+		}
+
+		fog.draw(batcher);
+		batcher.end();
+
+		// debugRenderer.render(gameWorld.getWorld(), camera.combined);
+	}
+
+	private void controlCamera() {
 		camera.position.set(clientPlayer.getX(), clientPlayer.getY(), 0);
 
-		// camera x is too far right
+		// if camera x is too far right
 		if (camera.position.x - (camera.viewportWidth * 0.5f) <= 0) { // left coords
 			camera.position.set(camera.viewportWidth * .5f, camera.position.y, 0);
 			camera.update();
@@ -159,33 +146,26 @@ public class GameRenderer {
 			batcher.setProjectionMatrix(camera.combined);
 		}
 
-		// camera y too far down
+		// if camera y too far down
 		if (camera.position.y - (camera.viewportHeight * 0.5f) <= 0) {
 			camera.position.set(camera.position.x, camera.viewportHeight * 0.5f, 0);
 			camera.update();
 			mapRenderer.setView(camera);
 			batcher.setProjectionMatrix(camera.combined);
-			// camera y too far up
+			// if camera y too far up
 		} else if (camera.position.y + (camera.viewportHeight * 0.5f) >= MAP_HEIGHT) {
 			camera.position.set(camera.position.x, MAP_HEIGHT - camera.viewportHeight * 0.5f, 0);
 			camera.update();
 			mapRenderer.setView(camera);
 			batcher.setProjectionMatrix(camera.combined);
 		}
+	}
 
-		// start rendering here
-		// Black background is drawn which prevents flickering.
-		Gdx.gl.glClearColor(0, 0, 0, 0);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
+	private void renderMaps() {
 		Vector3 camVec = camera.position.cpy();
-
-		// gameMaps = gameWorld.getMapSequence();
-
 		for (int mapNumber : gameMaps) {
 			if ((int) mapRenderer.getMap().getProperties().get("mapNumber") != mapNumber) {
-				// if the map loaded into the render is not the one needed to be rendered in
-				// this loop
+				// if the map loaded into the render is not the one needed to be rendered in this loop
 				mapRenderer.setMap(mapMap.get(mapNumber));
 			}
 			mapRenderer.render();
@@ -204,15 +184,6 @@ public class GameRenderer {
 		camera.update();
 		mapRenderer.setView(camera);
 		batcher.setProjectionMatrix(camera.combined);
-
-		batcher.begin();
-		for (String id : entities.keySet()) {
-			entities.get(id).draw(batcher);
-		}
-		fog.draw(batcher);
-		batcher.end();
-
-		// debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}
 
 	// create player entities based on username plus their associated data, and also
@@ -242,7 +213,7 @@ public class GameRenderer {
 	 * playerMoveLeft, playerMoveRight, playerJumped, Split into player records with
 	 * "/n" Split attributes with ","
 	 */
-	public void addPlayerData(String data) {
+	private void addPlayerData(String data) {
 		String[] dataArray = data.split("/n");
 
 //		String fogDataEntry = dataArray[dataArray.length - 1];  // 0: x, 1: y
@@ -265,6 +236,8 @@ public class GameRenderer {
 					}
 
 					e.setPosition(f1, f2);
+
+					// if standing before jumping or falling before jumping again, play sound.
 					if ((e.getState() == EntityState.STANDING
 							&& EntityState.valueOf(playerData[3]) == EntityState.ASCENDING)
 							|| (e.getState() == EntityState.DESCENDING
@@ -277,19 +250,18 @@ public class GameRenderer {
 				} else { // player died
 					if (entities.containsKey(playerData[0])) {
 						e.setState(EntityState.valueOf(playerData[3]));
-						entities.remove(playerData[0]);
 					}
 				}
 			}
 		}
 	}
 
-	public void addFogData(String fogData) {
+	private void addFogData(String fogData) {
 		String[] data = fogData.split(",");
 		fog.setPosition(Float.parseFloat(data[0]), Float.parseFloat(data[1]));
 	}
 
-	public void addMapData(String mapData) {
+	private void addMapData(String mapData) {
 		String[] data = mapData.split(",");
 		gameMaps = new ArrayList<Integer>();
 		for (String map : data) {
@@ -305,23 +277,15 @@ public class GameRenderer {
 		entities.put(id, new Entity(id, type, entityState, pbAssetManager));
 	}
 
+	public void resetRenderer(){
+		entities.clear();
+	}
+
 	public OrthographicCamera getCamera() {
 		return camera;
 	}
 
 	public Viewport getViewport() {
 		return viewport;
-	}
-
-	public void keyDown(int keycode) {
-		if (clientPlayer.getState() != EntityState.DEAD) {
-			client.keyDown(keycode);
-		}
-	}
-
-	public void keyUp(int keycode) {
-		if (clientPlayer.getState() != EntityState.DEAD) {
-			client.keyUp(keycode);
-		}
 	}
 }

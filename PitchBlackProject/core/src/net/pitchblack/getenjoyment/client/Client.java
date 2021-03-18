@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
-import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
+import net.pitchblack.getenjoyment.graphics.screens.GameScreen.GameState;
 import net.pitchblack.getenjoyment.graphics.screens.LobbyScreen;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
 import net.pitchblack.getenjoyment.logic.GameRenderer;
@@ -28,10 +28,6 @@ import io.socket.emitter.Emitter;
 
 public class Client {
 	private static final float UPDATE_TIME = 1/60f;
-	private float timer;
-	private String username;
-	private String currentRoom;
-
 	public enum ClientState {
 		ACCOUNT,  // logging in / registration
 		LOBBY, // in lobby
@@ -39,31 +35,28 @@ public class Client {
 		IDLE, // does nothing
 		LOADING,  // load entites from given player id's
 		READY,  // finished loading
-		PLAYING,  // ingame
-		FINISH, 
-		WIN, 
-		LOSE
+		GAME
 	}
-	
+
 	public enum AccountState {
 		LOGGED_IN,
 		LOGIN_ATTEMPTED,
 		REGISTRATION_ATTEMPTED,
-		LOGGED_OUT
+		LOGGED_OUT;
 	}
-	
-	// TODO: replace these w/ currentScreen field
+
 	private PitchBlackGraphics parent;
-	//private LobbyScreen lobbyScreen;
-	//private GameScreen gameScreen;
-	
-	private Player player;
+	private LoginInitiator loginInitiator;
 	private String id;
 	private Socket socket;
+	private String username;
+	private String currentRoom;
+	private float timer;
 	private Boolean isConnected;
+
 	private ClientState clientState;
 	private AccountState accountState;
-	private LoginInitiator loginInitiator;
+
 	private int keyUpCode;
 	private int keyDownCode;
 	
@@ -89,7 +82,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("https://754afc1ff645.ngrok.io/"); //"http://localhost:8081");
+			socket = IO.socket("http://localhost:8081");
 			socket.connect();
 			isConnected = true;
 		} catch (Exception e) {
@@ -117,25 +110,19 @@ public class Client {
 				}
 				//clientState = ClientState.IDLE;
 				break;
-//			case READY:
-//				//socket.emit("playerReady");
-//				clientState = ClientState.IDLE;
-			case PLAYING:
-				if(keyUpCode != -1 || keyDownCode != -1) {  // if either button pressed
-					JSONObject data = new JSONObject();
-					try {
-						data.put("username", username)
-							.put("room", currentRoom)
-							.put("keyUp", keyUpCode)
-							.put("keyDown", keyDownCode);
-						keyUpCode = -1;
-						keyDownCode = -1;
-						socket.emit("gameKeyPress", data);
-					} catch(JSONException e){ e.printStackTrace(); }
-				}
-				break;
-			case WIN:
-			case LOSE:
+			case GAME:
+//				if(keyUpCode != -1 || keyDownCode != -1) {  // if either button pressed
+//					JSONObject data = new JSONObject();
+//					try {
+//						data.put("username", username)
+//							.put("room", currentRoom)
+//							.put("keyUp", keyUpCode)
+//							.put("keyDown", keyDownCode);
+//						keyUpCode = -1;
+//						keyDownCode = -1;
+//						socket.emit("gameKeyPress", data);
+//					} catch(JSONException e){ e.printStackTrace(); }
+//				}
 		default:
 			break;	
 		}
@@ -175,6 +162,7 @@ public class Client {
 				if(loggedInAttempt) {
 					accountState = AccountState.LOGGED_IN;
 					Client.this.username = username;
+					emitPlayerClientInit();
 				} else {
 					accountState = AccountState.LOGGED_OUT;
 				}
@@ -257,8 +245,9 @@ public class Client {
 				} catch(JSONException e) { e.printStackTrace(); }
 				if(response) {
 					currentRoom = room;
-					parent.lobbyJoinRoomSuccess(room, message);
-					// TODO: send message to lobby about joining room
+					parent.lobbyJoinRoomResponse(true, room, message);
+				} else {
+					parent.lobbyJoinRoomResponse(false, room, message);
 				}
 			}
 		}).on("gameSetup", new Emitter.Listener() {
@@ -285,8 +274,9 @@ public class Client {
 		}).on("gameBegin", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
+				parent.gameScreenSetState(GameState.PLAYING);
 				parent.postRunnableChangeScreen(Screens.GAME);
-				clientState = ClientState.PLAYING;
+				clientState = ClientState.GAME;
 			}
 		}).on("gameUpdate", new Emitter.Listener() {
 			@Override
@@ -300,13 +290,25 @@ public class Client {
 					fogData = data.getString("fogData");
 					mapData = data.getString("mapData");
 				} catch(JSONException e) { e.printStackTrace(); }
-				
 				parent.addGameData(playerData, fogData, mapData);
 			}
-		}).on("win", new Emitter.Listener() {
+		}).on("gameFinish", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				clientState = ClientState.WIN;
+				JSONObject data = (JSONObject) args[0];
+				String winnerName = null;
+				try {
+					winnerName = data.getString("winnerName");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+
+				if (winnerName.equals("")) {  // for one player, assumes died anyway and lose state change should also occur anyway
+					//parent.gameScreenSetState(GameState.LOSE);
+				} else if(winnerName.equals(username)) {  // if won in multiplayer
+					parent.gameScreenSetState(GameState.WIN);
+				}
+
 			}
 		});
 	}
@@ -343,8 +345,6 @@ public class Client {
 		try{
 			data.put("username", username);
 		} catch(JSONException e) { e.printStackTrace(); }
-		socket.emit("playerClientInit", data);
-		System.out.println("Sent Player Init");
 		clientState = ClientState.IDLE;
 	}
 	
@@ -369,12 +369,26 @@ public class Client {
 		socket.emit("getRooms");
 	}
 	
-	public void keyDown(int keycode) {
-		keyDownCode = keycode;
+	public void emitKeyDown(int keycode) {
+		JSONObject data = new JSONObject();
+		try {
+			data.put("username", username)
+					.put("room", currentRoom)
+					.put("keyUp", -1)
+					.put("keyDown", keycode);
+			socket.emit("gameKeyPress", data);
+		} catch(JSONException e){ e.printStackTrace(); }
 	}
 	
-	public void keyUp(int keycode) {
-		keyUpCode = keycode;
+	public void emitKeyUp(int keycode) {
+		JSONObject data = new JSONObject();
+		try {
+			data.put("username", username)
+					.put("room", currentRoom)
+					.put("keyUp", keycode)
+					.put("keyDown", -1);
+			socket.emit("gameKeyPress", data);
+		} catch(JSONException e){ e.printStackTrace(); }
 	}
 
 	public String getUsername() {
@@ -385,7 +399,7 @@ public class Client {
 		this.clientState = clientState;
 	}
 
-	public boolean isPlaying() { return clientState == ClientState.PLAYING; }
+	public boolean isPlaying() { return clientState == ClientState.GAME; }
 	
 	public void setAccountState(AccountState accountState) {
 		this.accountState = accountState;

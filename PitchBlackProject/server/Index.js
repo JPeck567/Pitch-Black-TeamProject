@@ -2,7 +2,12 @@ const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const mysql = require('mysql');
+const bcrypt = require('bcryptjs');
+const SQL_USERNAME = 'localGame';
+const SQL_PASSWORD = 'xRAFz71jyeW8JeNQ';
 const LOBBYROOM = 'lobby';
+const PORT = 8081;
+const SALTROUNDS = 10;
 
 var playerNameSocketMap = new Map(); // could use object - {}. used as game uses names to refer to socket
 var socketIDToPlayerName = new Map(); // used so can get users from rooms as rooms refers to users by socket id
@@ -10,24 +15,36 @@ var socketIDToPlayerName = new Map(); // used so can get users from rooms as roo
 var roomNames = ['1', '2', '3', '4', '5'];
 var gameClientSocket;
 
-
-server.listen(8081, function() {
-  console.log('Server running on localhost:8081');
+server.listen(PORT, function() {
+  console.log('Server running on localhost:' + PORT);
 });
 
 io.on('connection', function(socket) {
   console.log('SocketIO: ID ' + socket.id + ' Connected!');
-  socket.emit('socketID', {
-    id: socket.id
+  socket.emit('socketID', { id: socket.id });
+
+	socket.on('disconnect', function(){
+    if(socketIDToPlayerName.has(socket.id)) {  // is connected as render client
+      playerNameSocketMap.delete(socketIDToPlayerName.get(socket.id));
+      socketIDToPlayerName.delete(socket.id);
+      console.log("Client " + socket.id + " Disconnected");
+    } else if (gameClientSocket != null) {
+      if (socket.id === gameClientSocket.id) {  // check if actually game client
+        gameClientSocket = null;
+        console.log("Game Client Socket " + socket.id + " Disconnected");
+      } else {
+        console.log("SQL Socket " + socket.id + " Disconnected");
+      }
+    } else {  // assume connection is for login/registration
+      console.log("SQL Socket " + socket.id + " Disconnected");
+    }
   });
-  //socket.emit('getPlayers', players);
-  //socket.broadcast.emit('newPlayer', { id: socket.id });
 
   socket.on('login', function(data) {
     var connection = mysql.createConnection({
       host: '127.0.0.1',
-      user: 'root',
-      password: '',
+      user: SQL_USERNAME,
+      password: SQL_PASSWORD,
       database: 'gamedatabase'
     });
 
@@ -41,8 +58,16 @@ io.on('connection', function(socket) {
 
     var username = data.username;
     var password = data.password;
+
+    // checks if already logged in
+	  if(playerNameSocketMap.has(username)) {
+      socket.emit('loginAttempt', {successful: false, username: null, message: 'User is already logged in!'});
+      return;
+    }
+
+    // SQL to check pass + username: 'SELECT * FROM users WHERE username = ? AND password = ?'
     // using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
-    connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], function(error, results, fields) {
+    connection.query('SELECT password FROM users WHERE username = ?', [username], function(error, results, fields) {
       if (error) {
         console.log(error);
         socket.emit('registerAttempt', {
@@ -53,13 +78,27 @@ io.on('connection', function(socket) {
         socket.emit('loginAttempt', {
           successful: false,
           username: null,
-          message: 'Login unsuccessful - please check your username and/or password are correct'
+          message: 'Login unsuccessful - please check your username is correct'
         });
-      } else if (results.length >= 1) {
-        socket.emit('loginAttempt', {
-          successful: true,
-          username: username,
-          message: 'Login successful!'
+      } else if (results[0].password) {
+        bcrypt.compare(password, results[0].password, function(err, result) {
+          if(result){
+            socket.emit('loginAttempt', {
+              successful: true,
+              username: username,
+              message: 'Login successful!'
+            });
+            
+            console.log('Player ' + data.username + ' Connected!');
+            playerNameSocketMap.set(data.username, socket);
+            socketIDToPlayerName.set(socket.id, data.username);
+          } else {
+            socket.emit('loginAttempt', {
+              successful: false,
+              username: username,
+              message: 'Login unsuccessful - please check your password.'
+            });
+          }
         });
       }
     });
@@ -72,8 +111,8 @@ io.on('connection', function(socket) {
   socket.on('register', function(data) {
     var connection = mysql.createConnection({
       host: '127.0.0.1',
-      user: 'root',
-      password: '',
+      user: SQL_USERNAME,
+      password: SQL_PASSWORD,
       database: 'gamedatabase'
     });
 
@@ -90,7 +129,8 @@ io.on('connection', function(socket) {
     var email = data.email;
     var flag = false;
 
-    connection.query('SELECT * FROM users WHERE email = ?', [email], function(error, results, fields) {
+		// using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
+    connection.query('SELECT * FROM users WHERE email = ?', email, function(error, results, fields) {
       if (error) {
         console.log(error);
         socket.emit('registerAttempt', {
@@ -124,45 +164,41 @@ io.on('connection', function(socket) {
 
     // will only insert data if username or email isn't taken
     if (!flag) {
-      connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, password], function(error, results, fields) {
-        if (error) {
-          console.log(error);
-          socket.emit('registerAttempt', {
-            successful: false,
-            message: error.name + ": " + error.message
+          // auto gen a salt and make a hash an async
+          bcrypt.hash(password, SALTROUNDS, function(err, hash) {
+            connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, hash], function(error, results, fields) {
+              if (error) {
+                console.log(error);
+                socket.emit('registerAttempt', {
+                  successful: false,
+                  message: error.name + ": " + error.message
+                });
+              } else {
+                if (results.affectedRows >= 1) {
+                  socket.emit('registerAttempt', {
+                    successful: true,
+                    message: 'Registration successful!'
+                  });
+                } else if (results.affectedRows < 1) {
+                  socket.emit('registerAttempt', {
+                    successful: false,
+                    message: 'Registration unsuccessful - unknown error'
+                  });
+                }
+              }
+            });
+
+            connection.end(function(err) {
+              // The connection is terminated now
+            });
+
           });
-        } else {
-          if (results.affectedRows >= 1) {
-            socket.emit('registerAttempt', {
-              successful: true,
-              message: 'Registration successful!'
-            });
-          } else if (results.affectedRows < 1) {
-            socket.emit('registerAttempt', {
-              successful: false,
-              message: 'Registration unsuccessful - unknown error'
-            });
-          }
-        }
-      });
     }
-
-    // using ? 'escapes' values. this means special characters have a '\' appended to them, which will invalidate a given sql injection string'
-
-    connection.end(function(err) {
-      // The connection is terminated now
-    });
   });
 
   socket.on('gameClientInit', function() { // the game connects
     console.log('Game Client Connected!');
     gameClientSocket = socket;
-  });
-
-  socket.on('playerClientInit', function(data) { // a player connects
-    console.log('Player ' + data.username + ' Connected!');
-    playerNameSocketMap.set(data.username, socket);
-    socketIDToPlayerName.set(socket.id, data.username);
   });
 
   socket.on('joinLobby', function(data) { // confirms client in in lobby. message acts as confirmation, w/ 'inLobby' verifying if join or leaving
@@ -183,16 +219,9 @@ io.on('connection', function(socket) {
     var roomClientList = {};
 
     for (let roomID in roomNames) {
-      var room = io.sockets.adapter.rooms[roomID]; // list of connected socket ids in socket property
-      var nameList = [];
-
-      if (room != null) { // if room has players in, hence has object
-        Object.keys(room.sockets).forEach(function(socketId) { // for each id, add username to list
-          nameList.push(socketIDToPlayerName.get(socketId));
-        });
-      }
-      roomClientList[roomID] = nameList;
+      roomClientList[roomID] = getNamesInRoom(roomID);
     }
+
     socket.emit('roomList', {
       roomUsers: roomClientList
     }); // need to add players connected in room
@@ -237,7 +266,7 @@ io.on('connection', function(socket) {
     socket.to(data.room).emit('gameBegin');
   });
 
-  socket.on('gameUpdate', function(data) {
+  socket.on('gameUpdate', function(data) {  // game instance updates players
     socket.to(data.room).emit('gameUpdate', {
       playerData: data.playerData,
       fogData: data.fogData,
@@ -245,8 +274,42 @@ io.on('connection', function(socket) {
     });
   });
 
-  socket.on('gameKeyPress', function(data) {
-    gameClientSocket.emit('gameKeyPress', data)
+  socket.on('gameKeyPress', function(data) {  // game client sends key input
+    gameClientSocket.emit('gameKeyPress', data);
   });
 
-});
+  socket.on('removeFromRoom', function(data) {  // if player dies, remove from room
+    for(let playerName in data.diedArray){
+      io.sockets.sockets[playerNameSocketMap.get(playerName).id].leave(data.room);
+    }
+  });
+
+	socket.on('gameFinish', function(data) {  // game instance updates players still in room with winner & clients return to menu.
+		socket.to(data.room).emit('gameFinish', { winnerName : data.winnerName });
+	});
+
+  socket.on('resetRoom', function(data){ // when game finished, empty room in server, and tell clients
+    socket.to(data.room).emit('emptyRoom');
+
+    var sockIds = io.sockets.adapter.rooms[data.room];
+
+    if(sockIds != null){
+      Object.keys(sockIds.sockets).forEach(function(socketId) { // for each id, add remove from room
+        io.sockets.sockets[socketId].leave(data.room)
+      });
+    }
+  });
+
+});  // closing brace + bracket to ' io.on('connection', function(socket) { /the code/  '
+
+function getNamesInRoom(roomID){
+  var nameList = [];
+  var sockIds = io.sockets.adapter.rooms[roomID]; // list of connected socket ids in socket property
+
+  if (sockIds != null) { // if room has players in, hence has object
+    Object.keys(sockIds.sockets).forEach(function(socketId) { // for each id, add username to list
+      nameList.push(socketIDToPlayerName.get(socketId));
+    });
+  }
+  return nameList;
+}

@@ -21,12 +21,11 @@ import net.pitchblack.getenjoyment.logic.GameWorld;
 
 public class Player {
 	public static final float SPEED = 1.5f;
-
 	public static final Vector2 SPEED_VECTOR = new Vector2(SPEED, 0);
 	public static final Vector2 PUSH_SPEED_VECTOR = new Vector2(SPEED / 20, 0);
-	public static final float JUMP_FORCE = 5.5f;
 	public static final float TERMINAL_VELOCITY = 10f;
-	private static final int JUMP_LIMIT = 1000; // 2
+	public static final float JUMP_FORCE = 7f;
+	private static final int JUMP_LIMIT = 2; // 2
 	
 	private Vector2 position;
 	private Vector2 velocity;

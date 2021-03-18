@@ -6,26 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 
+import net.pitchblack.getenjoyment.client.GameInstance;
 import net.pitchblack.getenjoyment.entities.BodyFactory;
-import net.pitchblack.getenjoyment.entities.Entity;
 import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.entities.Player.State;
@@ -48,28 +38,31 @@ public class GameWorld {
 	public final float MAP_WIDTH_PX;
 	public final float MAP_HEIGHT_PX;
 
+	private GameInstance gameInstance;
+
 	private World physWorld;
 	private BodyFactory bodyFactory;
-	
-	private TiledMap map;
-	private HashMap<Integer, TiledMap> mapsMap;  // stores all the loaded maps
+
+	private final HashMap<Integer, TiledMap> mapsMap;  // stores all the loaded maps
 	private HashMap<Integer, ArrayList<Body>> mapsCollisionBodiesMap;  // stores bodies for each map
-	private ArrayList<Integer> gameMapSequence;  // the maps selection for the game initially
-	private Random random;
+	private ArrayList<Integer> gameMapSequence;  // the maps selection for the game
+	private final Random random;
 	
 	//private Player player;
-	private HashMap<String, Player> players;
+	private final HashMap<String, Player> players;  // all players
 	//private HashMap<String, Vector2> otherPlayers;  // will be all players in server, so <String, Player>
-	private ArrayList<String> alivePlayers;
-	private ArrayList<String> deadPlayers;
-	private ArrayList<String> toRemove;
-	private int playerCount;
-	
+	private final ArrayList<String> alivePlayers;
+	private final ArrayList<String> deadPlayers;
+	private final ArrayList<String> toRemove;
+	private final ArrayList<String> recentlyDied;
+
 	private Fog fog;
 	private float playerWidth, playerHeight;
 	private float fogWidth, fogHeight;
 
-	public GameWorld(PBAssetManager pbAssetManager) {
+	public GameWorld(PBAssetManager pbAssetManager, GameInstance gameInstance) {
+	    this.gameInstance = gameInstance;
+
 		MapProperties prop = pbAssetManager.getAsset(PBAssetManager.map0).getProperties();
 		MAP_WIDTH_PX = ((float) prop.get("width", Integer.class)) * PPM;
 		MAP_HEIGHT_PX = ((float) prop.get("height", Integer.class)) * PPM;
@@ -81,73 +74,105 @@ public class GameWorld {
 		this.fogWidth = 192;
 		this.fogHeight = MAP_HEIGHT_PX;
 		
-		physWorld = new World(GRAVITY_VECT, true);  // last param tells world to not simulate inactive bodies (ie two equal forces against each other)
-		physWorld.setContactListener(new CollisionListener(this));
+		createB2DWorld();
 		
 		bodyFactory = BodyFactory.getInstance(physWorld);
 		
 		mapsMap = pbAssetManager.getMaps();
-		
-		gameMapSequence = new ArrayList<Integer>();
-		gameMapSequence.add(0); // starting map
-		
+
 		random = new Random();
-		
-		mapsCollisionBodiesMap = new HashMap<Integer, ArrayList<Body>>();
-		mapSetup();
+
+		gameMapSequence = new ArrayList<Integer>();
+		mapsCollisionBodiesMap = new HashMap<Integer, ArrayList<Body>>();  // stores all bodies for each map in here
+		mapSequenceSetup();
 		
 		players = new HashMap<String, Player>();
 		alivePlayers = new ArrayList<String>();
 		deadPlayers = new ArrayList<String>();
 		toRemove = new ArrayList<String>();
-		playerCount = 0;
+        recentlyDied = new ArrayList<String>(); // used by instance client to poll who has died. after, clears list
 		
 		fog = createFog();
 	}
-	
-	private void mapSetup() {
-		// will be random
-		for(int i = 0; i < INITIAL_NUMBER_OF_MAPS; i++) {
-			gameMapSequence.add(getRandomMapNum()); 
-		}
-		
-		for(int i = 0; i < gameMapSequence.size() ; i++ ) {  // cycles through the map sequence. i is the seq number of the map
-			appendMap(gameMapSequence.get(i), i + 1); // +1 as i starts at 0
-			//TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
-			//mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, i + 1));
+
+	private void createB2DWorld(){
+		physWorld = new World(GRAVITY_VECT, true);  // last param tells world to not simulate inactive bodies (ie two equal forces against each other)
+		physWorld.setContactListener(new CollisionListener(this));
+	}
+
+	private void mapSequenceSetup() {  // create list of initial maps at random + add collision bodies to physWorld
+		addMapToGame(0, 1);  // initial map is 0, in pos 1 (not 0 as cannot * by 0 to work out coord
+
+        // start at 2 as pos 1 is taken
+		for (int i = 2; i < INITIAL_NUMBER_OF_MAPS; i++) {
+			addMapToGame(getRandomMapNum(), i); // pos 0 is taken up by map 0, and as loop starts at 0, we +1
 		}
 	}
-	
+
+    private void addMapToGame(int mapNumber, int position){
+        gameMapSequence.add(mapNumber);
+        addMapCollisionBodies(mapNumber, position);
+    }
+
+	private void addMapCollisionBodies(int mapNumber, int position) {  // map body adds bodies to physWorld, and also returns bodies to store in mapsCollisionBodiesMap
+		TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
+		mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, position));
+	}
+
+	public int getRandomMapNum() {
+		int numberOfMaps = mapsMap.size();
+		int mapNo = 0;
+
+		while(mapNo == 0) {
+			mapNo = random.nextInt(numberOfMaps);
+		}
+
+		return mapNo;
+	}
+
 	public void setupPlayers(List<String> playerList) {
 		for(String name : playerList) {
 			createPlayer(name);
 		}
 	}
-	
+
+	private void createPlayer(String id) {
+		Body playerBody = bodyFactory.createBody(playerWidth, playerHeight, START_POS_X, START_POS_Y, BodyDef.BodyType.DynamicBody, PLAYER_USER_DATA + "," + id);
+		playerBody.setLinearVelocity(0, 0);
+		Player p = new Player(id, playerBody, playerWidth / PPM, playerHeight / PPM);
+
+		players.put(id, p);
+		alivePlayers.add(id);
+	}
+
+	private Fog createFog() {
+		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
+		return new Fog(fogBody, fogWidth, fogHeight);
+	}
+
 	public void update(float delta) {
         playingUpdate(delta);
     }
 
 	private void playingUpdate(float delta) {
-		physWorld.step(delta, 8, 3);
+		physWorld.step(delta, 4, 2);
 
 		// check if map needs extending
 		// find biggest x coord
 		// done in the loop for updating players
 		float xCoord = 0;
-		
+
 		// update fog
 		//fog.update(delta, playerCount);
 
 		// update players
 		for(String id : alivePlayers) {
 			Player p = players.get(id);
-			
+
 			// checks if x coord is biggest
 			xCoord = Math.max(p.getX(), xCoord);
-			
-			// death check //
 
+			// death check //
             // is fallen out of map
 			if(p.getY() < 0) {
 				toRemove.add(id);
@@ -156,74 +181,39 @@ public class GameWorld {
 				toRemove.add(id);
 			} else {
 				p.update(delta);
-			}	
+			}
 			//float i = fog.getX() + (fogWidth / GameWorld.PPM);
 			//float j = p.getX() - (playerWidth / GameWorld.PPM);
 			//System.out.println( i + "," + j);
 		}
-		
+
 		// check if xCoord is further that the second to last map
 		if(xCoord * PPM > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
 			int pos = gameMapSequence.size() + 1;
 			int mapNo = getRandomMapNum();
-			appendMap(mapNo, pos);
-			gameMapSequence.add(mapNo);
+			addMapToGame(mapNo, pos);
 		}
 		sweepDeadBodies();
 	}
-	
-	public Player createPlayer(String id) {
-		Body playerBody = bodyFactory.createBody(playerWidth, playerHeight, START_POS_X, START_POS_Y, BodyDef.BodyType.DynamicBody, PLAYER_USER_DATA + "," + id);
-	    playerBody.setLinearVelocity(0, 0);
-	    Player p = new Player(id, playerBody, playerWidth / PPM, playerHeight / PPM);
-	    
-	    players.put(id, p);
-	    alivePlayers.add(id);
-	    playerCount++;
-	    return p;
-	}
 
-	public Fog createFog() {
-		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
-        return new Fog(fogBody, fogWidth, fogHeight);
-	}
-
-	private void appendMap(int mapNumber, int position) {  // position starts from 1
-		TiledMap currentMap = mapsMap.get(mapNumber);  // gets tiled map from map number in i'th position in sequence
-		mapsCollisionBodiesMap.put(mapNumber, MapBodyFactory.getCollisionBodies(currentMap, physWorld, position));
-	}
-
-	public int getRandomMapNum() {
-		int numberOfMaps = mapsMap.size();
-		int mapNo = random.nextInt(numberOfMaps);
-		
-		while(mapNo == 0) {
-			mapNo = random.nextInt(numberOfMaps);
-		}
-		
-		return mapNo;
-	}
-	
-	public void addToKillList(String id) {	
+	public void addToKillList(String id) {	// collision listener finds collision from player to fog, so add to kill list
 		// to check if not already dead, as collision listener can trigger several times
 		if(!deadPlayers.contains(id)){
-			players.get(id).kill();
 			toRemove.add(id);
-			alivePlayers.remove(id);
 		}
 	}
 	
 	// to avoid sync issues with box2d
 	private void sweepDeadBodies() {
 	for(String id : toRemove) {
-			Player p = players.get(id);
-			p.setState(State.DEAD);
-			physWorld.destroyBody(p.getBody());
-			
-			alivePlayers.remove(alivePlayers.indexOf(id));
-			deadPlayers.add(id);
-		}
-		toRemove.clear();
+        Player p = players.get(id);
+        p.kill();
+        physWorld.destroyBody(p.getBody());
+        alivePlayers.remove(id);  // removal by object. arraylist scans for first occurance of id + removes it
+        deadPlayers.add(id);
+    }
+    gameInstance.addToRecentlyDied(toRemove);
+    toRemove.clear();
 	}
 	
 	public boolean isPlayerNull(String id) {
@@ -252,10 +242,6 @@ public class GameWorld {
 	
 	public Player getPlayer(String id){
 		return players.get(id);
-	}
-	
-	public TiledMap getMap() {
-		return map;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -288,6 +274,10 @@ public class GameWorld {
 		return mapSeq;
 	}
 
+	public String[] getRecentlyDied(){
+	    return (String[]) recentlyDied.toArray();
+    }
+
 	public void keyPress(String id, String keyUp, String keyDown) {
 		int keyUpCode = Integer.parseInt(keyUp);
 		int keyDownCode = Integer.parseInt(keyDown);
@@ -302,13 +292,29 @@ public class GameWorld {
 	}
 
 	public boolean finished() {
-		if(deadPlayers.size() - 1 > players.size()) {  // if one player alive
-			return true;
+		if(GameInstance.PLAYER_MAX == 1){
+			// if one player alive
+			return alivePlayers.size() == 0;
+		} else {
+			return alivePlayers.size() == 1;
 		}
-		return false;
+
 	}
 	
-	public Player getWinner() {
-		return players.get(alivePlayers.get(0));
+	public String getWinner() {  // assumes game finished
+		return players.get(alivePlayers.get(0)).getID();
 	}
+
+    public void refreshWorld() {
+		createB2DWorld();
+		mapSequenceSetup();
+		createFog();
+		players.clear();
+		alivePlayers.clear();
+		deadPlayers.clear();
+    }
+
+    public void getDeadPlayers() {
+
+    }
 }
