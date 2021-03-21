@@ -12,10 +12,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.Map;
@@ -41,6 +38,7 @@ import net.pitchblack.getenjoyment.entities.Fog;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen;
 import net.pitchblack.getenjoyment.graphics.screens.GameScreen.GameState;
+import net.pitchblack.getenjoyment.graphics.screens.Hud;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 import net.pitchblack.getenjoyment.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.helpers.SoundManager;
@@ -66,6 +64,8 @@ public class GameRenderer {
 	private OrthographicCamera camera;
 	private Viewport viewport;
 
+	private BitmapFont font;
+	private Hud hud;
 	// private ShapeRenderer shapeRenderer; // draws lines and shapes easily
 
 	private HashMap<Integer, TiledMap> mapMap;
@@ -92,7 +92,7 @@ public class GameRenderer {
 		// placeholder to get properties + to setup map renderer with something
 		TiledMap firstMap = mapMap.get(0);
 		MapProperties prop = firstMap.getProperties();
-		
+
 		MAP_WIDTH = ((float) prop.get("width", Integer.class));
 		MAP_HEIGHT = ((float) prop.get("height", Integer.class));
 
@@ -100,20 +100,24 @@ public class GameRenderer {
 		mapRenderer.setView(camera);
 
 		batcher = new SpriteBatch();
-		batcher.setProjectionMatrix(camera.combined);
 		batcher.enableBlending();  // to enable transparency for images I think
 		batcher.setProjectionMatrix(camera.combined);
-		
+
+		hud = new Hud(batcher);
+		font = new BitmapFont(Gdx.files.internal("skin/arial-15.fnt"), Gdx.files.internal("skin/arial-15.png"), false);
+		font.getData().setScale(0.2f);
+
 		entities = new HashMap<String, Entity>();
 
 		//debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true);
 	}
 
 	public void render(float delta) {
+		hud.update(delta);
 	    /// SCREEN CONTROL ///
-		if(clientPlayer.isDead()){
-			gameScreen.setGameState(GameState.LOSE);
-		}
+//		if(clientPlayer.isDead()){
+//			gameScreen.setGameState(GameState.LOSE);
+//		}
 
 		/// CAMERA CONTROL ///
 		controlCamera();
@@ -126,11 +130,16 @@ public class GameRenderer {
 		renderMaps();
 
 		for (String id : entities.keySet()) {
-			entities.get(id).draw(batcher);
+			Entity e = entities.get(id);
+			e.draw(batcher);
+			font.draw(batcher, e.getName(), e.getX(), e.getY());
 		}
 
 		fog.draw(batcher);
+
 		batcher.end();
+
+		hud.draw();
 
 		// debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}

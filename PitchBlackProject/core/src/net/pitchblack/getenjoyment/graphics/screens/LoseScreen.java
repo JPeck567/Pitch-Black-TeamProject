@@ -3,7 +3,6 @@ package net.pitchblack.getenjoyment.graphics.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -12,7 +11,6 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener.ChangeEvent;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
@@ -36,7 +34,7 @@ public class LoseScreen implements Screen {
 		
 		stage.addActor(table);
 		
-		Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
+		Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.screenSkin);
 		final TextButton backButton = new TextButton("Back to Menu", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
 		
 		backButton.addListener(new ChangeListener() {

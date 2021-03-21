@@ -1,5 +1,6 @@
 package net.pitchblack.getenjoyment.graphics;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Game;
@@ -24,20 +25,20 @@ public class PitchBlackGraphics extends Game {
 		GAME,
 		SETTINGS,
 		WIN,
-		LOSE;
-
-		// CREDITS
+		LOSE,
+		CREDITS
 	}
+
 	private LoginInitiator loginInit;
 
-	private WelcomeScreen welcomeScreen;
-
+	private MenuScreen menuScreen;
 	private LobbyScreen lobbyScreen;
 	private GameScreen gameScreen;
 	private WinScreen winScreen;
 	private LoseScreen loseScreen;
 	private SettingsScreen settingsScreen;
-	//private CreditsScreen creditsScreen;
+	private CreditsScreen creditsScreen;
+
 	private Client client;
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
 
@@ -66,10 +67,10 @@ public class PitchBlackGraphics extends Game {
 	public void changeScreen(Screens screen) {
 		switch (screen) {
 			case MENU:
-				if (welcomeScreen == null) {
-					welcomeScreen = new WelcomeScreen(this, client);
+				if (menuScreen == null) {
+					menuScreen = new MenuScreen(this, client);
 				}
-				this.setScreen(welcomeScreen);
+				this.setScreen(menuScreen);
 				break;
 			case LOBBY:
 				if (lobbyScreen == null) {
@@ -101,11 +102,11 @@ public class PitchBlackGraphics extends Game {
 				}
 				this.setScreen(loseScreen);
 				break;
-//			case CREDITS:
-//				if (creditsScreen == null) {
-//					creditsScreen = new CreditsScreen(this);
-//					this.setScreen(creditsScreen);
-//				}
+			case CREDITS:
+				if (creditsScreen == null) {
+					creditsScreen = new CreditsScreen(this);
+					this.setScreen(creditsScreen);
+				}
 		default:
 			break;
 		}
@@ -115,11 +116,13 @@ public class PitchBlackGraphics extends Game {
 	public void setScreen(Screen screen) {
 		super.setScreen(screen);
 	}
-	public void addLobbyRoomData(HashMap roomUsersMap) {
+
+	public void addLobbyRoomData(HashMap<String, ArrayList<String>> roomUsersMap) {
 		if(lobbyScreen != null){
 			lobbyScreen.addRoomData(roomUsersMap);
 		}
 	}
+
 	public void addLobbyNewPlayer(String username, String room) {
 		if(lobbyScreen != null) {
 			lobbyScreen.addNewPlayer(username, room);

@@ -70,7 +70,7 @@ io.on('connection', function(socket) {
     connection.query('SELECT password FROM users WHERE username = ?', [username], function(error, results, fields) {
       if (error) {
         console.log(error);
-        socket.emit('registerAttempt', {
+        socket.emit('loginAttempt', {
           successful: true,
           message: error.name + ": " + error.message
         });
@@ -88,7 +88,7 @@ io.on('connection', function(socket) {
               username: username,
               message: 'Login successful!'
             });
-            
+
             console.log('Player ' + data.username + ' Connected!');
             playerNameSocketMap.set(data.username, socket);
             socketIDToPlayerName.set(socket.id, data.username);
@@ -137,6 +137,7 @@ io.on('connection', function(socket) {
           successful: false,
           message: error.name + ": " + error.message
         });
+        flag = true
       } else if (results.length != 0) { // if there is result, means that there existing email in the db
         socket.emit('registerAttempt', {
           successful: false,
@@ -153,6 +154,7 @@ io.on('connection', function(socket) {
           successful: false,
           message: error.name + ": " + error.message
         });
+        flag = true
       } else if (results.length != 0) { // if there is a result, means that there existing username found in the db
         socket.emit('registerAttempt', {
           successful: false,
@@ -164,35 +166,37 @@ io.on('connection', function(socket) {
 
     // will only insert data if username or email isn't taken
     if (!flag) {
-          // auto gen a salt and make a hash an async
-          bcrypt.hash(password, SALTROUNDS, function(err, hash) {
-            connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, hash], function(error, results, fields) {
-              if (error) {
-                console.log(error);
-                socket.emit('registerAttempt', {
-                  successful: false,
-                  message: error.name + ": " + error.message
-                });
-              } else {
-                if (results.affectedRows >= 1) {
-                  socket.emit('registerAttempt', {
-                    successful: true,
-                    message: 'Registration successful!'
-                  });
-                } else if (results.affectedRows < 1) {
-                  socket.emit('registerAttempt', {
-                    successful: false,
-                    message: 'Registration unsuccessful - unknown error'
-                  });
-                }
-              }
+      // auto gen a salt and make a hash an async
+      bcrypt.hash(password, SALTROUNDS, function(err, hash) {
+        connection.query('INSERT INTO users (email, username, password) VALUES (?, ?, ?)', [email, username, hash], function(error, results, fields) {
+          if (error) {
+            console.log(error);
+            socket.emit('registerAttempt', {
+              successful: false,
+              message: error.name + ": " + error.message
             });
-
-            connection.end(function(err) {
-              // The connection is terminated now
-            });
-
+          } else {
+            if (results.affectedRows >= 1) {
+              socket.emit('registerAttempt', {
+                successful: true,
+                message: 'Registration successful!'
+              });
+            } else if (results.affectedRows < 1) {
+              socket.emit('registerAttempt', {
+                successful: false,
+                message: 'Registration unsuccessful - unknown error'
+              });
+            }
+          }
+          connection.end(function(err) {
+            // The connection is terminated now
           });
+        });
+      });
+    } else {
+      connection.end(function(err) {
+        // The connection is terminated now
+      });
     }
   });
 
@@ -218,7 +222,7 @@ io.on('connection', function(socket) {
   socket.on('getRooms', function() {
     var roomClientList = {};
 
-    for (let roomID in roomNames) {
+    for (roomID of roomNames) {
       roomClientList[roomID] = getNamesInRoom(roomID);
     }
 
@@ -278,19 +282,23 @@ io.on('connection', function(socket) {
     gameClientSocket.emit('gameKeyPress', data);
   });
 
-  socket.on('removeFromRoom', function(data) {  // if player dies, remove from room
-    for(let playerName in data.diedArray){
-      io.sockets.sockets[playerNameSocketMap.get(playerName).id].leave(data.room);
+  // triggers client LOSE state
+  socket.on('gamePlayerDied', function(data) {  // if player(s) dies, remove from room
+    var diedArray = data.diedArray[0];
+    for(playerName of diedArray){
+      var playerSocket = playerNameSocketMap.get(playerName);
+      playerSocket.leave(data.room);
+      playerSocket.emit('gamePlayerDied');
     }
   });
 
+  // triggers client WIN state
 	socket.on('gameFinish', function(data) {  // game instance updates players still in room with winner & clients return to menu.
 		socket.to(data.room).emit('gameFinish', { winnerName : data.winnerName });
 	});
 
-  socket.on('resetRoom', function(data){ // when game finished, empty room in server, and tell clients
-    socket.to(data.room).emit('emptyRoom');
 
+  socket.on('resetRoom', function(data){ // when game finished, empty room in server, and tell clients
     var sockIds = io.sockets.adapter.rooms[data.room];
 
     if(sockIds != null){
@@ -299,7 +307,6 @@ io.on('connection', function(socket) {
       });
     }
   });
-
 });  // closing brace + bracket to ' io.on('connection', function(socket) { /the code/  '
 
 function getNamesInRoom(roomID){

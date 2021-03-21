@@ -28,6 +28,9 @@ import io.socket.emitter.Emitter;
 
 public class Client {
 	private static final float UPDATE_TIME = 1/60f;
+
+
+
 	public enum ClientState {
 		ACCOUNT,  // logging in / registration
 		LOBBY, // in lobby
@@ -35,46 +38,43 @@ public class Client {
 		IDLE, // does nothing
 		LOADING,  // load entites from given player id's
 		READY,  // finished loading
-		GAME
+		GAME;
 	}
-
 	public enum AccountState {
 		LOGGED_IN,
 		LOGIN_ATTEMPTED,
 		REGISTRATION_ATTEMPTED,
 		LOGGED_OUT;
-	}
 
+	}
 	private PitchBlackGraphics parent;
+
 	private LoginInitiator loginInitiator;
 	private String id;
 	private Socket socket;
 	private String username;
 	private String currentRoom;
-	private float timer;
 	private Boolean isConnected;
-
 	private ClientState clientState;
-	private AccountState accountState;
 
-	private int keyUpCode;
-	private int keyDownCode;
-	
+	private AccountState accountState;
 	public Client(PitchBlackGraphics parent) {
 		this.parent = parent;
-		//this.player = gameRenderer.getPlayer();
+		id = null;
+		socket = null;
+		username = null;
+		currentRoom = null;
 		isConnected = false;
+
 		clientState = ClientState.IDLE;
 		accountState = AccountState.LOGGED_OUT;
-		keyUpCode = -1;
-		keyDownCode = -1;
 	}
-	
+
 	public void beginConnection() {
 		connectSocket();
 		configSocketEvents();
 	}
-	
+
 	public void endConnection() {
 		socket.close();
 		isConnected = false;
@@ -89,7 +89,7 @@ public class Client {
 			System.out.println(e);
 		}
 	}
-	
+
 	public void updateServer(float delta){
 		switch(clientState) {
 //			case INITIATED:
@@ -105,7 +105,7 @@ public class Client {
 						data.put("username", username)
 							.put("room", currentRoom);
 					} catch(JSONException e) { e.printStackTrace(); }
-					
+
 					socket.emit("playerReady", data);
 				}
 				//clientState = ClientState.IDLE;
@@ -124,10 +124,10 @@ public class Client {
 //					} catch(JSONException e){ e.printStackTrace(); }
 //				}
 		default:
-			break;	
+			break;
 		}
 	}
-	
+
 	public void configSocketEvents(){
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 			@Override
@@ -157,7 +157,7 @@ public class Client {
 					username = data.getString("username");
 					message = data.getString("message");
 				} catch (JSONException e) { e.printStackTrace(); }
-				
+
 				loginInitiator.loginResponse(loggedInAttempt, message);
 				if(loggedInAttempt) {
 					accountState = AccountState.LOGGED_IN;
@@ -177,7 +177,7 @@ public class Client {
 					registrationAttempt = data.getBoolean("successful");
 					message = data.getString("message");
 				} catch (JSONException e) { e.printStackTrace(); }
-				
+
 				loginInitiator.registrationResponse(registrationAttempt, message);
 				accountState = AccountState.LOGGED_OUT;
 			}
@@ -191,7 +191,9 @@ public class Client {
 				} catch(JSONException e) { e.printStackTrace(); }
 				if(inLobby) {
 					clientState = ClientState.LOBBY;
-				}  // if not don't change state, and message lobby not conn. so go back
+				} else {
+					clientState = ClientState.IDLE;
+				}
 			}
 		}).on("roomList", new Emitter.Listener() {
 			public void call(Object... args) {
@@ -215,9 +217,9 @@ public class Client {
 					room = data.getString("room");
 					username = data.getString("username");
 				} catch(JSONException e) { e.printStackTrace(); }
-				parent.addLobbyNewPlayer(username, room);	// TODO: then send message to lobby screen with new player in room
+				parent.addLobbyNewPlayer(username, room);
 			}
-				
+
 //		}).on("joinedLobbyResponse", new Emitter.Listener() {
 //			public void call(Object... args) {
 //				Boolean response = false;
@@ -225,13 +227,13 @@ public class Client {
 //				try {
 //					response = data.getBoolean("response");
 //				} catch(JSONException e) { e.printStackTrace(); }
-//				
+//
 //				if(response) {
 //					clientState = ClientState.LOBBY;
 //				} else {
 //					// TODO: tell lobby error
 //				}
-//			}	
+//			}
 		}).on("joinRoomResponse", new Emitter.Listener() {
 			public void call(Object... args) {
 				boolean response = false;
@@ -264,13 +266,12 @@ public class Client {
 				} catch(JSONException e) { e.printStackTrace(); }
 				clientState = ClientState.LOADING;
 				parent.setupGameScreen(playerData, fogData, mapData);
-
 			}
 		}).on("gameCountdown", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
 				//TODO: alert lobby to countdown
-			}		
+			}
 		}).on("gameBegin", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
@@ -289,8 +290,13 @@ public class Client {
 					playerData = data.getString("playerData");
 					fogData = data.getString("fogData");
 					mapData = data.getString("mapData");
-				} catch(JSONException e) { e.printStackTrace(); }
+				} catch (JSONException e) { e.printStackTrace(); }
 				parent.addGameData(playerData, fogData, mapData);
+			}
+		}).on("gamePlayerDied", new Emitter.Listener() {
+			@Override
+			public void call(Object... args){
+				parent.gameScreenSetState(GameState.LOSE);
 			}
 		}).on("gameFinish", new Emitter.Listener() {
 			@Override
@@ -316,7 +322,7 @@ public class Client {
 	public void tick(float delta) {
 		updateServer(delta);
 	}
-	
+
 	public void emitSendLogin(String username, String password, LoginInitiator loginInit) {
 		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
@@ -327,7 +333,7 @@ public class Client {
 		socket.emit("login", data);
 		accountState = AccountState.LOGIN_ATTEMPTED;
 	}
-	
+
 	public void emitSendRegistration(String email, String username, String password, LoginInitiator loginInit) {
 		loginInitiator = loginInit;
 		JSONObject data = new JSONObject();
@@ -339,7 +345,7 @@ public class Client {
 		socket.emit("register", data);
 		accountState = AccountState.REGISTRATION_ATTEMPTED;
 	}
-	
+
 	public void emitPlayerClientInit() {
 		JSONObject data = new JSONObject();
 		try{
@@ -347,7 +353,7 @@ public class Client {
 		} catch(JSONException e) { e.printStackTrace(); }
 		clientState = ClientState.IDLE;
 	}
-	
+
 	public void emitJoinLobby() {
 		JSONObject data = new JSONObject();
 		try{
@@ -355,7 +361,7 @@ public class Client {
 		} catch(JSONException e) { e.printStackTrace(); }
 		socket.emit("joinLobby", data);
 	}
-	
+
 	public void emitJoinRoomRequest(String room) {
 		JSONObject data = new JSONObject();
 		try{
@@ -364,11 +370,11 @@ public class Client {
 		} catch(JSONException e) { e.printStackTrace(); }
 		socket.emit("joinRoomRequest", data);
 	}
-	
+
 	public void emitGetRooms() {
 		socket.emit("getRooms");
 	}
-	
+
 	public void emitKeyDown(int keycode) {
 		JSONObject data = new JSONObject();
 		try {
@@ -379,7 +385,7 @@ public class Client {
 			socket.emit("gameKeyPress", data);
 		} catch(JSONException e){ e.printStackTrace(); }
 	}
-	
+
 	public void emitKeyUp(int keycode) {
 		JSONObject data = new JSONObject();
 		try {
@@ -400,17 +406,21 @@ public class Client {
 	}
 
 	public boolean isPlaying() { return clientState == ClientState.GAME; }
-	
+
 	public void setAccountState(AccountState accountState) {
 		this.accountState = accountState;
 	}
-	
+
 	public AccountState getAccountState() {
 		return accountState;
 	}
 
 	public boolean isInLobby() {
 		return clientState == ClientState.LOBBY;
+	}
+
+	public void resetCurrentRoom() {
+		currentRoom = null;
 	}
 
 }

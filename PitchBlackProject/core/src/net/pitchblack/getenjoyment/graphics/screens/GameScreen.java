@@ -79,6 +79,13 @@ public class GameScreen implements Screen {
 		this.gameState = gameState;
 	}
 
+	// go from game state back to normal as would be from menu
+	private void resetFromGameState(){
+		client.setClientState(ClientState.IDLE);
+		client.resetCurrentRoom();
+		gameRenderer.resetRenderer();
+	}
+
 	@Override
 	public void show() {
 		// TODO Auto-generated method stub
@@ -91,15 +98,11 @@ public class GameScreen implements Screen {
 				gameRenderer.render(delta);
 				break;
 			case WIN:
-				gameState = GameState.WIN;
-				client.setClientState(ClientState.IDLE);
-				gameRenderer.resetRenderer();
+				resetFromGameState();
 				parent.changeScreen(Screens.WIN);
 				break;
 			case LOSE:
-				gameState = GameState.LOSE;
-				client.setClientState(ClientState.IDLE);
-				gameRenderer.resetRenderer();
+				resetFromGameState();
 				parent.changeScreen(Screens.LOSE);
 				break;
 		}

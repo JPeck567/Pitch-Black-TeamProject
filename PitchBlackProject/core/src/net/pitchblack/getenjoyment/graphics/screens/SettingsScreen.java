@@ -53,7 +53,7 @@ public class SettingsScreen implements Screen  {
 		table.setDebug(false);
 		
 		stage.addActor(table);
-		Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
+		Skin skin = new Skin(Gdx.files.internal("skin/flat-earth-ui.json"));
 		Skin fontSkin = new Skin (Gdx.files.internal("skin/glassy-ui.json"));
 		
 		Label titleLabel = new Label( "SETTINGS", fontSkin);
@@ -70,31 +70,30 @@ public class SettingsScreen implements Screen  {
 		
 		//Sliders
 		final Slider volumeMusicSlider = new Slider( 0f, 1f, 0.25f,false, skin );
-			volumeMusicSlider.setValue(PreferencesManager.getMusicVolume());
-			volumeMusicSlider.addListener( new ChangeListener() {
-				public void changed(ChangeEvent event, Actor actor) {
-					music.setVolume(volumeMusicSlider.getValue());
-					PreferencesManager.setMusicVolume(volumeMusicSlider.getValue());
-					
-				}
-			});
+		volumeMusicSlider.setValue(PreferencesManager.getMusicVolume());
+		volumeMusicSlider.addListener( new ChangeListener() {
+			public void changed(ChangeEvent event, Actor actor) {
+				music.setVolume(volumeMusicSlider.getValue());
+				PreferencesManager.setMusicVolume(volumeMusicSlider.getValue());
+
+			}
+		});
 			
-			final Slider soundMusicSlider = new Slider( 0f, 1f, 0.25f,false, skin );
-			soundMusicSlider.setValue(PreferencesManager.getSoundVolume());
-			soundMusicSlider.addListener( new ChangeListener() {
-				public void changed(ChangeEvent event, Actor actor) {
-					sound.setVolume(soundMusicSlider.getValue());
-					PreferencesManager.setSoundVolume(soundMusicSlider.getValue());
-					
-				}
-			});	
-		
-		
+		final Slider soundMusicSlider = new Slider( 0f, 1f, 0.25f,false, skin );
+		soundMusicSlider.setValue(PreferencesManager.getSoundVolume());
+		soundMusicSlider.addListener( new ChangeListener() {
+			public void changed(ChangeEvent event, Actor actor) {
+				sound.setVolume(soundMusicSlider.getValue());
+				PreferencesManager.setSoundVolume(soundMusicSlider.getValue());
+
+			}
+		});
+
 		//CheckBox
 		final CheckBox musicCheckbox = new CheckBox(null, skin);
-			musicCheckbox.setChecked( PreferencesManager.isMusicEnabled() );
-			musicCheckbox.addListener( new EventListener() {
-			   	@Override
+		musicCheckbox.setChecked( PreferencesManager.isMusicEnabled() );
+		musicCheckbox.addListener( new EventListener() {
+			@Override
 			public boolean handle(Event event) {
 			       	boolean enabled = musicCheckbox.isChecked();
 			       	PreferencesManager.setMusicEnabled( enabled );
@@ -107,57 +106,57 @@ public class SettingsScreen implements Screen  {
                     }
 			       	return false;
 				}
-			});
+		});
 			
-			final CheckBox soundEffectsCheckbox = new CheckBox(null, skin);
-			soundEffectsCheckbox.setChecked( PreferencesManager.isSoundEnabled() );
-			soundEffectsCheckbox.addListener( new EventListener() {
-			   	@Override
+		final CheckBox soundEffectsCheckbox = new CheckBox(null, skin);
+		soundEffectsCheckbox.setChecked( PreferencesManager.isSoundEnabled() );
+		soundEffectsCheckbox.addListener( new EventListener() {
+			@Override
 			public boolean handle(Event event) {
-			       	boolean enabled = soundEffectsCheckbox.isChecked();
-			       	PreferencesManager.setSoundEnabled( enabled );
-			       	PreferencesManager.isSoundEnabled();
-			       	if(enabled == false) {
-			       		PreferencesManager.setSoundEnabled(false);
-			       	}
-
-			       	return false;
+					boolean enabled = soundEffectsCheckbox.isChecked();
+					PreferencesManager.setSoundEnabled( enabled );
+					PreferencesManager.isSoundEnabled();
+					if(!enabled) {
+						PreferencesManager.setSoundEnabled(false);
+					}
+					return false;
 				}
-			});
+		});
 			
 			// return to main screen button
-			final TextButton backButton = new TextButton("Back", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
-				
-			backButton.addListener(new ChangeListener() {
-				@Override
-				public void changed(ChangeEvent event, Actor actor) {
-					parent.changeScreen(Screens.MENU);
-					if(PreferencesManager.isSoundEnabled() == true) {
-						sound.setVolume(PreferencesManager.getSoundVolume());
-						sound.play( PitchBlackSound.CLICK );
-					}
-				}
-			});
-			
-			stage.addActor(musicCheckbox);
-			stage.addActor(soundEffectsCheckbox);
-			stage.addActor(backButton);
+		final TextButton backButton = new TextButton("Back", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
 
-			table.row().pad(10, 0, 10, 0); 
-			table.add(volumeMusicLabel).left();
-			table.add(volumeMusicSlider);
-			table.row();
-			table.add(musicOnOffLabel).left();
-			table.add(musicCheckbox);
-			table.row().pad(10, 0, 10, 0); 
-			table.add(volumeSoundLabel).left();
-			table.add(soundMusicSlider);
-			table.row();
-			table.add(soundOnOffLabel).left();
-			table.add(soundEffectsCheckbox);
-			table.row().pad(10, 0, 10, 0); 
-			table.add(backButton);
-	}
+		backButton.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				parent.changeScreen(Screens.MENU);
+				if(PreferencesManager.isSoundEnabled() == true) {
+					sound.setVolume(PreferencesManager.getSoundVolume());
+					sound.play( PitchBlackSound.CLICK );
+				}
+			}
+		});
+			
+		stage.addActor(musicCheckbox);
+		stage.addActor(soundEffectsCheckbox);
+		stage.addActor(backButton);
+
+		table.add(titleLabel).colspan(2);
+		table.row().pad(10, 0, 10, 0);
+		table.add(volumeMusicLabel).left();
+		table.add(volumeMusicSlider);
+		table.row();
+		table.add(musicOnOffLabel).left();
+		table.add(musicCheckbox);
+		table.row().pad(10, 0, 10, 0);
+		table.add(volumeSoundLabel).left();
+		table.add(soundMusicSlider);
+		table.row();
+		table.add(soundOnOffLabel).left();
+		table.add(soundEffectsCheckbox);
+		table.row().pad(10, 0, 10, 0);
+		table.add(backButton);
+}
 
 	@Override
 	public void show() {

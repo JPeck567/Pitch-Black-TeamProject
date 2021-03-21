@@ -185,13 +185,14 @@ public class GameInstancesClient implements ApplicationListener {
 		socket.emit("gameFinish", data);
 	}
 
-    public void emitRemoveFromRoom(String room, ArrayList<String> recentlyDied) {
+    public void emitGamePlayerDied(String room, ArrayList<String> recentlyDied) {
         JSONObject data = new JSONObject();
+
         try{
             data.put("room", room)
                 .put("diedArray", new JSONArray().put(recentlyDied));
         } catch (JSONException e) { e.printStackTrace(); }
-        socket.emit("removeFromRoom", data);
+        socket.emit("gamePlayerDied", data);
     }
 
 	public void emitResetRoom(String roomName) {

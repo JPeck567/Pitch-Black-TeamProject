@@ -2,19 +2,8 @@ package net.pitchblack.getenjoyment.client;
 
 import java.util.ArrayList;
 
-import com.badlogic.gdx.Game;
 import net.pitchblack.getenjoyment.helpers.PBAssetManager;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.ApplicationListener;
-import com.badlogic.gdx.Gdx;
-
-import io.socket.client.IO;
-import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
 import net.pitchblack.getenjoyment.entities.Player;
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
@@ -85,16 +74,18 @@ public class GameInstance {
 				if(timer >= COUNTDOWN_INTERVAL) {  // 5 seconds
 					instanceClient.emitGameBegin(roomName);
 					gameState = GameState.PLAYING;
+					System.out.println("Room " + roomName + "starting game");
 				}
 				break;
 			case PLAYING:
 				gameWorld.update(timePassed);
-				instanceClient.emitGameUpdate(roomName, gameWorld.getPlayerData(), gameWorld.getFogData(), gameWorld.getMapSequence());
 
 				if(recentlyDied.size() > 0){
-				    instanceClient.emitRemoveFromRoom(roomName, recentlyDied);
-				    recentlyDied.clear();
-                }
+					instanceClient.emitGamePlayerDied(roomName, recentlyDied);
+					recentlyDied.clear();
+				}
+
+				instanceClient.emitGameUpdate(roomName, gameWorld.getPlayerData(), gameWorld.getFogData(), gameWorld.getMapSequence());
 
 				if(gameWorld.finished()) {
 					gameState = GameState.FINISH;
@@ -105,6 +96,10 @@ public class GameInstance {
 				String winnerName = (PLAYER_MAX > 1) ? gameWorld.getWinner() : ""; // if playing with others, get winner
 				instanceClient.emitGameFinish(roomName, winnerName);
 				instanceClient.emitResetRoom(roomName);
+
+				refreshInstance();
+				gameState = GameState.WAITING;
+				System.out.println("Room " + roomName + "refreshing game");
 			default:
 				break;
 		}

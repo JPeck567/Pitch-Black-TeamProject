@@ -1,32 +1,20 @@
 package net.pitchblack.getenjoyment.helpers;
 
-import java.nio.MappedByteBuffer;
 import java.util.HashMap;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetDescriptor;
-import com.badlogic.gdx.assets.AssetLoaderParameters;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.assets.loaders.SkinLoader;
-import com.badlogic.gdx.assets.loaders.TextureLoader;
-import com.badlogic.gdx.assets.loaders.resolvers.LocalFileHandleResolver;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.Texture.TextureFilter;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.MapLayers;
-import com.badlogic.gdx.maps.tiled.BaseTmxMapLoader;
 import com.badlogic.gdx.maps.tiled.TiledMap;
-import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.TmxMapLoader.Parameters;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 public class PBAssetManager{  // can't make into singleton, as may corrupt textures in libGDX
 	public final AssetManager manager;
 	
 	// TODO: use texture atlas for skin + eventually player sprite sheets
-    public static final AssetDescriptor<Skin> menuSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.atlas"));
+    public static final AssetDescriptor<Skin> screenSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.atlas"));
     public static final AssetDescriptor<Texture> menuBackground = new AssetDescriptor<Texture>("background/background.png", Texture.class);
     public static final AssetDescriptor<Texture> gameOverBackground = new AssetDescriptor<Texture>("background/gameOverBackGround.png", Texture.class);
 	public static final AssetDescriptor<Texture> winBackground = new AssetDescriptor<Texture>("background/winScreenBackground.png", Texture.class);
@@ -47,7 +35,7 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     }
         
     public void loadMenuAssets() {
-    	manager.load(menuSkin);
+    	manager.load(screenSkin);
     	manager.load(menuBackground);
     	manager.load(gameOverBackground);
     	manager.load(winBackground);

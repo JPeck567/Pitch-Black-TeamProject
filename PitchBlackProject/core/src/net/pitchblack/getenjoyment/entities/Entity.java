@@ -14,11 +14,11 @@ public class Entity extends Sprite {
 	private boolean movementLeft;
 	private boolean movementRight;
 
-	public enum Type {
+    public enum Type {
 		PLAYER,
 		FOG;
-	}
 
+	}
 	public enum EntityState {
 		  ASCENDING,
 		  DESCENDING,
@@ -26,8 +26,8 @@ public class Entity extends Sprite {
 		  LEFT,
 		  RIGHT,
 		  DEAD;
-	}
 
+	}
 	public Entity(String id, Type type, EntityState moveState, PBAssetManager pbAssetManager) {
 		super(getTextureFromType(type, pbAssetManager));
 		this.id = id;
@@ -81,6 +81,10 @@ public class Entity extends Sprite {
 
 	public void setState(EntityState entityState) {
 		this.entityState = entityState;
+	}
+
+	public String getName() {
+		return id;
 	}
 
 	public Type getType() {

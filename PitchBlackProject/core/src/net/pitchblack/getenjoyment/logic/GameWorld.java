@@ -71,7 +71,7 @@ public class GameWorld {
 		this.playerWidth = playerTexture.getWidth();
 		this.playerHeight = playerTexture.getHeight();
 		
-		this.fogWidth = 192;
+		this.fogWidth = 1950;
 		this.fogHeight = MAP_HEIGHT_PX;
 		
 		createB2DWorld();
@@ -146,7 +146,7 @@ public class GameWorld {
 	}
 
 	private Fog createFog() {
-		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -5), fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
+		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, (fogWidth * -2) / 3, fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
 		return new Fog(fogBody, fogWidth, fogHeight);
 	}
 
