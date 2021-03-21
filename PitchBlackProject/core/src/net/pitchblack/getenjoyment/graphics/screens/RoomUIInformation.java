@@ -51,7 +51,6 @@ public class RoomUIInformation {;
         if(playersInRoomTextArea.getLines() < playersInRoom.size()){  // if text area out of date
             playersInRoomTextArea.setText(getPlayersInRoomString());
         }
-
     }
 
     private String getPlayersInRoomString(){

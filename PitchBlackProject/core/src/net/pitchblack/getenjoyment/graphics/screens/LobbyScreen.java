@@ -46,6 +46,8 @@ public class LobbyScreen implements Screen {
 	private Label roomTitle;
 	private Label capacityTakenTitle;
 
+	private TextArea currentPlayersInRoomTextArea;
+
 	private TextButton backButton;
 	private TextButton joinButton;
 
@@ -68,6 +70,7 @@ public class LobbyScreen implements Screen {
 
 		roomTitle = new Label("Room", skin,"title");
 		capacityTakenTitle = new Label("Capacity", skin, "title");
+        currentPlayersInRoomTextArea = null;
 
 		backButton = new TextButton("Back", skin);
 		backButton.addListener(new ChangeListener() {
@@ -82,7 +85,7 @@ public class LobbyScreen implements Screen {
         });
 
 		joinButton = new TextButton("Join Room", skin);
-        backButton.addListener(new ChangeListener() {
+        joinButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 client.emitJoinRoomRequest(roomViewed.getRoomName());
@@ -130,19 +133,21 @@ public class LobbyScreen implements Screen {
 		roomTable.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("background/backgroundDark.jpg"))));
 		roomTable.setFillParent(true);
 		roomTable.setDebug(false);
-		roomTable.addActor(roomTable);
-		roomTable.addActor(joinButton);
+		roomStage.addActor(roomTable);
+		roomStage.addActor(joinButton);
 
-		roomTable.add(roomViewed.getPlayersInRoomTextArea());
+		roomTable.add(currentPlayersInRoomTextArea);
 		roomTable.row();
 		roomTable.add(joinButton);
 	}
 
-	private void addListenerToViewRoomButton(TextButton button, final String roomName) {
+    private void addListenerToViewRoomButton(TextButton button, final String roomName) {
 		button.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+                Gdx.input.setInputProcessor(roomStage);
 				roomViewed = roomMap.get(roomName);
+				currentPlayersInRoomTextArea = roomViewed.getPlayersInRoomTextArea();
 				createRoomTable();
 			}
 		});
@@ -153,13 +158,12 @@ public class LobbyScreen implements Screen {
         for(String roomName : roomUsersMap.keySet()){
             roomMap.put(roomName, new RoomUIInformation(roomName, roomUsersMap.get(roomName), skin, fontSkin));
         }
-
-		Gdx.app.postRunnable(new Runnable() {  // requires openGL context from libGDX render thread
-			@Override
-			public void run() {
-				createAllRoomsScene();
-			}
-		});
+        Gdx.app.postRunnable(new Runnable() {  // requires openGL context from libGDX render thread
+            @Override
+            public void run() {
+                createAllRoomsScene();
+            }
+        });
 	}
 
 	public void joinRoomResponse(Boolean joined, String room, String message) {

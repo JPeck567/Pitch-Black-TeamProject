@@ -105,7 +105,7 @@ public class GameRenderer {
 
 		hud = new Hud(batcher);
 		font = new BitmapFont(Gdx.files.internal("skin/arial-15.fnt"), Gdx.files.internal("skin/arial-15.png"), false);
-		font.getData().setScale(0.2f);
+		font.getData().setScale(1/PPM);
 
 		entities = new HashMap<String, Entity>();
 
