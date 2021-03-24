@@ -282,8 +282,8 @@ s*/
     socket.to(data.room).emit('gameCountdown');
   });
 
-  socket.on('gameBegin', function(data) { // game client starts game, notif players
-    io.to(LOBBYROOM).emit('gameInSession', { room : data.room})
+  socket.on('gameBegin', function(data) { // game client starts game, notif players + lobby clients
+    io.to(LOBBYROOM).emit('gameInSession', { session : true, room : data.room});
     socket.to(data.room).emit('gameBegin');
   });
 

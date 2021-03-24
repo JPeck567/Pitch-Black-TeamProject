@@ -65,8 +65,6 @@ public class GameRenderer {
 	private OrthographicCamera camera;
 	private Viewport viewport;
 
-	private BitmapFont font;
-
 	// private ShapeRenderer shapeRenderer; // draws lines and shapes easily
 
 	private HashMap<Integer, TiledMap> mapMap;
@@ -108,10 +106,6 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 
 		hud = new Hud(batcher);
-		font = new BitmapFont();
-		font.setColor(Color.WHITE);
-		font.getData().setScale(0.5f);
-
 
 		//debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true);
 	}
@@ -138,7 +132,7 @@ public class GameRenderer {
 		for (String id : entities.keySet()) {
 			Entity e = entities.get(id);
 			e.draw(batcher);
-			font.draw(batcher, e.getName(), e.getX(), e.getY());
+			//gameScreen.drawText(batcher, e.getName(), e.getX(), e.getY());
 		}
 
 		fog.draw(batcher);

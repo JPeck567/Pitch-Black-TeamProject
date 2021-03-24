@@ -80,7 +80,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8081");
+			socket = IO.socket("http://localhost:8081"); //https://68582efdc943.ngrok.io/
 			socket.connect();
 			isConnected = true;
 		} catch (Exception e) {

@@ -117,7 +117,7 @@ public class GameInstance {
 	}
 
 	public void addPlayerToRoom(String username) {
-        if (gameState != GameState.WAITING) {  // if not waiting for players
+        if (gameState == GameState.WAITING) {  // if not waiting for players
             if (players.size() < PLAYER_MAX) {
                 if (players.contains(username)) {
                     instanceClient.emitJoinRoomResponse(false, username, roomName, "Player already in room");
@@ -129,7 +129,7 @@ public class GameInstance {
                 instanceClient.emitJoinRoomResponse(false, username, roomName, "Room full!");
             }
         } else if (gameState == GameState.PLAYING) {
-                instanceClient.emitJoinRoomResponse(false, username, roomName, "Game is in progress!");
+            instanceClient.emitJoinRoomResponse(false, username, roomName, "Game is in progress!");
         }
 	}
 

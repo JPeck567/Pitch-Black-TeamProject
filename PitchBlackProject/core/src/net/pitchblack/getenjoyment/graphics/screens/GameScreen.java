@@ -3,8 +3,11 @@ package net.pitchblack.getenjoyment.graphics.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -28,6 +31,8 @@ public class GameScreen implements Screen {
 	private PBAssetManager pbManager;
 	private InputHandler inputHandler;
 	private GameRenderer gameRenderer;
+	private BitmapFont font;
+	private SpriteBatch fontBatcher;
 
 	public enum GameState {
 		IDLE,
@@ -45,6 +50,9 @@ public class GameScreen implements Screen {
 		PBAssetManager pbManager = parent.pbAssetManager;
 		inputHandler = new InputHandler(this);
 		gameRenderer = new GameRenderer(this, client, pbManager);
+		font = new BitmapFont();
+		font.setColor(Color.WHITE);
+		fontBatcher = new SpriteBatch();
 		gameState = GameState.IDLE;
 
 		this.client = client;
@@ -76,12 +84,19 @@ public class GameScreen implements Screen {
 		}
 	}
 
+	public void drawText(SpriteBatch batcher, String text, float x, float y){
+		//fontBatcher.begin();
+		font.draw(fontBatcher, text, x, y);
+		//fontBatcher.end();
+	}
+
 	public void setGameState(GameState gameState){
 		this.gameState = gameState;
 	}
 
 	// go from game state back to normal as would be from menu
 	private void resetFromGameState(){
+		gameState = GameState.IDLE;
 		client.setClientState(ClientState.IDLE);
 		client.resetCurrentRoom();
 		gameRenderer.resetRenderer();
@@ -116,8 +131,6 @@ public class GameScreen implements Screen {
 		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();
 
 		gameRenderer.getHud().getStage().getViewport().update(width, height, true);
-
-
 	}
 
 	@Override

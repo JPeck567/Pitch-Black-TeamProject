@@ -209,7 +209,6 @@ public class GameInstancesClient implements ApplicationListener {
 
     public void emitGamePlayerDied(String room, ArrayList<String> recentlyDied) {
         JSONObject data = new JSONObject();
-
         try{
             data.put("room", room)
                 .put("diedArray", new JSONArray().put(recentlyDied));

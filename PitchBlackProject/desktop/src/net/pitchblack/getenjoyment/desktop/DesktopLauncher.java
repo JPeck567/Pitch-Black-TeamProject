@@ -8,7 +8,7 @@ import net.pitchblack.getenjoyment.client.Client;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
 
-    public class DesktopLauncher {
+public class DesktopLauncher {
 	public static void main(String[] args) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.title = "Pitch Black";

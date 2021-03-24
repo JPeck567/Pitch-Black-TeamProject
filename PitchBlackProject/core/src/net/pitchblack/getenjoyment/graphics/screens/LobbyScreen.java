@@ -94,7 +94,7 @@ public class LobbyScreen implements Screen {
 				}
 				parent.changeScreen(Screens.MENU);
 			}
-        });
+   	     });
 
         backToAllRoomsButton.addListener(new ChangeListener() {
 			@Override
