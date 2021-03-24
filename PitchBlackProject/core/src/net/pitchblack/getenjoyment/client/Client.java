@@ -80,7 +80,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8081"); //https://68582efdc943.ngrok.io/
+			socket = IO.socket("http://localhost:8081"); //
 			socket.connect();
 			isConnected = true;
 		} catch (Exception e) {
@@ -226,6 +226,21 @@ public class Client {
 					username = data.getString("username");
 				} catch(JSONException e) { e.printStackTrace(); }
 				parent.removeLobbyPlayer(username, room);
+            }
+        }).on("gameInSession", new Emitter.Listener() {
+            public void call(Object... args) {
+                String room = null;
+                boolean inSession = false;
+                JSONObject data = (JSONObject) args[0];
+                try {
+                    room = data.getString("room");
+                    inSession = data.getBoolean("inSession");
+                } catch(JSONException e) { e.printStackTrace(); }
+                if(inSession){
+                    parent.lobbyRoomInSession(room);
+                } else {
+                    parent.lobbyResetRoom(room);
+                }
             }
         }).on("resetRoom", new Emitter.Listener() {
             public void call(Object... args) {

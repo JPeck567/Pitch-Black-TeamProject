@@ -296,7 +296,6 @@ public class GameWorld {
 		} else {
 			return alivePlayers.size() == 1;
 		}
-
 	}
 	
 	public String getWinner() {  // assumes game finished

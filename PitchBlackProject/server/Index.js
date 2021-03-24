@@ -283,7 +283,7 @@ s*/
   });
 
   socket.on('gameBegin', function(data) { // game client starts game, notif players + lobby clients
-    io.to(LOBBYROOM).emit('gameInSession', { session : true, room : data.room});
+    io.to(LOBBYROOM).emit('gameInSession', { inSession : true, room : data.room});
     socket.to(data.room).emit('gameBegin');
   });
 
@@ -322,10 +322,7 @@ s*/
         io.sockets.sockets[socketId].leave(data.room)
       });
     }
-
-    io.to(LOBBYROOM).emit('resetRoom', {  // tell clients to reset their lobby room ui user list
-      room: data.room
-    });
+    io.to(LOBBYROOM).emit('gameInSession', { inSession : false, room : data.room}); // tell clients to reset their lobby room ui user list
   });
 });  // closing brace + bracket from ' io.on('connection', function(socket) { /* the code */  '
 

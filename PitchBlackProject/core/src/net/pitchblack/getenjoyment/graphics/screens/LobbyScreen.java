@@ -94,7 +94,7 @@ public class LobbyScreen implements Screen {
 				}
 				parent.changeScreen(Screens.MENU);
 			}
-   	     });
+        });
 
         backToAllRoomsButton.addListener(new ChangeListener() {
 			@Override
@@ -236,6 +236,10 @@ public class LobbyScreen implements Screen {
         roomMap.get(room).removePlayer(username);
     }
 
+	public void setRoomInSession(String room) {
+		roomMap.get(room).setToInSession();
+	}
+
     public void resetRoom(String room) {
         roomMap.get(room).resetRoom();
     }
@@ -259,6 +263,11 @@ public class LobbyScreen implements Screen {
 				allRoomsStage.act();
 				allRoomsStage.draw();
 			} else {
+				if(roomViewed.isInSession()){
+					if(joinButton.isVisible()) joinButton.setVisible(false);
+				} else {
+					if(!joinButton.isVisible()) joinButton.setVisible(true);
+				}
 				roomStage.act();
 				roomStage.draw();
 			}

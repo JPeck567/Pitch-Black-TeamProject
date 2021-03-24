@@ -20,7 +20,7 @@ public class PitchBlackGraphics extends Game {
 	public static final String LOG = "PitchBlack";
 
 
-    public enum Screens{
+	public enum Screens{
 		MENU,
 		LOBBY,
 		GAME,
@@ -29,23 +29,24 @@ public class PitchBlackGraphics extends Game {
 		LOSE,
 		CREDITS;
 
+
 	}
 	private LoginInitiator loginInit;
 	private MenuScreen menuScreen;
-
 	private LobbyScreen lobbyScreen;
 
 	private GameScreen gameScreen;
+
 	private WinScreen winScreen;
 	private LoseScreen loseScreen;
 	private SettingsScreen settingsScreen;
 	private CreditsScreen creditsScreen;
 	private Client client;
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
-
 	public PitchBlackGraphics(){
 		client = new Client(this);
 	}
+
 	@Override
 	public void create() {
 		// Load assets first
@@ -63,7 +64,6 @@ public class PitchBlackGraphics extends Game {
 			   }
 			}).start();
 	}
-
 	public void changeScreen(Screens screen) {
 		switch (screen) {
 			case MENU:
@@ -83,6 +83,8 @@ public class PitchBlackGraphics extends Game {
 			case GAME:
 				if (screenIsNull(gameScreen)) {
 					gameScreen = new GameScreen(this, client);
+				} else {
+					gameScreen.restartGame();
 				}
 				this.setScreen(gameScreen);
 				break;
@@ -146,11 +148,16 @@ public class PitchBlackGraphics extends Game {
 			lobbyScreen.joinRoomResponse(joined, room, message);
 		}
 	}
+
 	public boolean isLobbyScreenReady() {
 		if(screenIsNull(lobbyScreen)){
 			return false;
 		}
 		return lobbyScreen.ready();
+	}
+
+	public void lobbyRoomInSession(String room) {
+		lobbyScreen.setRoomInSession(room);
 	}
 
 	public void setupGameScreen(final String playerData, final String fogData, final String mapData) {

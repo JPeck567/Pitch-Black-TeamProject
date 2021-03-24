@@ -59,8 +59,13 @@ public class GameScreen implements Screen {
 
 		Gdx.input.setInputProcessor(inputHandler);
 
-		//MusicManager music = new MusicManager();
         MusicManager.getInstance().play(PitchBlackMusic.GAME);
+		MusicManager.getInstance().setVolume(PreferencesManager.getMusicVolume());
+	}
+
+	public void restartGame(){ // setup game screen to get input
+		Gdx.input.setInputProcessor(inputHandler);
+		MusicManager.getInstance().play(PitchBlackMusic.GAME);
 		MusicManager.getInstance().setVolume(PreferencesManager.getMusicVolume());
 	}
 	
@@ -107,6 +112,7 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
+		System.out.println(gameState);
 		switch (gameState){
 			case PLAYING:
 				gameRenderer.render(delta);

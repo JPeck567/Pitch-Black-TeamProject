@@ -51,12 +51,13 @@ public class RoomUIInformation {;
     }
 
     private void updatePlayerInRoomTextArea() {
-        int playersInRoomSize = playersInRoom.size();
-
-        if(playersInRoomSize == 0) {  // no players in room
-            playersInRoomTextArea.setText("There are no players in room " + roomName);
-        } else {  // update text
-            playersInRoomTextArea.setText(getPlayersInRoomString());
+        if(!sessionInProgress) {
+            int playersInRoomSize = playersInRoom.size();
+            if (playersInRoomSize == 0) {  // no players in room
+                playersInRoomTextArea.setText("There are no players in room " + roomName);
+            } else {  // update text
+                playersInRoomTextArea.setText(getPlayersInRoomString());
+            }
         }
     }
 
@@ -84,7 +85,13 @@ public class RoomUIInformation {;
         updateUIComponents();
     }
 
+    public void setToInSession() {
+        capacityTakenLabel.setText("Room in game session");
+        sessionInProgress = true;
+    }
+
     public void resetRoom() {
+        sessionInProgress = false;
         playersInRoom.clear();
         updateUIComponents();
     }
@@ -103,5 +110,9 @@ public class RoomUIInformation {;
 
     public TextArea getPlayersInRoomTextArea(){
         return playersInRoomTextArea;
+    }
+
+    public boolean isInSession() {
+        return sessionInProgress;
     }
 }
