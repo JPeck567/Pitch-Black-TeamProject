@@ -28,6 +28,7 @@ public class GameScreen implements Screen {
 	private PBAssetManager pbManager;
 	private InputHandler inputHandler;
 	private GameRenderer gameRenderer;
+
 	public enum GameState {
 		IDLE,
 		PLAYING,
@@ -59,8 +60,8 @@ public class GameScreen implements Screen {
 		gameRenderer.setupData(playerData, fogData, mapData);
 	}
 	
-	public void addGameData(String playerData, String fogData, String mapData) {
-		gameRenderer.addGameData(playerData, fogData, mapData);
+	public void addToGameDataBuffer(String playerData, String fogData, String mapData) {
+		gameRenderer.addToGameDataBuffer(playerData, fogData, mapData);
 	}
 
 	public void keyUp(int keyCode){
@@ -87,9 +88,7 @@ public class GameScreen implements Screen {
 	}
 
 	@Override
-	public void show() {
-		// TODO Auto-generated method stub
-	}
+	public void show() {	}
 
 	@Override
 	public void render(float delta) { // delta relates to the number of seconds since the render method was last called, usually a fractional number. therefore we can deduce the number of frames per second by taking its reciprocal.
@@ -115,29 +114,23 @@ public class GameScreen implements Screen {
 
 		gameRenderer.getCamera().viewportHeight = v.getWorldHeight();
 		gameRenderer.getCamera().viewportWidth = v.getWorldWidth();
+
+		gameRenderer.getHud().getStage().getViewport().update(width, height, true);
+
+
 	}
 
 	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void pause() {	}
 
 	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void resume() {	}
 
 	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void hide() {	}
 
 	@Override
 	public void dispose() {
 		pbManager.manager.dispose();
 	}
-
 }

@@ -47,10 +47,8 @@ public class GameWorld {
 	private HashMap<Integer, ArrayList<Body>> mapsCollisionBodiesMap;  // stores bodies for each map
 	private ArrayList<Integer> gameMapSequence;  // the maps selection for the game
 	private final Random random;
-	
-	//private Player player;
+
 	private final HashMap<String, Player> players;  // all players
-	//private HashMap<String, Vector2> otherPlayers;  // will be all players in server, so <String, Player>
 	private final ArrayList<String> alivePlayers;
 	private final ArrayList<String> deadPlayers;
 	private final ArrayList<String> toRemove;
@@ -221,7 +219,7 @@ public class GameWorld {
 	}
 	
 	public void removePlayer(String id) {
-		players.remove(id);
+		toRemove.add(id);
 	}
 	
 	public void movePlayer(String id, float x, float y) {  // acts by just adding a new vector, so can simulate addition of new players
@@ -315,6 +313,5 @@ public class GameWorld {
     }
 
     public void getDeadPlayers() {
-
     }
 }

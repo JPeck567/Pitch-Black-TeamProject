@@ -19,33 +19,33 @@ import net.pitchblack.getenjoyment.helpers.PBAssetManager;
 public class PitchBlackGraphics extends Game {
 	public static final String LOG = "PitchBlack";
 
-	public enum Screens{
+
+    public enum Screens{
 		MENU,
 		LOBBY,
 		GAME,
 		SETTINGS,
 		WIN,
 		LOSE,
-		CREDITS
+		CREDITS;
+
 	}
-
 	private LoginInitiator loginInit;
-
 	private MenuScreen menuScreen;
+
 	private LobbyScreen lobbyScreen;
+
 	private GameScreen gameScreen;
 	private WinScreen winScreen;
 	private LoseScreen loseScreen;
 	private SettingsScreen settingsScreen;
 	private CreditsScreen creditsScreen;
-
 	private Client client;
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
 
 	public PitchBlackGraphics(){
 		client = new Client(this);
 	}
-
 	@Override
 	public void create() {
 		// Load assets first
@@ -67,43 +67,45 @@ public class PitchBlackGraphics extends Game {
 	public void changeScreen(Screens screen) {
 		switch (screen) {
 			case MENU:
-				if (menuScreen == null) {
+				if (screenIsNull(menuScreen)) {
 					menuScreen = new MenuScreen(this, client);
 				}
 				this.setScreen(menuScreen);
 				break;
 			case LOBBY:
-				if (lobbyScreen == null) {
+				if (screenIsNull(lobbyScreen)) {
 					lobbyScreen = new LobbyScreen(this, client);
+				} else {
+					lobbyScreen.restartLobby();
 				}
 				this.setScreen(lobbyScreen);
 				break;
 			case GAME:
-				if (gameScreen == null) {
+				if (screenIsNull(gameScreen)) {
 					gameScreen = new GameScreen(this, client);
 				}
 				this.setScreen(gameScreen);
 				break;
 			case SETTINGS:
-				if (settingsScreen == null) {
+				if (screenIsNull(settingsScreen)) {
 					settingsScreen = new SettingsScreen(this);
 				}
 				this.setScreen(settingsScreen);
 				break;
 			case WIN:
-				if (winScreen == null) {
+				if (screenIsNull(winScreen)) {
 					winScreen = new WinScreen(this);
 				}
 				this.setScreen(winScreen);
 				break;
 			case LOSE:
-				if (loseScreen == null) {
+				if (screenIsNull(loseScreen)) {
 					loseScreen = new LoseScreen(this);
 				}
 				this.setScreen(loseScreen);
 				break;
 			case CREDITS:
-				if (creditsScreen == null) {
+				if (screenIsNull(creditsScreen)) {
 					creditsScreen = new CreditsScreen(this);
 					this.setScreen(creditsScreen);
 				}
@@ -117,25 +119,35 @@ public class PitchBlackGraphics extends Game {
 		super.setScreen(screen);
 	}
 
+	private boolean screenIsNull(Screen screen){
+		return screen == null;
+	}
+
 	public void addLobbyRoomData(HashMap<String, ArrayList<String>> roomUsersMap) {
-		if(lobbyScreen != null){
+		if(!screenIsNull(lobbyScreen)){
 			lobbyScreen.addRoomData(roomUsersMap);
 		}
 	}
 
 	public void addLobbyNewPlayer(String username, String room) {
-		if(lobbyScreen != null) {
+		if(!screenIsNull(lobbyScreen)) {
 			lobbyScreen.addNewPlayer(username, room);
 		}
 	}
-	public void lobbyJoinRoomResponse(Boolean joined, String room, String message) {
-		if(lobbyScreen != null) {
-			lobbyScreen.joinRoomResponse(joined, room, message);
+
+	public void removeLobbyPlayer(String username, String room) {
+		if(!screenIsNull(lobbyScreen)) {
+			lobbyScreen.removePlayer(username, room);
 		}
 	}
 
+	public void lobbyJoinRoomResponse(Boolean joined, String room, String message) {
+		if(!screenIsNull(lobbyScreen)) {
+			lobbyScreen.joinRoomResponse(joined, room, message);
+		}
+	}
 	public boolean isLobbyScreenReady() {
-		if(lobbyScreen == null){
+		if(screenIsNull(lobbyScreen)){
 			return false;
 		}
 		return lobbyScreen.ready();
@@ -154,8 +166,14 @@ public class PitchBlackGraphics extends Game {
 		});
 	}
 
-	public void addGameData(String playerData, String fogData, String mapData) {
-		gameScreen.addGameData(playerData, fogData, mapData);
+	public void lobbyResetRoom(String room) {
+		if(!screenIsNull(lobbyScreen)){
+			lobbyScreen.resetRoom(room);
+		}
+	}
+
+	public void gameAddToGameDataBuffer(String playerData, String fogData, String mapData) {
+		gameScreen.addToGameDataBuffer(playerData, fogData, mapData);
 	}
 
 	public void gameScreenSetState(GameState gameState) {

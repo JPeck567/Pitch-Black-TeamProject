@@ -25,11 +25,8 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 
-
 public class Client {
 	private static final float UPDATE_TIME = 1/60f;
-
-
 
 	public enum ClientState {
 		ACCOUNT,  // logging in / registration
@@ -40,13 +37,14 @@ public class Client {
 		READY,  // finished loading
 		GAME;
 	}
+
 	public enum AccountState {
 		LOGGED_IN,
 		LOGIN_ATTEMPTED,
 		REGISTRATION_ATTEMPTED,
 		LOGGED_OUT;
-
 	}
+
 	private PitchBlackGraphics parent;
 
 	private LoginInitiator loginInitiator;
@@ -105,7 +103,6 @@ public class Client {
 						data.put("username", username)
 							.put("room", currentRoom);
 					} catch(JSONException e) { e.printStackTrace(); }
-
 					socket.emit("playerReady", data);
 				}
 				//clientState = ClientState.IDLE;
@@ -205,7 +202,7 @@ public class Client {
 					roomUsersMap = new ObjectMapper().readValue(roomUsers, HashMap.class);  // uses jackson dependency to easily turn json to java map
 				} catch(JSONException | JsonProcessingException e) { e.printStackTrace(); }
 				// convert JSON string to Java Map
-				parent.addLobbyRoomData(roomUsersMap);// TODO: then send message to lobby screen with rooms
+				parent.addLobbyRoomData(roomUsersMap);
 				//System.out.println(roomUsersMap.toString());
 			}
 		}).on("newPlayerToRoom", new Emitter.Listener() {
@@ -219,21 +216,26 @@ public class Client {
 				} catch(JSONException e) { e.printStackTrace(); }
 				parent.addLobbyNewPlayer(username, room);
 			}
-
-//		}).on("joinedLobbyResponse", new Emitter.Listener() {
-//			public void call(Object... args) {
-//				Boolean response = false;
-//				JSONObject data = (JSONObject) args[0];
-//				try {
-//					response = data.getBoolean("response");
-//				} catch(JSONException e) { e.printStackTrace(); }
-//
-//				if(response) {
-//					clientState = ClientState.LOBBY;
-//				} else {
-//					// TODO: tell lobby error
-//				}
-//			}
+		}).on("removePlayerFromRoom", new Emitter.Listener() {
+			public void call(Object... args) {
+				String username = null;
+				String room = null;
+				JSONObject data = (JSONObject) args[0];
+				try {
+					room = data.getString("room");
+					username = data.getString("username");
+				} catch(JSONException e) { e.printStackTrace(); }
+				parent.removeLobbyPlayer(username, room);
+            }
+        }).on("resetRoom", new Emitter.Listener() {
+            public void call(Object... args) {
+                String room = null;
+                JSONObject data = (JSONObject) args[0];
+                try {
+                    room = data.getString("room");
+                } catch(JSONException e) { e.printStackTrace(); }
+                parent.lobbyResetRoom(room);
+			}
 		}).on("joinRoomResponse", new Emitter.Listener() {
 			public void call(Object... args) {
 				boolean response = false;
@@ -291,7 +293,7 @@ public class Client {
 					fogData = data.getString("fogData");
 					mapData = data.getString("mapData");
 				} catch (JSONException e) { e.printStackTrace(); }
-				parent.addGameData(playerData, fogData, mapData);
+				parent.gameAddToGameDataBuffer(playerData, fogData, mapData);
 			}
 		}).on("gamePlayerDied", new Emitter.Listener() {
 			@Override
@@ -309,6 +311,7 @@ public class Client {
 					e.printStackTrace();
 				}
 
+				// should be redundant as losing players are messaged anyway and this event is only for winning players
 				if (winnerName.equals("")) {  // for one player, assumes died anyway and lose state change should also occur anyway
 					//parent.gameScreenSetState(GameState.LOSE);
 				} else if(winnerName.equals(username)) {  // if won in multiplayer
@@ -373,6 +376,16 @@ public class Client {
 
 	public void emitGetRooms() {
 		socket.emit("getRooms");
+	}
+
+	public void emitPlayerReady(){
+		JSONObject data = new JSONObject();
+		try {
+			data.put("username", username)
+					.put("room", currentRoom);
+		} catch(JSONException e) { e.printStackTrace(); }
+
+		socket.emit("playerReady", data);
 	}
 
 	public void emitKeyDown(int keycode) {

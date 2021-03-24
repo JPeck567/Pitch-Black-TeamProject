@@ -9,14 +9,13 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-import com.badlogic.gdx.utils.viewport.Viewport;
 import net.pitchblack.getenjoyment.client.Client;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics.Screens;
@@ -30,6 +29,7 @@ public class LobbyScreen implements Screen {
 	private Client client;
 	private HashMap<String, RoomUIInformation> roomMap;
 	private ArrayList<String> playersList;
+	private boolean roomMapLoaded;
 	private RoomUIInformation roomViewed; // if 0, lobby
 
 	private SoundManager sound;
@@ -37,64 +37,91 @@ public class LobbyScreen implements Screen {
 	private Skin skin;
 	private Skin fontSkin;
 
-	private Viewport screenViewport;
+	private Stage currentStage;
 	private Stage allRoomsStage;
 	private Table allRoomsTable;
 	private Stage roomStage;
 	private Table roomTable;
 
-	private Label roomTitle;
-	private Label capacityTakenTitle;
+	private Label roomHeadingTitle;
+	private Label capacityHeadingTitle;
 
 	private TextArea currentPlayersInRoomTextArea;
 
-	private TextButton backButton;
+    private TextButton backToMenuButton;
+    private TextButton backToAllRoomsButton;
 	private TextButton joinButton;
 
 	public LobbyScreen(PitchBlackGraphics p, final Client client) {
 		this.parent = p;
 		this.client = client;
         roomMap = null;
+        roomMapLoaded = false;
 		roomViewed = null;
 
 		sound = SoundManager.getInstance();
 
 		skin = parent.pbAssetManager.getAsset(PBAssetManager.screenSkin);
-		fontSkin = new Skin (Gdx.files.internal("skin_2/flat-earth-ui.json"));
+		fontSkin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
 
-		screenViewport = new ScreenViewport();
 		allRoomsStage = new Stage();
 		allRoomsTable = new Table();
 		roomStage = new Stage();
 		roomTable = new Table();
 
-		roomTitle = new Label("Room", skin,"title");
-		capacityTakenTitle = new Label("Capacity", skin, "title");
-        currentPlayersInRoomTextArea = null;
+		currentStage = allRoomsStage;
 
-		backButton = new TextButton("Back", skin);
-		backButton.addListener(new ChangeListener() {
+		roomHeadingTitle = new Label("Room", skin,"title");
+		capacityHeadingTitle = new Label("Capacity", skin, "title");
+        currentPlayersInRoomTextArea = new TextArea("Placeholder as room not selected", skin);
+
+        backToMenuButton = new TextButton("Back", skin);
+        backToAllRoomsButton = new TextButton("Back", skin);
+        joinButton = new TextButton("Join Room", skin);
+        setupButtonListeners();
+
+        client.emitJoinLobby();
+        client.emitGetRooms();
+	}
+
+    private void setupButtonListeners() {
+        backToMenuButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                parent.changeScreen(Screens.MENU);
-                if(PreferencesManager.isSoundEnabled()) {
-                    sound.setVolume(PreferencesManager.getSoundVolume());
-                    sound.play(PitchBlackSound.CLICK);
-                }
-            }
+				if(PreferencesManager.isSoundEnabled()) {
+					sound.setVolume(PreferencesManager.getSoundVolume());
+					sound.play(PitchBlackSound.CLICK);
+				}
+				parent.changeScreen(Screens.MENU);
+			}
         });
 
-		joinButton = new TextButton("Join Room", skin);
+        backToAllRoomsButton.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				currentStage = allRoomsStage;
+				roomViewed = null;
+				Gdx.input.setInputProcessor(currentStage);
+			}
+		});
+
         joinButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
+            	joinButton.setTouchable(Touchable.disabled);
                 client.emitJoinRoomRequest(roomViewed.getRoomName());
             }
         });
+    }
 
-		client.emitJoinLobby(); // to get polled with new players joining rooms
-		client.emitGetRooms(); // Will populate rooms
-	}
+    public void restartLobby(){
+	    //roomMapLoaded = false;
+        roomViewed = null;
+        currentStage = allRoomsStage;
+        backToAllRoomsButton.setVisible(true);
+        joinButton.setTouchable(Touchable.enabled);
+        client.emitGetRooms();
+    }
 
     private void createAllRoomsScene() {
         //Create Table
@@ -102,9 +129,10 @@ public class LobbyScreen implements Screen {
         allRoomsTable.setFillParent(true);
         allRoomsTable.setDebug(false);
         allRoomsStage.addActor(allRoomsTable);
+        allRoomsStage.addActor(backToMenuButton);
 
-        allRoomsTable.add(roomTitle);
-		allRoomsTable.add(capacityTakenTitle);
+        allRoomsTable.add(roomHeadingTitle).padRight(60);
+		allRoomsTable.add(capacityHeadingTitle);
         allRoomsTable.row();
 
         // all buttons + labels added to table and stage as actor
@@ -122,22 +150,22 @@ public class LobbyScreen implements Screen {
             allRoomsTable.row();
         }
 
-        allRoomsStage.addActor(backButton);
         allRoomsTable.row();
-        allRoomsTable.add(backButton);
+        allRoomsTable.add(backToMenuButton).center();
     }
 
-    private void createRoomTable(){
-	    roomTable = new Table();
-
+    private void createRoomScene(){
 		roomTable.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("background/backgroundDark.jpg"))));
 		roomTable.setFillParent(true);
 		roomTable.setDebug(false);
+
+		roomStage.addActor(currentPlayersInRoomTextArea);
 		roomStage.addActor(roomTable);
 		roomStage.addActor(joinButton);
 
-		roomTable.add(currentPlayersInRoomTextArea);
+		roomTable.add(currentPlayersInRoomTextArea).pad(0, 30, 0, 0);
 		roomTable.row();
+		roomTable.add(backToAllRoomsButton).padRight(40);
 		roomTable.add(joinButton);
 	}
 
@@ -145,31 +173,55 @@ public class LobbyScreen implements Screen {
 		button.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-                Gdx.input.setInputProcessor(roomStage);
-				roomViewed = roomMap.get(roomName);
-				currentPlayersInRoomTextArea = roomViewed.getPlayersInRoomTextArea();
-				createRoomTable();
+			    RoomUIInformation roomUI = roomMap.get(roomName);
+			    roomViewed = roomUI;
+                currentStage = roomStage;
+                updateRoomTextArea();
+                Gdx.input.setInputProcessor(currentStage);
 			}
 		});
 	}
 
+	private void updateRoomTextArea() {
+		if(roomViewed != null) {
+			Cell c = roomTable.getCell(currentPlayersInRoomTextArea);
+			currentPlayersInRoomTextArea = roomViewed.getPlayersInRoomTextArea();
+			c.setActor(currentPlayersInRoomTextArea);
+		}
+	}
+
+	// sets up room map with players in room
 	public void addRoomData(HashMap<String, ArrayList<String>> roomUsersMap) {
-		roomMap = new HashMap<String, RoomUIInformation>();
-        for(String roomName : roomUsersMap.keySet()){
-            roomMap.put(roomName, new RoomUIInformation(roomName, roomUsersMap.get(roomName), skin, fontSkin));
-        }
-        Gdx.app.postRunnable(new Runnable() {  // requires openGL context from libGDX render thread
-            @Override
-            public void run() {
-                createAllRoomsScene();
+		if(roomMap == null){ // if not loaded before, make new object. implies scenes not created before
+		    roomMap = new HashMap<String, RoomUIInformation>();
+            for(String roomName : roomUsersMap.keySet()){
+                roomMap.put(roomName, new RoomUIInformation(roomName, roomUsersMap.get(roomName), skin, fontSkin));
             }
-        });
+
+            Gdx.app.postRunnable(new Runnable() {  // requires openGL context from libGDX render thread
+                @Override
+                public void run() {  // create scenes required for lobby view
+                    createAllRoomsScene();
+                    createRoomScene();
+                    roomMapLoaded = true;
+                }
+            });
+        } else {  // if loaded previously
+            for(String roomName : roomUsersMap.keySet()){
+                roomMap.get(roomName).addAllPlayers(roomUsersMap.get(roomName));
+            }
+            roomMapLoaded = true;
+        }
 	}
 
 	public void joinRoomResponse(Boolean joined, String room, String message) {
 		if(joined){
-			System.out.println(message);
+			RoomUIInformation roomInfo = roomMap.get(room);
+			backToAllRoomsButton.setVisible(false);  // no going back now
+			addNewPlayer(client.getUsername(), room);
+			updateRoomTextArea();
 		} else {
+			joinButton.setTouchable(Touchable.enabled);
 			System.out.println(message);
 		}
 	}
@@ -179,13 +231,22 @@ public class LobbyScreen implements Screen {
 		roomMap.get(room).addPlayer(username);
 	}
 
+    public void removePlayer(String username, String room) {
+        System.out.println(username + " left room " + room);
+        roomMap.get(room).removePlayer(username);
+    }
+
+    public void resetRoom(String room) {
+        roomMap.get(room).resetRoom();
+    }
+
 	public boolean ready() {
 		return true;
 	}
 
 	@Override
 	public void show() {
-		Gdx.input.setInputProcessor(allRoomsStage);
+		Gdx.input.setInputProcessor(currentStage);
 	}
 
 	@Override
@@ -193,14 +254,14 @@ public class LobbyScreen implements Screen {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);  // clears screen each frame
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		if(roomMap != null) {
-            if (roomViewed == null) {  // meaning not viewing room
-                allRoomsStage.act();
-                allRoomsStage.draw();
-            } else {  // meaning viewing room
-                roomStage.act();
-                roomStage.draw();
-            }
+		if(roomMapLoaded) {
+			if(roomViewed == null){
+				allRoomsStage.act();
+				allRoomsStage.draw();
+			} else {
+				roomStage.act();
+				roomStage.draw();
+			}
         } else {
 		    // show loading screen ?
         }
@@ -209,26 +270,21 @@ public class LobbyScreen implements Screen {
 	@Override
 	public void resize(int width, int height) {
 		allRoomsStage.getViewport().update(width, height, true);
+		roomStage.getViewport().update(width, height, true);
 	}
 
 	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-	}
+	public void pause() {	}
 
 	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-	}
+	public void resume() {	}
 
 	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-	}
+	public void hide() {	}
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
 		allRoomsStage.dispose();
+		roomStage.dispose();
 	}
 }

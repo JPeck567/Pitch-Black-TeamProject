@@ -8,9 +8,8 @@ import com.badlogic.gdx.physics.box2d.World;
 
 import net.pitchblack.getenjoyment.logic.GameWorld;
 
-public class BodyFactory {
+public class BodyFactory {  // use to be singleton, but when shared between game instances, world field needs to be different
 	private World world;
-	private static BodyFactory thisInstance = null;
 	
 	private BodyFactory(World world) {
 		this.world = world;
@@ -50,9 +49,6 @@ public class BodyFactory {
 	}
 	
 	public static BodyFactory getInstance(World world){
-		if(thisInstance == null){
-			thisInstance = new BodyFactory(world);
-		} 
-		return thisInstance;
+		return new BodyFactory(world);
 	}
 }

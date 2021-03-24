@@ -74,13 +74,8 @@ public class CollisionListener implements ContactListener {
 	}
 
 	@Override
-	public void preSolve(Contact contact, Manifold oldManifold) {
-		// TODO Auto-generated method stub
-	}
+	public void preSolve(Contact contact, Manifold oldManifold) {	}
 
 	@Override
-	public void postSolve(Contact contact, ContactImpulse impulse) {
-		// TODO Auto-generated method stub
-	}
-
+	public void postSolve(Contact contact, ContactImpulse impulse) {	}
 }

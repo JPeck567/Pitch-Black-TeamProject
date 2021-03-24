@@ -44,6 +44,7 @@ public class Hud implements Disposable {
 		//sets the values of the labels
 		timerLabel = new Label(String.format("%05d", timer), new Label.LabelStyle(new BitmapFont(), Color.WHITE));
 		timeLabel = new Label("TIME", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+		timeLabel.scaleBy(1.5f, 1.5f);
 		blankLabel = new Label("", new Label.LabelStyle(new BitmapFont(), Color.WHITE));
 		
 		//labels are added to the table to show on the screen
@@ -80,5 +81,9 @@ public class Hud implements Disposable {
 
 	public Camera getCamera() {
 		return stage.getCamera();
+	}
+
+	public Stage getStage() {
+		return stage;
 	}
 }

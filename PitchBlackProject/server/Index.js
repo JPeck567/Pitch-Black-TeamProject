@@ -20,14 +20,29 @@ server.listen(PORT, function() {
 });
 
 io.on('connection', function(socket) {
-  console.log('SocketIO: ID ' + socket.id + ' Connected!');
+  //console.log('SocketIO: ID ' + socket.id + ' Connected!');
   socket.emit('socketID', { id: socket.id });
 
+  socket.on('disconnecting', () => {  // before teardown which means socket leaves room. we need to know this so can't use 'disconnect'
+    if(socketIDToPlayerName.has(socket.id)) {  // is connected as render client
+        removeClient(socket);
+        console.log("Client " + socket.id + " Disconnected");
+        return;
+    } else if (gameClientSocket != null) {
+      if (socket.id === gameClientSocket.id) {  // check if actually game client
+        gameClientSocket = null;
+        console.log("Game Client Socket " + socket.id + " Disconnected");
+        return;
+      }
+    }  // assume connection is for login/registration if not game or render client
+    console.log("SQL Socket " + socket.id + " Disconnected");
+  });
+
+/*
 	socket.on('disconnect', function(){
     if(socketIDToPlayerName.has(socket.id)) {  // is connected as render client
-      playerNameSocketMap.delete(socketIDToPlayerName.get(socket.id));
-      socketIDToPlayerName.delete(socket.id);
-      console.log("Client " + socket.id + " Disconnected");
+        removeClient(socket);
+        console.log("Client " + socket.id + " Disconnected");
     } else if (gameClientSocket != null) {
       if (socket.id === gameClientSocket.id) {  // check if actually game client
         gameClientSocket = null;
@@ -39,6 +54,7 @@ io.on('connection', function(socket) {
       console.log("SQL Socket " + socket.id + " Disconnected");
     }
   });
+s*/
 
   socket.on('login', function(data) {
     var connection = mysql.createConnection({
@@ -267,6 +283,7 @@ io.on('connection', function(socket) {
   });
 
   socket.on('gameBegin', function(data) { // game client starts game, notif players
+    io.to(LOBBYROOM).emit('gameInSession', { room : data.room})
     socket.to(data.room).emit('gameBegin');
   });
 
@@ -292,22 +309,47 @@ io.on('connection', function(socket) {
     }
   });
 
-  // triggers client WIN state
+  // triggers client WIN state for winner. if called, assumed other clients already died, hence already in lose state
 	socket.on('gameFinish', function(data) {  // game instance updates players still in room with winner & clients return to menu.
-		socket.to(data.room).emit('gameFinish', { winnerName : data.winnerName });
+		playerNameSocketMap.get(data.winnerName).emit('gameFinish', { winnerName : data.winnerName });
 	});
-
 
   socket.on('resetRoom', function(data){ // when game finished, empty room in server, and tell clients
     var sockIds = io.sockets.adapter.rooms[data.room];
 
-    if(sockIds != null){
+    if(sockIds != null) { // remove sockets in room, if they exist
       Object.keys(sockIds.sockets).forEach(function(socketId) { // for each id, add remove from room
         io.sockets.sockets[socketId].leave(data.room)
       });
     }
+
+    io.to(LOBBYROOM).emit('resetRoom', {  // tell clients to reset their lobby room ui user list
+      room: data.room
+    });
   });
-});  // closing brace + bracket to ' io.on('connection', function(socket) { /the code/  '
+});  // closing brace + bracket from ' io.on('connection', function(socket) { /* the code */  '
+
+// if render client disconnects
+function removeClient(socket){
+  let rooms = Object.keys(socket.rooms);  // gets rooms client connected to
+
+  // checks if client was in room, if so should remove from game client
+  // socket will auto move out of socket.io room in disconnection, so no extra action is needed room wise server side.
+  console.log(rooms); // 'Rooms that ' + socketIDToPlayerName.get(socket.id) + ' is in: ' + rooms
+  for(room of rooms) {  // at most 1, the current game room
+    if(roomNames.includes(room)) {  // if room exists in room list
+      console.log('Room ' + room + 'found');
+      gameClientSocket.emit('playerDisconnected', {username : socketIDToPlayerName.get(socket.id), room : room} );
+      socket.to(LOBBYROOM).emit('removePlayerFromRoom', {
+        username: socketIDToPlayerName.get(socket.id),
+        room: room
+      });
+      break;  // get out of for loop
+    }
+  playerNameSocketMap.delete(socketIDToPlayerName.get(socket.id));
+  socketIDToPlayerName.delete(socket.id);
+  }
+}
 
 function getNamesInRoom(roomID){
   var nameList = [];

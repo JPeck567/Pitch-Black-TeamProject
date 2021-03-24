@@ -53,10 +53,10 @@ public class SettingsScreen implements Screen  {
 		table.setDebug(false);
 		
 		stage.addActor(table);
-		Skin skin = new Skin(Gdx.files.internal("skin/flat-earth-ui.json"));
-		Skin fontSkin = new Skin (Gdx.files.internal("skin/glassy-ui.json"));
+		Skin skin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
+		Skin fontSkin = new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json"));
 		
-		Label titleLabel = new Label( "SETTINGS", fontSkin);
+		Label titleLabel = new Label( "SETTINGS", fontSkin, "title");
 		Label volumeMusicLabel = new Label( "Music Volume", fontSkin);
 		Label volumeSoundLabel = new Label( "Sound Volume", fontSkin);
 		Label musicOnOffLabel = new Label( "Music", fontSkin);
@@ -85,7 +85,6 @@ public class SettingsScreen implements Screen  {
 			public void changed(ChangeEvent event, Actor actor) {
 				sound.setVolume(soundMusicSlider.getValue());
 				PreferencesManager.setSoundVolume(soundMusicSlider.getValue());
-
 			}
 		});
 
@@ -125,7 +124,6 @@ public class SettingsScreen implements Screen  {
 			
 			// return to main screen button
 		final TextButton backButton = new TextButton("Back", skin); // the extra argument here "small" is used to set the button to the smaller version instead of the big default version
-
 		backButton.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
@@ -142,7 +140,7 @@ public class SettingsScreen implements Screen  {
 		stage.addActor(backButton);
 
 		table.add(titleLabel).colspan(2);
-		table.row().pad(10, 0, 10, 0);
+		table.row().pad(10, 0, 50, 0);
 		table.add(volumeMusicLabel).left();
 		table.add(volumeMusicSlider);
 		table.row();
@@ -168,7 +166,6 @@ public class SettingsScreen implements Screen  {
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);  // clears screen each frame
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.act();
 		stage.draw();
 	}
@@ -179,26 +176,16 @@ public class SettingsScreen implements Screen  {
 	}
 
 	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void pause() {	}
 
 	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void resume() {	}
 
 	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void hide() {	}
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
 		stage.dispose();
 	}	
 

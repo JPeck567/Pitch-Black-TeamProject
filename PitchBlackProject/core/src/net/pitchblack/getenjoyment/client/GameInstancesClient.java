@@ -32,11 +32,11 @@ public class GameInstancesClient implements ApplicationListener {
 
 	private void makeInstances(){
 		instanceMap = new HashMap<String, GameInstance>();
-		instanceMap.put("1", getGameInstance("1"));
-		instanceMap.put("2", getGameInstance("2"));
-		instanceMap.put("3", getGameInstance("3"));
-		instanceMap.put("4", getGameInstance("4"));
-		instanceMap.put("5", getGameInstance("5"));
+		setupNewGameInstance("1");
+		setupNewGameInstance("2");
+		setupNewGameInstance("3");
+		setupNewGameInstance("4");
+		setupNewGameInstance("5");
 	}
 	
 	private void connectSocket() {
@@ -95,7 +95,12 @@ public class GameInstancesClient implements ApplicationListener {
 					room = data.getString("room");
 					//socket.emit("newPlayerAcknowledge", idData);
 				} catch(JSONException e) { e.printStackTrace(); }
-				GameInstancesClient.this.instanceMap.get(room).addPlayerToRoom(username);
+				GameInstance instance = GameInstancesClient.this.instanceMap.get(room);
+				if(instance == null) {
+					emitJoinRoomResponse(false, username, room, "Room is preparing a new game, try in a moment");
+				} else {
+					GameInstancesClient.this.instanceMap.get(room).addPlayerToRoom(username);
+				}
 			}
 		}).on("playerReady", new Emitter.Listener() {
 			@Override
@@ -127,6 +132,19 @@ public class GameInstancesClient implements ApplicationListener {
 				
 				GameInstancesClient.this.instanceMap.get(room).gameKeyPress(username, keyUp, keyDown);
 			}
+		}).on("playerDisconnected", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject data = (JSONObject) args[0];
+				String username = null;
+				String room = null;
+				try {
+					username = data.getString("username");
+					room = data.getString("room");
+				} catch(JSONException e){ e.printStackTrace(); }
+
+				GameInstancesClient.this.instanceMap.get(room).playerDisconnected(username);
+			}
 		});
 	}	
 
@@ -153,8 +171,12 @@ public class GameInstancesClient implements ApplicationListener {
 		socket.emit("gameSetup", data);
 	}
 	
-	public void emitGameCountdown() {
-		socket.emit("gameCountdown");
+	public void emitGameCountdown(String roomName) {
+        JSONObject data = new JSONObject();
+        try {
+            data.put("room", roomName);
+        } catch (JSONException e) { e.printStackTrace(); }
+		socket.emit("gameCountdown", data);
 	}
 
 	public void emitGameBegin(String roomName) {
@@ -203,15 +225,8 @@ public class GameInstancesClient implements ApplicationListener {
 		socket.emit("resetRoom", data);
 	}
 
-	private GameInstance getGameInstance(String room) {
-		GameInstance instance = instanceMap.get(room);
-
-		if(instance == null) {  // no instance exists, so make new one
-			instance = createGameInstance(room);
-			instanceMap.put(room, instance);
-		}
-
-		return instance;
+	private void setupNewGameInstance(String room) {
+		instanceMap.put(room, createGameInstance(room));
 	}
 
 	private GameInstance createGameInstance(String room) {
@@ -255,5 +270,10 @@ public class GameInstancesClient implements ApplicationListener {
 	@Override
 	public void dispose() {
 
+	}
+
+	public void reinitialiseInstance(String room) {
+		emitResetRoom(room);
+		setupNewGameInstance(room);
 	}
 }

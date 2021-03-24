@@ -55,6 +55,7 @@ public class GameRenderer {
 
 	// will need array list of string id's to sprites to update from server
 	private HashMap<String, Entity> entities;
+	private String[] gameDataBuffer;
 
 	private Entity clientPlayer;
 	private Entity fog;
@@ -65,19 +66,22 @@ public class GameRenderer {
 	private Viewport viewport;
 
 	private BitmapFont font;
-	private Hud hud;
+
 	// private ShapeRenderer shapeRenderer; // draws lines and shapes easily
 
 	private HashMap<Integer, TiledMap> mapMap;
 	private ArrayList<Integer> gameMaps;
 	private OrthogonalTiledMapRenderer mapRenderer;
 
+	private Hud hud;
 	private SpriteBatch batcher;
 	private Box2DDebugRenderer debugRenderer;
 
 	public GameRenderer(GameScreen gameScreen, Client client, PBAssetManager pbAssetManager) {
 	    this.gameScreen = gameScreen;
 		this.pbAssetManager = pbAssetManager;
+		entities = new HashMap<String, Entity>();
+		gameDataBuffer = new String[]{"", "", ""};
 
 		this.client = client;
 		this.username = client.getUsername();
@@ -104,20 +108,22 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 
 		hud = new Hud(batcher);
-		font = new BitmapFont(Gdx.files.internal("skin/arial-15.fnt"), Gdx.files.internal("skin/arial-15.png"), false);
-		font.getData().setScale(1/PPM);
+		font = new BitmapFont();
+		font.setColor(Color.WHITE);
+		font.getData().setScale(0.5f);
 
-		entities = new HashMap<String, Entity>();
 
 		//debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true);
 	}
 
 	public void render(float delta) {
+		/// LOAD DATA HERE ///
+		// avoids concurrent access for map if loading map whilst client adds new maps to list
+		if(!gameDataBuffer[0].equals("")){  // if not empty
+			addGameData();
+		}
+
 		hud.update(delta);
-	    /// SCREEN CONTROL ///
-//		if(clientPlayer.isDead()){
-//			gameScreen.setGameState(GameState.LOSE);
-//		}
 
 		/// CAMERA CONTROL ///
 		controlCamera();
@@ -207,20 +213,30 @@ public class GameRenderer {
 		clientPlayer = entities.get(username);
 
 		// reuse data parsing methods which are used ingame
-		addGameData(playerData, fogData, mapData);
+		addToGameDataBuffer(playerData, fogData, mapData);
+		addGameData();
 	}
 
-	public void addGameData(String playerData, String fogData, String mapData) {
-		addPlayerData(playerData);
-		addFogData(fogData);
-		addMapData(mapData);
+	public void addToGameDataBuffer(String playerData, String fogData, String mapData){
+		gameDataBuffer[0] = playerData;
+		gameDataBuffer[1] = fogData;
+		gameDataBuffer[2] = mapData;
+
+	}
+
+	public void addGameData() {
+		addPlayerData(gameDataBuffer[0]);
+		addFogData(gameDataBuffer[1]);
+		addMapData(gameDataBuffer[2]);
+
+		// clear array
+		Arrays.fill(gameDataBuffer, "");
 	}
 
 	/*
-	 * Player Data Schema "playerID, playerX, playerY, playerState, playerMoveLeft,
-	 * playerMoveRight, playerJumped, /n playerID, playerX, playerY, playerState,
-	 * playerMoveLeft, playerMoveRight, playerJumped, Split into player records with
-	 * "/n" Split attributes with ","
+	 * Player Data Schema
+	 * "playerID, playerX, playerY, playerState, playerMoveLeft, playerMoveRight, playerJumped, /n playerID, ..." (and repeat)
+	 * Is split into player records with "/n". Then split for attributes with ","
 	 */
 	private void addPlayerData(String data) {
 		String[] dataArray = data.split("/n");
@@ -290,6 +306,10 @@ public class GameRenderer {
 		entities.clear();
 	}
 
+	public Hud getHud(){
+		return hud;
+	}
+
 	public OrthographicCamera getCamera() {
 		return camera;
 	}
@@ -297,4 +317,5 @@ public class GameRenderer {
 	public Viewport getViewport() {
 		return viewport;
 	}
+
 }

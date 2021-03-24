@@ -59,7 +59,7 @@ public class MenuScreen implements Screen {
             MusicManager.getInstance().play(PitchBlackMusic.MENU);
         }
 
-        Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.screenSkin); //new Skin(Gdx.files.internal("skin_2/flat-earth-ui.json")); // TODO: Inconsistent & has error sometimes - parent.pbAssetManager.getAsset(PBAssetManager.menuSkin);
+        Skin skin = parent.pbAssetManager.getAsset(PBAssetManager.screenSkin);
 
         //newGame = new TextButton("New Game", skin);
         exit = new TextButton("Exit", skin);
@@ -164,29 +164,17 @@ public class MenuScreen implements Screen {
 	}
 
 	@Override
-	public void pause() {
-		// TODO Auto-generated method stub
-
-	}
+	public void pause() {	}
 
 	@Override
-	public void resume() {
-		// TODO Auto-generated method stub
-
-	}
+	public void resume() {	}
 
 	@Override
-	public void hide() {
-		// TODO Auto-generated method stub
-		//dispose();
-
-	}
+	public void hide() {	}
 
 	@Override
 	public void dispose() {
 		stage.dispose();
-		//music.dispose();
-		//buttonPress.dispose();
 	}
 
 }

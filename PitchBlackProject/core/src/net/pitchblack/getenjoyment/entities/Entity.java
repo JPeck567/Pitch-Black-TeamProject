@@ -77,6 +77,7 @@ public class Entity extends Sprite {
 	public void setMovement(boolean left, boolean right) {
 		movementLeft = left;
 		movementRight = right;
+		setFlip(left, false);  // if either left or right is true, but not both (^ = XOR)
 	}
 
 	public void setState(EntityState entityState) {

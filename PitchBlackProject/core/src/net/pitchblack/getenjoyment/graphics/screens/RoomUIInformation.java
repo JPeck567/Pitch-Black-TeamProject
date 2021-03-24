@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class RoomUIInformation {;
     private final String roomName;
     private final int capacity;
+    private boolean sessionInProgress;
     private final ArrayList<String> playersInRoom;
 
     private final TextButton roomTextButton;
@@ -20,35 +21,41 @@ public class RoomUIInformation {;
     public RoomUIInformation(String roomName, ArrayList<String> playersInRoom, Skin skin, Skin fontSkin){
         this.roomName = roomName;
         this.capacity = 4; // hard coded in, but should be dynamic and client should send the capacity set by game instance
+        sessionInProgress = false;
         this.playersInRoom = playersInRoom;
 
-        roomTextButton = new TextButton("",  skin);
-        updateRoomTextButton();
-
+        roomTextButton = new TextButton("Room " + roomName,  skin);
         capacityTakenLabel = new Label("", skin);
-        updateCapacityTakenLabel();
-
         playersInRoomTextArea = new TextArea("", fontSkin);
-        updatePlayerInRoomTextArea();
+        playersInRoomTextArea.setDisabled(true);  // so can't write in it
+        playersInRoomTextArea.setScale(5);
+
+        updateUIComponents();
     }
 
-    private void updateRoomTextButton(){
-        roomTextButton.setText("Room " + roomName);
+    private void updateUIComponents(){
+        updatePlayerInRoomTextArea();
+        updateCapacityTakenLabel();
     }
 
     private void updateCapacityTakenLabel(){
         int size = playersInRoom.size();
 
-        if(size == capacity) {
-            roomTextButton.setTouchable(Touchable.disabled);
-            capacityTakenLabel.setText( size + " / " + capacity);
+        if(size < capacity) {
+            capacityTakenLabel.setText(size + " / " + capacity);
+            roomTextButton.setTouchable(Touchable.enabled);
         } else {
             capacityTakenLabel.setText("Room is full!");
+            roomTextButton.setTouchable(Touchable.disabled);
         }
     }
 
     private void updatePlayerInRoomTextArea() {
-        if(playersInRoomTextArea.getLines() < playersInRoom.size()){  // if text area out of date
+        int playersInRoomSize = playersInRoom.size();
+
+        if(playersInRoomSize == 0) {  // no players in room
+            playersInRoomTextArea.setText("There are no players in room " + roomName);
+        } else {  // update text
             playersInRoomTextArea.setText(getPlayersInRoomString());
         }
     }
@@ -63,8 +70,23 @@ public class RoomUIInformation {;
 
     public void addPlayer(String username){
         playersInRoom.add(username);
-        updateRoomTextButton();
-        updateCapacityTakenLabel();
+        updateUIComponents();
+    }
+
+    public void addAllPlayers(ArrayList<String> players){
+        playersInRoom.clear();
+        playersInRoom.addAll(players);
+        updateUIComponents();
+    }
+
+    public void removePlayer(String username) {
+        playersInRoom.remove(username);
+        updateUIComponents();
+    }
+
+    public void resetRoom() {
+        playersInRoom.clear();
+        updateUIComponents();
     }
 
     public String getRoomName() {
