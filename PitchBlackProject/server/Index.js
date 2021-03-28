@@ -20,7 +20,7 @@ server.listen(PORT, function() {
 });
 
 io.on('connection', function(socket) {
-  //console.log('SocketIO: ID ' + socket.id + ' Connected!');
+  console.log('SocketIO: ID ' + socket.id + ' Connected!');
   socket.emit('socketID', { id: socket.id });
 
   socket.on('disconnecting', () => {  // before teardown which means socket leaves room. we need to know this so can't use 'disconnect'
@@ -278,7 +278,7 @@ s*/
     gameClientSocket.emit('playerReady', data);
   })
 
-  socket.on('gameCountdown', function() { // game client issue 5 second waring
+  socket.on('gameCountdown', function(data) { // game client issue 5 second waring
     socket.to(data.room).emit('gameCountdown');
   });
 
@@ -304,8 +304,12 @@ s*/
     var diedArray = data.diedArray[0];
     for(playerName of diedArray){
       var playerSocket = playerNameSocketMap.get(playerName);
-      playerSocket.leave(data.room);
-      playerSocket.emit('gamePlayerDied');
+       // player may die as disconnected and server responds by sending kill request.
+       // if disconn, data not in map. checks if this is the case.
+      if(playerSocket != null) {
+        playerSocket.leave(data.room);
+        playerSocket.emit('gamePlayerDied');
+      }
     }
   });
 
@@ -332,10 +336,8 @@ function removeClient(socket){
 
   // checks if client was in room, if so should remove from game client
   // socket will auto move out of socket.io room in disconnection, so no extra action is needed room wise server side.
-  console.log(rooms); // 'Rooms that ' + socketIDToPlayerName.get(socket.id) + ' is in: ' + rooms
   for(room of rooms) {  // at most 1, the current game room
     if(roomNames.includes(room)) {  // if room exists in room list
-      console.log('Room ' + room + 'found');
       gameClientSocket.emit('playerDisconnected', {username : socketIDToPlayerName.get(socket.id), room : room} );
       socket.to(LOBBYROOM).emit('removePlayerFromRoom', {
         username: socketIDToPlayerName.get(socket.id),
@@ -343,9 +345,10 @@ function removeClient(socket){
       });
       break;  // get out of for loop
     }
+  }
+  console.log("Player: " + socketIDToPlayerName.get(socket.id) + " ID: " + socket.id + " was removed from server")
   playerNameSocketMap.delete(socketIDToPlayerName.get(socket.id));
   socketIDToPlayerName.delete(socket.id);
-  }
 }
 
 function getNamesInRoom(roomID){

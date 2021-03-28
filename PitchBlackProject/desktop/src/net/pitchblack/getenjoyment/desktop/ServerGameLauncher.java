@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.headless.HeadlessApplication;
 import com.badlogic.gdx.backends.headless.HeadlessApplicationConfiguration;
 import com.badlogic.gdx.graphics.GL20;
-import net.pitchblack.getenjoyment.client.GameInstancesClient;
+import net.pitchblack.getenjoyment.backend.client.GameInstancesClient;
 
 import static org.mockito.Mockito.mock;
 

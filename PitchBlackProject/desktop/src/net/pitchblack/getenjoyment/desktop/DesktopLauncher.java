@@ -1,12 +1,9 @@
 package net.pitchblack.getenjoyment.desktop;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 
-import net.pitchblack.getenjoyment.client.Client;
-import net.pitchblack.getenjoyment.graphics.PitchBlackGraphics;
-import net.pitchblack.getenjoyment.graphics.screens.LoginInitiator;
+import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
 
 public class DesktopLauncher {
 	public static void main(String[] args) {
