@@ -127,7 +127,7 @@ public class LobbyScreen implements Screen {
 		});
     }
 
-    public void restartLobby(){
+    public void restartLobby() {
 	    //roomMapLoaded = false;
 		readyWaiting = false;
         roomViewed = null;
@@ -135,6 +135,7 @@ public class LobbyScreen implements Screen {
         backToAllRoomsButton.setVisible(true);
         joinButton.setVisible(true);
 		readyButton.setVisible(false);
+		readyButton.setTouchable(Touchable.enabled);
         client.emitGetRooms();
     }
 
