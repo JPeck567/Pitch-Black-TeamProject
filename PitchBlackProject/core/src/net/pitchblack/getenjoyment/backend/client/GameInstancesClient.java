@@ -175,7 +175,8 @@ public class GameInstancesClient implements ApplicationListener {
 	public void emitGameCountdown(String roomName) {
         JSONObject data = new JSONObject();
         try {
-            data.put("room", roomName);
+            data.put("room", roomName)
+					.put("countdownSeconds", GameInstance.COUNTDOWN_INTERVAL);
         } catch (JSONException e) { e.printStackTrace(); }
 		socket.emit("gameCountdown", data);
 	}

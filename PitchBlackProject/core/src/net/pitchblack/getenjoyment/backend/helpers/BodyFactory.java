@@ -15,7 +15,7 @@ public class BodyFactory {  // use to be singleton, but when shared between game
 		this.world = world;
 	}
 
-	public Body createBody(float width, float height, float posX, float posY, BodyDef.BodyType bodyType, String userData) {
+	public Body createSquareBody(float width, float height, float posX, float posY, BodyDef.BodyType bodyType, String userData) {
 		// create body for, which defines object type and position
 		BodyDef bodyDef = new BodyDef();
 		
@@ -32,7 +32,7 @@ public class BodyFactory {  // use to be singleton, but when shared between game
 	    FixtureDef fixtureDef = new FixtureDef();
 	    
 	    fixtureDef.shape = shape;
-	    fixtureDef.density = 1.1f;
+	    fixtureDef.density = 1.5f;
 	    fixtureDef.friction = 0f;
 	    body.createFixture(fixtureDef);  // sets fixture
 	    

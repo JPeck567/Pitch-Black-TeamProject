@@ -1,24 +1,22 @@
 buildscript {
     repositories {
-        mavenLocal()
-        mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-        jcenter()
-        google()
+        //mavenLocal()
+        //mavenCentral()
+        //maven { url "https://plugins.gradle.org/m2/" }
+        //maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        //jcenter()
+        //google()
     }
     dependencies {
-        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.13'
-        classpath 'org.gretty:gretty:3.0.2'
+        //classpath 'org.wisepersist:gwt-gradle-plugin:1.0.13'
+        //classpath 'org.gretty:gretty:3.0.2'
     }
 }
 
 allprojects {
-    apply plugin: "eclipse"
-
     version = '1.0'
     ext {
-        appName = "pitch-black"
+        appName = "pitch-black-client"
         gdxVersion = '1.9.14'
     }
 

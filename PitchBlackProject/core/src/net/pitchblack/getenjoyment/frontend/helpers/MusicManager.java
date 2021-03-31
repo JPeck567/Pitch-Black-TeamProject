@@ -5,7 +5,7 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Disposable;
 
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
 
 public class MusicManager implements Disposable {
 	public enum PitchBlackMusic {

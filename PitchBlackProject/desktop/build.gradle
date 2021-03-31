@@ -5,9 +5,17 @@ sourceSets.main.resources.srcDirs = [ "../core/assets/" ]
 project.ext.mainClassName = "net.pitchblack.getenjoyment.desktop.DesktopLauncher"
 project.ext.assetsDir = new File("../core/assets")
 
-task run(dependsOn: classes, type: JavaExec) {
+task runClient(dependsOn: classes, type: JavaExec) {
     main = project.mainClassName
     classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+}
+
+task runGame(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "net.pitchblack.getenjoyment.desktop.ServerGameLauncher"
     standardInput = System.in
     workingDir = project.assetsDir
     ignoreExitValue = true
@@ -20,6 +28,10 @@ task debug(dependsOn: classes, type: JavaExec) {
     workingDir = project.assetsDir
     ignoreExitValue = true
     debug = true
+}
+
+jar {
+    archivesBaseName = appName
 }
 
 task dist(type: Jar) {
@@ -36,4 +48,4 @@ task dist(type: Jar) {
 
 dist.dependsOn classes
 
-eclipse.project.name = appName + "-desktop"
+//eclipse.project.name = appName + "-desktop"

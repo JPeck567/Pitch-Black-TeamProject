@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.ui;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -11,8 +11,8 @@ import net.pitchblack.getenjoyment.frontend.login.LoginOptions;
 import net.pitchblack.getenjoyment.frontend.login.Registration;
 import net.pitchblack.getenjoyment.frontend.client.Client.AccountState;
 import net.pitchblack.getenjoyment.frontend.client.Client.ClientState;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics.Screens;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics.Screens;
 
 public class LoginInitiator {
 	private PitchBlackGraphics parent;

@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
@@ -90,8 +90,7 @@ public class Hud implements Disposable {
 	}
 
 	public void resize(int width, int height) {
-		//viewport.update(width, height, true);
-
+		viewport.update(width, height, true);
 	}
 
 	public Camera getCamera() {

@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game;
+package net.pitchblack.getenjoyment.frontend.rendering;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,26 +10,27 @@ import com.badlogic.gdx.Screen;
 import net.pitchblack.getenjoyment.frontend.client.Client;
 import net.pitchblack.getenjoyment.frontend.client.Client.AccountState;
 import net.pitchblack.getenjoyment.frontend.client.Client.ClientState;
-import net.pitchblack.getenjoyment.frontend.game.screens.*;
-import net.pitchblack.getenjoyment.frontend.game.screens.GameScreen.GameState;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.game.GameScreen;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.game.GameScreen.GameState;
 
 import net.pitchblack.getenjoyment.PBAssetManager;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.*;
 
 public class PitchBlackGraphics extends Game {
 	public static final String LOG = "PitchBlack";
 
-
 	public enum Screens{
 		MENU,
-		LOBBY,
-		GAME,
 		SETTINGS,
+		CREDITS,
+		LOBBY,
+		INTERMISSION,
+		COUNTDOWN,
+		GAME,
 		WIN,
-		LOSE,
-		CREDITS;
-
-
+		LOSE;
 	}
+
 	private LoginInitiator loginInit;
 	private MenuScreen menuScreen;
 	private LobbyScreen lobbyScreen;
@@ -40,11 +41,14 @@ public class PitchBlackGraphics extends Game {
 	private LoseScreen loseScreen;
 	private SettingsScreen settingsScreen;
 	private CreditsScreen creditsScreen;
+	private IntermissionScreen intermissionScreen;
+	private CountdownScreen countdownScreen;
+
 	private Client client;
 	public final PBAssetManager pbAssetManager = new PBAssetManager();
 
-	public PitchBlackGraphics() {
-		client = new Client(this);
+	public PitchBlackGraphics(String serverURL) {
+		client = new Client(this, serverURL);
 	}
 
 	@Override
@@ -53,6 +57,10 @@ public class PitchBlackGraphics extends Game {
 		pbAssetManager.loadTextures();
 		pbAssetManager.loadMaps();
 		pbAssetManager.loadMenuAssets();
+		countdownScreen = new CountdownScreen(this);
+		// pre-made as vital countdown has to be precice. if was making object aserver
+		// counts down will yield client render slightly inaccurate.
+
 		client.setClientState(ClientState.ACCOUNT);
 		client.beginConnection();
 		new Thread(new Runnable() {
@@ -80,12 +88,16 @@ public class PitchBlackGraphics extends Game {
 				}
 				this.setScreen(lobbyScreen);
 				break;
+			case COUNTDOWN:
+				this.setScreen(countdownScreen);
+				break;
 			case GAME:
 				if (screenIsNull(gameScreen)) {
 					gameScreen = new GameScreen(this, client);
 				} else {
 					gameScreen.restartGame();
 				}
+				Gdx.input.setInputProcessor(gameScreen.getInputHandler());
 				this.setScreen(gameScreen);
 				break;
 			case SETTINGS:
@@ -168,9 +180,15 @@ public class PitchBlackGraphics extends Game {
 					gameScreen = new GameScreen(PitchBlackGraphics.this, client);;
 				}
 				gameScreen.setupRenderer(playerData, fogData, mapData);
-				client.setClientState(ClientState.READY);
+				// once data loaded, show ready button
+				lobbyScreen.setReadyButtonVisible();
+				// client.setClientState(ClientState.READY);
 			}
 		});
+	}
+
+	public void setCountdownSeconds(int countdownSeconds){
+		countdownScreen.setMillisecondsLeft(countdownSeconds);
 	}
 
 	public void lobbyResetRoom(String room) {
@@ -194,6 +212,13 @@ public class PitchBlackGraphics extends Game {
 				changeScreen(screen);
 			}
 		});
+	}
+
+	public IntermissionScreen getIntermissionScreen(){
+		if(screenIsNull(intermissionScreen)){
+			intermissionScreen = new IntermissionScreen(this);
+		}
+		return intermissionScreen;
 	}
 
 	@Override

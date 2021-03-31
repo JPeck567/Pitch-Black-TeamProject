@@ -4,8 +4,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import net.pitchblack.getenjoyment.frontend.game.screens.LoginInitiator;
-import net.pitchblack.getenjoyment.frontend.game.screens.LoginInitiator.WindowType;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.LoginInitiator;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.LoginInitiator.WindowType;
 
 import javax.swing.JLabel;
 import java.awt.Font;

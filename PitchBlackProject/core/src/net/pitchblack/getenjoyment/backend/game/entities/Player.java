@@ -20,6 +20,7 @@ public class Player {
 	private Vector2 velocity;
 	private Body body;
 	private final String id;
+	private final int playerNo;
 
 	private float height;
 	private float width;
@@ -45,8 +46,9 @@ public class Player {
 		  DEAD
 		}
 	
-	public Player(String id, Body body, float height, float width) {
+	public Player(String id, int playerNo, Body body, float height, float width) {
 		this.id = id;
+		this.playerNo = playerNo;
 		this.height = height;
 		this.width = width;
 		
@@ -212,6 +214,6 @@ public class Player {
 	@Override
 	public String toString() {
 		return id + "," + getScreenX() / GameWorld.PPM + "," + getScreenY() / GameWorld.PPM + "," +
-			   state + "," + movementLeft + "," + movementRight;
+			   state + "," + movementLeft + "," + movementRight + "," + playerNo;
 	}
 }

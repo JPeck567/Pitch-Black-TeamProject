@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -15,7 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 import net.pitchblack.getenjoyment.PBAssetManager;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.frontend.helpers.MusicManager;
 import net.pitchblack.getenjoyment.frontend.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.frontend.helpers.PreferencesManager;

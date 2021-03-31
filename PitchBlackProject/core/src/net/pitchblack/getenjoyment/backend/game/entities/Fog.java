@@ -7,24 +7,17 @@ import com.badlogic.gdx.physics.box2d.Body;
 import net.pitchblack.getenjoyment.backend.game.logic.GameWorld;
 
 public class Fog {
-
-	private Vector2 position;
 	private static final float SPEED = Player.SPEED * 5.5f;
-	private Texture image;
-	//private EntityType type;
+	private static final int STARTING_OFFSET = 30;
+	private final float width, height;
 	private Body body;
-	private float width, height;
-	
-	private boolean allPlayersEliminated = false;
-	private int playersLeft = 4;
+
 
 	public Fog(Body body, float width, float height) {
 		this.body = body;
 		this.body.setLinearVelocity(SPEED, 0);
-		this.body.setTransform(body.getPosition().x - 30, body.getPosition().y, 0);  // starting pos
+		this.body.setTransform(body.getPosition().x - STARTING_OFFSET, body.getPosition().y, 0);  // starting pos
 		body.setSleepingAllowed(false);
-		//this.position = new Vector2(x, y);
-		//image = new Texture("fog.png");	
 		this.width = width;
 		this.height = height;		
 	}

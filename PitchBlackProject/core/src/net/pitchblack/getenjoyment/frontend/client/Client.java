@@ -2,16 +2,17 @@ package net.pitchblack.getenjoyment.frontend.client;
 
 import java.util.HashMap;
 
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.IntermissionScreen;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics.Screens;
-import net.pitchblack.getenjoyment.frontend.game.screens.GameScreen.GameState;
-import net.pitchblack.getenjoyment.frontend.game.screens.LoginInitiator;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics.Screens;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.game.GameScreen.GameState;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.LoginInitiator;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -37,6 +38,7 @@ public class Client {
 	}
 
 	private PitchBlackGraphics parent;
+	private final String serverURL;
 
 	private LoginInitiator loginInitiator;
 	private String id;
@@ -47,8 +49,9 @@ public class Client {
 	private ClientState clientState;
 
 	private AccountState accountState;
-	public Client(PitchBlackGraphics parent) {
+	public Client(PitchBlackGraphics parent, String serverURL) {
 		this.parent = parent;
+		this.serverURL = serverURL;
 		id = null;
 		socket = null;
 		username = null;
@@ -71,7 +74,7 @@ public class Client {
 
 	private void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8081"); //
+			socket = IO.socket(serverURL); //
 			socket.connect();
 			isConnected = true;
 		} catch (Exception e) {
@@ -88,16 +91,16 @@ public class Client {
 			case LOADING:
 				//gameScreen.loadEntities(playerIds);
 				// TODO: check if player clicks ready button after data loaded OR better to have lobby call a client method to do work below
-				if(parent.isLobbyScreenReady()) {
-					JSONObject data = new JSONObject();
-					try {
-						data.put("username", username)
-							.put("room", currentRoom);
-					} catch(JSONException e) { e.printStackTrace(); }
-					socket.emit("playerReady", data);
-				}
-				//clientState = ClientState.IDLE;
-				break;
+//				if(parent.isLobbyScreenReady()) {
+//					JSONObject data = new JSONObject();
+//					try {
+//						data.put("username", username)
+//							.put("room", currentRoom);
+//					} catch(JSONException e) { e.printStackTrace(); }
+//					socket.emit("playerReady", data);
+//				}
+//				//clientState = ClientState.IDLE;
+//				break;
 			case GAME:
 //				if(keyUpCode != -1 || keyDownCode != -1) {  // if either button pressed
 //					JSONObject data = new JSONObject();
@@ -278,7 +281,14 @@ public class Client {
 		}).on("gameCountdown", new Emitter.Listener() {
 			@Override
 			public void call(Object... args) {
-				//TODO: alert lobby to countdown
+				JSONObject data = (JSONObject) args[0];
+				int countdownSeconds = 0;
+				try {
+					countdownSeconds = data.getInt("countdownSeconds");
+				} catch(JSONException e) { e.printStackTrace(); }
+
+				parent.setCountdownSeconds(countdownSeconds);
+				parent.postRunnableChangeScreen(Screens.COUNTDOWN);
 			}
 		}).on("gameBegin", new Emitter.Listener() {
 			@Override
@@ -384,13 +394,12 @@ public class Client {
 		socket.emit("getRooms");
 	}
 
-	public void emitPlayerReady(){
+	public void emitLobbyPlayerReady(){
 		JSONObject data = new JSONObject();
 		try {
 			data.put("username", username)
 					.put("room", currentRoom);
 		} catch(JSONException e) { e.printStackTrace(); }
-
 		socket.emit("playerReady", data);
 	}
 

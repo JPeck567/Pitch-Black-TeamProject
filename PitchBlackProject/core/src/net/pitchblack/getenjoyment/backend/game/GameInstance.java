@@ -10,8 +10,8 @@ import net.pitchblack.getenjoyment.backend.game.logic.GameWorld;
 
 public class GameInstance {
 	public static final int PLAYER_MAX = 1;
+	public static final int COUNTDOWN_INTERVAL = 5; // in seconds
 	private static final float UPDATE_TIME = 1/30f;  // 30 times a second
-	private static final int COUNTDOWN_INTERVAL = 5; // in seconds
 	private final String roomName;
 	private float timer;
 
@@ -23,8 +23,8 @@ public class GameInstance {
 		COUNTDOWN,
 		PLAYING,
 		FINISH;
-
 	}
+
 	private GameInstancesClient instanceClient;
     private PBAssetManager pbAssetManager;
     private GameWorld gameWorld;
@@ -72,8 +72,9 @@ public class GameInstance {
 			case READY:
 				if(readyCount == PLAYER_MAX) {
 					instanceClient.emitGameCountdown(roomName);
+					gameState = GameState.COUNTDOWN;
 				}
-				gameState = GameState.COUNTDOWN;
+
 				break;
 			case COUNTDOWN:
 				timer += timePassed;

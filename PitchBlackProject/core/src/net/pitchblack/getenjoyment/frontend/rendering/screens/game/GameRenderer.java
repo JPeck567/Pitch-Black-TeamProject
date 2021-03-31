@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.game;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,13 +19,13 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import net.pitchblack.getenjoyment.frontend.client.Client;
-import net.pitchblack.getenjoyment.frontend.game.entities.Entity;
-import net.pitchblack.getenjoyment.frontend.game.screens.Hud;
-import net.pitchblack.getenjoyment.frontend.game.screens.GameScreen;
+import net.pitchblack.getenjoyment.frontend.rendering.entities.Entity;
 import net.pitchblack.getenjoyment.PBAssetManager;
 import net.pitchblack.getenjoyment.frontend.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.frontend.helpers.PreferencesManager;
 import net.pitchblack.getenjoyment.frontend.helpers.SoundManager;
+import net.pitchblack.getenjoyment.frontend.rendering.entities.Fog;
+import net.pitchblack.getenjoyment.frontend.rendering.entities.Player;
 
 public class GameRenderer {
 	public static final float PPM = 32; // pixels per meter
@@ -38,7 +38,7 @@ public class GameRenderer {
 	private PBAssetManager pbAssetManager;
 
 	// will need array list of string id's to sprites to update from server
-	private HashMap<String, Entity> entities;
+	private HashMap<String, Player> players;
 	private String[] gameDataBuffer;
 
 	private Entity clientPlayer;
@@ -48,9 +48,10 @@ public class GameRenderer {
 
 	private OrthographicCamera camera;
 	private final Vector3 camScreenPosOrigin;
-	private final float camScreenOrigX = 16.875f;
-	private final float camScreenOrigY = 15.014999f;
-	private final Matrix4 camScreenMatOrigin;
+	private final float camScreenPosX;
+	private final float camScreenPosY;
+	private final float camScreenOrigX = 20f;
+	private final float camScreenOrigY = 11.25f;
 	private Viewport viewport;
 
 	// private ShapeRenderer shapeRenderer; // draws lines and shapes easily
@@ -69,7 +70,7 @@ public class GameRenderer {
 	public GameRenderer(GameScreen gameScreen, Client client, PBAssetManager pbAssetManager) {
 	    this.gameScreen = gameScreen;
 		this.pbAssetManager = pbAssetManager;
-		entities = new HashMap<String, Entity>();
+		players = new HashMap<String, Player>();
 		gameDataBuffer = new String[]{"", "", ""};
 
 		this.client = client;
@@ -77,8 +78,6 @@ public class GameRenderer {
 
 		viewport = new ExtendViewport(Gdx.graphics.getWidth() / PPM, Gdx.graphics.getHeight() / PPM);
 		camera = new OrthographicCamera(viewport.getWorldWidth(), viewport.getWorldWidth());  // this camera allows a 3d plane to be projected onto a since 2d plane
-		camScreenPosOrigin = camera.position.cpy();
-
 		viewport.setCamera(camera);
 
 		// get all maps
@@ -99,18 +98,21 @@ public class GameRenderer {
 		batcher.setProjectionMatrix(camera.combined);
 
 		hud = new Hud(batcher);
-		camScreenMatOrigin = hud.getCamera().combined;
+		//camScreenPosOrigin = camera.position.cpy();
+		camScreenPosOrigin = hud.getCamera().position.cpy().scl(1/PPM); // to know what game units to offset text by
+		camScreenPosX = camScreenPosOrigin.x;
+		camScreenPosY = camScreenPosOrigin.y;
+
+		System.out.println(camScreenPosX + "," + camScreenOrigY + "," + camScreenPosOrigin);
 		font = new BitmapFont();
 		font.setColor(Color.WHITE);
-		//font.getData().setScale(0.1f);
-
 
 		//debugRenderer = new Box2DDebugRenderer(true,true,true,true,true,true);
 	}
 
 	public void render(float delta) {
 		/// LOAD DATA HERE ///
-		// avoids concurrent access exception for map if loading map whilst client adds new maps to list
+		// avoids concurrent access exception for map list if rendering maps whilst client adds new maps to list
 		if(!gameDataBuffer[0].equals("")){  // if not empty
 			addGameData();
 		}
@@ -122,41 +124,23 @@ public class GameRenderer {
 		/// RENDERING ///
 		Gdx.gl.glClearColor(0, 0, 0, 0);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		batcher.begin();
+		// work out how far camera is from original position, as font rendering works on screen coords
+		// so to work on game coords, must find the offset
+		Vector3 offset = camera.position.cpy().sub(camScreenPosOrigin);
 
+		batcher.begin();
 		renderMaps();
+		for (Player p: players.values()) {
+			p.draw(batcher);
 
-		for (Entity e: entities.values()) {
-			e.draw(batcher);
+			batcher.setProjectionMatrix(hud.getCamera().combined);  // scales down font to proper size. game world is working on 1/PPM not 1/1 as hud is
+			p.drawPlayerName(batcher, font, offset);
+			batcher.setProjectionMatrix(camera.combined);
 		}
-
 		fog.draw(batcher);
-
-		batcher.end();
-
-		batcher.setProjectionMatrix(hud.getCamera().combined);
-		batcher.begin();
-		for (Entity e: entities.values()) {
-			// Quite a hacky way around rendering bitmap font. it uses hud cam, as game cam scales things too big
-			// and the font cannot get small enough. problem is that hud cam is static, so player name will stay on
-			// screen. must translate screen coords back by the amount game cam has moved to correct positioning
-			float x = (e.getX()) - (camera.position.x - camScreenOrigX);
-			float y = (e.getY()) - (camera.position.y - camScreenOrigY);
-
-			GlyphLayout glyphLayout = new GlyphLayout(); // finds width of text to center it
-			glyphLayout.setText(font,e.getName());
-
-			font.draw(batcher, e.getName(),
-					// x : middle of player's x moved backward by half width of text, effectively rendering text midpoint in line with player midpoint on x
-					((x + e.getWidth() / 2) * PPM) - glyphLayout.width / 2,
-					(y * PPM) - PPM * 2);
-
-		}
 		batcher.end();
 
 		hud.draw();
-		batcher.setProjectionMatrix(camera.combined);
-
 		// debugRenderer.render(gameWorld.getWorld(), camera.combined);
 	}
 
@@ -214,25 +198,34 @@ public class GameRenderer {
 
 	// create player entities based on username plus their associated data, and also
 	// fog used before game begins
-	public void setupData(String playerData, String fogData, String mapData) {
-		for (String individualPlayerData : playerData.split("/n")) { // splits into individual player records
-			String[] players = individualPlayerData.split(","); // split individual player data into array
-			addNewEntity(players[0], Entity.Type.PLAYER, Entity.EntityState.STANDING); // 0 index is username, used to setup player
+	// also sets camera position
+	public void setupRenderer(String playerData, String fogData, String mapData) {
+		// DATA //
+		for (String singlePlayerData : playerData.split("/n")) { // splits into individual player records
+			String[] playerDataArray = singlePlayerData.split(","); // split individual player data into array
+			players.put(playerDataArray[0], new Player(playerDataArray[0], Integer.parseInt(playerDataArray[6]), font, pbAssetManager));
+			// 0 index is username, used to setup player. index 6 is to player number, to find which sprite to use
 		}
 
-		fog = new Entity(null, Entity.Type.FOG, null, pbAssetManager);
-		clientPlayer = entities.get(username);
+		fog = new Fog(pbAssetManager);
+		clientPlayer = players.get(username);
 
 		// reuse data parsing methods which are used ingame
 		addToGameDataBuffer(playerData, fogData, mapData);
 		addGameData();
+
+		// CAMERA & POSITIONING
+		updateCamera(); // set cam to first position
+		//camScreenPosOrigin = camera.position.cpy();
+		//System.out.println("Player Coords: " + clientPlayer.getX() + "," + clientPlayer.getY());
+		//System.out.println("Cam Pos: " + camera.position.cpy());
+		//System.out.println("Cam Viewport: " + camera.viewportHeight + "," + camera.viewportWidth);
 	}
 
 	public void addToGameDataBuffer(String playerData, String fogData, String mapData){
 		gameDataBuffer[0] = playerData;
 		gameDataBuffer[1] = fogData;
 		gameDataBuffer[2] = mapData;
-
 	}
 
 	public void addGameData() {
@@ -246,7 +239,7 @@ public class GameRenderer {
 
 	/*
 	 * Player Data Schema
-	 * "playerID, playerX, playerY, playerState, playerMoveLeft, playerMoveRight, playerJumped, /n playerID, ..." (and repeat)
+	 * "playerID, playerX, playerY, playerState, playerMoveLeft, playerMoveRight, playerJumped, playerNo /n playerID, ..." (and repeat)
 	 * Is split into player records with "/n". Then split for attributes with ","
 	 */
 	private void addPlayerData(String data) {
@@ -260,34 +253,34 @@ public class GameRenderer {
 		for (String dataEntry : dataArray) {
 			if (dataEntry != null) {
 				String[] playerData = dataEntry.split(","); // 0: id, 1: x, 2: y, 3: state, 4: moveLeft, 5: moveRight,
-															// 6: jumped
-				Entity e = entities.get(playerData[0]);
-				if (!Entity.EntityState.valueOf(playerData[3]).equals(Entity.EntityState.DEAD)) {
+															// 6: playerJumped, 7: playerNo
+				Player p = (Player) players.get(playerData[0]);
+				if (!Player.EntityState.valueOf(playerData[3]).equals(Player.EntityState.DEAD)) {
 					// player didn't die
-					float f1 = Float.parseFloat(playerData[1]);
-					float f2 = Float.parseFloat(playerData[2]);
+					float x = Float.parseFloat(playerData[1]);
+					float y = Float.parseFloat(playerData[2]);
 
-					if (e == null) {
+					if (p == null) {
 						continue;
 					}
 
-					e.setPosition(f1, f2);
+					p.setPosition(x, y);
 
 					// if standing before jumping or falling before jumping again, play sound.
-					if ((e.getState() == Entity.EntityState.STANDING
-							&& Entity.EntityState.valueOf(playerData[3]) == Entity.EntityState.ASCENDING)
-							|| (e.getState() == Entity.EntityState.DESCENDING
-									&& Entity.EntityState.valueOf(playerData[3]) == Entity.EntityState.ASCENDING)) {
+					if ((p.getState() == Player.EntityState.STANDING
+							&& Player.EntityState.valueOf(playerData[3]) == Player.EntityState.ASCENDING)
+							|| (p.getState() == Player.EntityState.DESCENDING
+									&& Player.EntityState.valueOf(playerData[3]) == Player.EntityState.ASCENDING)) {
 						if(PreferencesManager.isSoundEnabled()) {
 							SoundManager.getInstance().play(PitchBlackSound.JUMP);
 						}
 					}
 
-					e.setState(Entity.EntityState.valueOf(playerData[3]));
-					e.setMovement(Boolean.parseBoolean(playerData[4]), Boolean.parseBoolean(playerData[5]));
+					p.setState(Player.EntityState.valueOf(playerData[3]));
+					p.setMovement(Boolean.parseBoolean(playerData[4]), Boolean.parseBoolean(playerData[5]));
 				} else { // player died
-					if (entities.containsKey(playerData[0])) {
-						e.setState(Entity.EntityState.valueOf(playerData[3]));
+					if (players.containsKey(playerData[0])) {
+						p.setState(Player.EntityState.valueOf(playerData[3]));
 					}
 				}
 			}
@@ -307,24 +300,20 @@ public class GameRenderer {
 		}
 	}
 
-	public void addMapToSequence(int mapNumber) {
-		gameMaps.add(mapNumber);
-	}
-
-	private void addNewEntity(String id, Entity.Type type, Entity.EntityState entityState) {
-		entities.put(id, new Entity(id, type, entityState, pbAssetManager));
-	}
-
 	public void resize(int width, int height) {
+		//System.out.println("Resize: W: " + width + "H: " + height);
 		viewport.update(width, height, true);
 		camera.viewportHeight = viewport.getWorldHeight();
 		camera.viewportWidth = viewport.getWorldWidth();
 
+		//camScreenPosOrigin.scl(width, height, 1);
+
 		hud.resize(width, height);
+		System.out.println("Hud Cam Pos: " + hud.getCamera().position);
 	}
 
 	public void resetRenderer(){
-		entities.clear();
+		players.clear();
 	}
 
 	public Hud getHud(){

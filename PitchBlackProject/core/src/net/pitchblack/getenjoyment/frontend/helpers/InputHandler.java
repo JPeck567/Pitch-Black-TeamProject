@@ -1,6 +1,6 @@
 package net.pitchblack.getenjoyment.frontend.helpers;
 
-import net.pitchblack.getenjoyment.frontend.game.screens.GameScreen;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.game.GameScreen;
 
 import com.badlogic.gdx.InputProcessor;
 

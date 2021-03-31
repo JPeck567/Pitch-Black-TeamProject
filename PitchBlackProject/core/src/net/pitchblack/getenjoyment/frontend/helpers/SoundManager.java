@@ -5,7 +5,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Disposable;
 
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.frontend.helpers.LRUCache.CacheEntryRemovedListener;
 
 
@@ -43,7 +43,7 @@ public class SoundManager implements CacheEntryRemovedListener<PitchBlackSound,S
             soundCache.add( sound, soundToPlay );
         }
 
-        Gdx.app.log( PitchBlackGraphics.LOG, "Playing sound: " + sound.name() );
+        //Gdx.app.log( PitchBlackGraphics.LOG, "Playing sound: " + sound.name() );
         soundToPlay.play(volume);
     }
     
@@ -62,12 +62,12 @@ public class SoundManager implements CacheEntryRemovedListener<PitchBlackSound,S
 
     @Override
     public void notifyEntryRemoved( PitchBlackSound key,Sound value ){
-        Gdx.app.log( PitchBlackGraphics.LOG, "Disposing sound: " + key.name() );
+        //Gdx.app.log( PitchBlackGraphics.LOG, "Disposing sound: " + key.name() );
         value.dispose();
     }
 
     public void dispose(){
-        Gdx.app.log( PitchBlackGraphics.LOG, "Disposing sound manager" );
+        //Gdx.app.log( PitchBlackGraphics.LOG, "Disposing sound manager" );
         for( Sound sound : soundCache.retrieveAll() ) {
             sound.stop();
             sound.dispose();

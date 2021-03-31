@@ -9,19 +9,25 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.Disposable;
 
-public class PBAssetManager{  // can't make into singleton, as may corrupt textures in libGDX
+public class PBAssetManager implements Disposable {  // can't make into singleton, as may corrupt textures in libGDX
 	public final AssetManager manager;
 	
 	// TODO: use texture atlas for skin + eventually player sprite sheets
     public static final AssetDescriptor<Skin> screenSkin = new AssetDescriptor<Skin>("skin_2/flat-earth-ui.json", Skin.class, new SkinLoader.SkinParameter("skin_2/flat-earth-ui.atlas"));
     public static final AssetDescriptor<Texture> menuBackground = new AssetDescriptor<Texture>("background/background.png", Texture.class);
 	public static final AssetDescriptor<Texture> menuBackgroundClear = new AssetDescriptor<Texture>("background/backgroundDark.jpg", Texture.class);
-    public static final AssetDescriptor<Texture> gameOverBackground = new AssetDescriptor<Texture>("background/gameOverBackGround.png", Texture.class);
+    public static final AssetDescriptor<Texture> gameOverBackground = new AssetDescriptor<Texture>("background/gameOverBackground.png", Texture.class);
 	public static final AssetDescriptor<Texture> winBackground = new AssetDescriptor<Texture>("background/winScreenBackground.png", Texture.class);
-    public static final AssetDescriptor<Texture> playerTexture = new AssetDescriptor<Texture>("texture/player.png", Texture.class);
-    public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("texture/fog.png", Texture.class);
-    
+
+	public static final AssetDescriptor<Texture> roguePlayerTexture = new AssetDescriptor<Texture>("texture/playerRogue.png", Texture.class);
+	public static final AssetDescriptor<Texture> clownPlayerTexture = new AssetDescriptor<Texture>("texture/playerClown.png", Texture.class);
+	public static final AssetDescriptor<Texture> engineerPlayerTexture = new AssetDescriptor<Texture>("texture/playerEngineer.png", Texture.class);
+	public static final AssetDescriptor<Texture> ninjaPlayerTexture = new AssetDescriptor<Texture>("texture/playerNinja.png", Texture.class);
+	public static final AssetDescriptor<Texture> fogTexture = new AssetDescriptor<Texture>("texture/fog.png", Texture.class);
+    public static final AssetDescriptor[] playerArray = {roguePlayerTexture, clownPlayerTexture, engineerPlayerTexture, ninjaPlayerTexture};
+
     public static final AssetDescriptor<TiledMap> map0 = new AssetDescriptor<TiledMap>("maps/map00.tmx", TiledMap.class);
     public static final AssetDescriptor<TiledMap> map1 = new AssetDescriptor<TiledMap>("maps/map01.tmx", TiledMap.class);
     public static final AssetDescriptor<TiledMap> map2 = new AssetDescriptor<TiledMap>("maps/map02.tmx", TiledMap.class);
@@ -33,6 +39,7 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     public PBAssetManager() {
     	manager = new AssetManager();
     }
+
     public void loadMenuAssets() {
     	manager.load(screenSkin);
     	manager.load(menuBackground);
@@ -43,7 +50,10 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     }
     
     public void loadTextures() {
-    	manager.load(playerTexture);
+    	for(AssetDescriptor playerDesc : playerArray){
+			manager.load(playerDesc);
+		}
+
     	manager.load(fogTexture);
     	manager.finishLoading();
     }
@@ -89,7 +99,7 @@ public class PBAssetManager{  // can't make into singleton, as may corrupt textu
     	}
     }
     
-//    public void dispose() {
-//    	dispose();
-//    }
+    public void dispose() {
+    	manager.dispose();
+    }
 }

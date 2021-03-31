@@ -9,7 +9,7 @@ public enum PitchBlackSound {
     
     private final String fileName;
 
-    private PitchBlackSound( String fileName ){
+    PitchBlackSound(String fileName){
         this.fileName = fileName;
     }
 

@@ -5,7 +5,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import net.pitchblack.getenjoyment.frontend.client.Client;
-import net.pitchblack.getenjoyment.frontend.game.screens.LoginInitiator;
+import net.pitchblack.getenjoyment.frontend.rendering.screens.ui.LoginInitiator;
 
 import javax.swing.JLabel;
 

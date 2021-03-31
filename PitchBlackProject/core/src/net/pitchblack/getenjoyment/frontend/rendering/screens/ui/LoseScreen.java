@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -18,8 +18,8 @@ import net.pitchblack.getenjoyment.frontend.helpers.MusicManager;
 import net.pitchblack.getenjoyment.frontend.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.frontend.helpers.PreferencesManager;
 import net.pitchblack.getenjoyment.frontend.helpers.SoundManager;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics.Screens;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics.Screens;
 
 public class LoseScreen implements Screen {
 	private PitchBlackGraphics parent;

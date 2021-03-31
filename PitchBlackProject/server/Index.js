@@ -279,7 +279,7 @@ s*/
   })
 
   socket.on('gameCountdown', function(data) { // game client issue 5 second waring
-    socket.to(data.room).emit('gameCountdown');
+    socket.to(data.room).emit('gameCountdown', { countdownSeconds : data.countdownSeconds});
   });
 
   socket.on('gameBegin', function(data) { // game client starts game, notif players + lobby clients

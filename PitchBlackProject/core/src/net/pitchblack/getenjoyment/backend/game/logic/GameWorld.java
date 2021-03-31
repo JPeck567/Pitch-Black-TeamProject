@@ -29,7 +29,7 @@ public class GameWorld {
 	public static final float FOG_OFFSET = 300f;
 	
 	public static final int SPEED_MODIFIER = 0;
-	public static final Vector2 GRAVITY_VECT = new Vector2(0, -14f);  // -9.81); = so downwards at 9.81px per second
+	public static final Vector2 GRAVITY_VECT = new Vector2(0, -15f);  // -9.81); = so downwards at 9.81px per second
 	public static int TILE_DIM;
 	public static final String PLAYER_USER_DATA = "player";
 	public static final String MAP_USER_DATA = "mapCollision";
@@ -39,6 +39,7 @@ public class GameWorld {
 	public final float MAP_HEIGHT_PX;
 
 	private GameInstance gameInstance;
+	private PBAssetManager pbAssetManager;
 
 	private World physWorld;
 	private BodyFactory bodyFactory;
@@ -55,20 +56,21 @@ public class GameWorld {
 	private final ArrayList<String> recentlyDied;
 
 	private Fog fog;
-	private float playerWidth, playerHeight;
+	//private float playerWidth, playerHeight;
 	private float fogWidth, fogHeight;
 
 	public GameWorld(PBAssetManager pbAssetManager, GameInstance gameInstance) {
 	    //System.out.println(START_POS_X + "," + START_POS_Y);
 	    this.gameInstance = gameInstance;
+	    this.pbAssetManager = pbAssetManager;
 
 		MapProperties prop = pbAssetManager.getAsset(PBAssetManager.map0).getProperties();
 		MAP_WIDTH_PX = ((float) prop.get("width", Integer.class)) * PPM;
 		MAP_HEIGHT_PX = ((float) prop.get("height", Integer.class)) * PPM;
 
-		Texture playerTexture = pbAssetManager.getAsset(PBAssetManager.playerTexture);
-		this.playerWidth = playerTexture.getWidth();
-		this.playerHeight = playerTexture.getHeight();
+		//Texture playerTexture = pbAssetManager.getAsset(PBAssetManager.roguePlayerTexture);
+		//this.playerWidth = playerTexture.getWidth();
+		//this.playerHeight = playerTexture.getHeight();
 
 		// in screen units
 		this.fogWidth = pbAssetManager.getAsset(PBAssetManager.fogTexture).getWidth() - FOG_OFFSET;
@@ -131,22 +133,25 @@ public class GameWorld {
 	}
 
 	public void setupPlayers(List<String> playerList) {
-		for(String name : playerList) {
-			createPlayer(name);
+		for(int i = 0; i < playerList.size(); i++) {
+			createPlayer(playerList.get(i), i);
 		}
 	}
 
-	private void createPlayer(String id) {  // start pos increases depending on player number/count
-		Body playerBody = bodyFactory.createBody(playerWidth, playerHeight, START_POS_X + (players.size() * PPM), START_POS_Y, BodyDef.BodyType.DynamicBody, PLAYER_USER_DATA + "," + id);
+	private void createPlayer(String id, int playerNo) {  // start pos increases depending on player number/count
+		Texture playerTexture = (Texture) pbAssetManager.getAsset(PBAssetManager.playerArray[playerNo]);
+		int playerWidth = playerTexture.getWidth();
+		int playerHeight = playerTexture.getHeight();
+		Body playerBody = bodyFactory.createSquareBody(playerWidth, playerHeight, START_POS_X + (playerNo * PPM), START_POS_Y, BodyDef.BodyType.DynamicBody, PLAYER_USER_DATA + "," + id);
 		playerBody.setLinearVelocity(0, 0);
-		Player p = new Player(id, playerBody, playerHeight, playerWidth);
+		Player p = new Player(id, playerNo, playerBody, playerHeight, playerWidth);
 
 		players.put(id, p);
 		alivePlayers.add(id);
 	}
 
 	private Fog createFog() {
-		Body fogBody = bodyFactory.createBody(fogWidth, fogHeight, ((fogWidth)* -2) / 3, fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
+		Body fogBody = bodyFactory.createSquareBody(fogWidth, fogHeight, ((fogWidth)* -2) / 3, fogHeight / 2, BodyDef.BodyType.KinematicBody, FOG_USER_DATA);
 		return new Fog(fogBody, fogWidth, fogHeight);
 	}
 
@@ -162,8 +167,7 @@ public class GameWorld {
 		// done in the loop for updating players
 		float xCoord = 0;
 
-		// update fog
-		//fog.update(delta, playerCount);
+		// fog update occurs in b2d world above
 
 		// update players
 		for(String id : alivePlayers) {
@@ -173,11 +177,12 @@ public class GameWorld {
 			xCoord = Math.max(p.getScreenX(), xCoord);
 
 			// death check //
+
             // is fallen out of map
 			if(p.getScreenY() / PPM < 0) {
 				toRemove.add(id);
 				System.out.println(p.getScreenY());
-			// caught by fog. should use collision of box2d but is kinematic body???
+			// caught by fog. should use collision of box2d but is kinematic body and can't detect collision???
 			// sets fog x to right, and player x to left
 			} else if (fog.getScreenX() + fogWidth + 1 >= p.getScreenX()){
 				// b2d body does not allow fog to surpass player. therefore + 1 to ensure player is in fog kill zone
@@ -190,7 +195,7 @@ public class GameWorld {
 		}
 
 		// check if xCoord is further that the second to last map
-		if(xCoord * PPM > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
+		if(xCoord > (gameMapSequence.size() - 1) * MAP_WIDTH_PX) {
 			int pos = gameMapSequence.size() + 1;
 			int mapNo = getRandomMapNum();
 			addMapToGame(mapNo, pos);
@@ -207,15 +212,15 @@ public class GameWorld {
 	
 	// to avoid sync issues with box2d
 	private void sweepDeadBodies() {
-	for(String id : toRemove) {
-        Player p = players.get(id);
-        p.kill();
-        physWorld.destroyBody(p.getBody());
-        alivePlayers.remove(id);  // removal by object. arraylist scans for first occurance of id + removes it
-        deadPlayers.add(id);
-    }
-    gameInstance.addToRecentlyDied(toRemove);
-    toRemove.clear();
+		for(String id : toRemove) {
+			Player p = players.get(id);
+			p.kill();
+			physWorld.destroyBody(p.getBody());
+			alivePlayers.remove(id);  // removal by object. arraylist scans for first occurance of id + removes it
+			deadPlayers.add(id);
+		}
+		gameInstance.addToRecentlyDied(toRemove);
+		toRemove.clear();
 	}
 	
 	public boolean isPlayerNull(String id) {

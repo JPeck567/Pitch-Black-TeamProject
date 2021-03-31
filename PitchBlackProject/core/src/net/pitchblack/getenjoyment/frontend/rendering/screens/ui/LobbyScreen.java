@@ -1,4 +1,4 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 
 import net.pitchblack.getenjoyment.frontend.client.Client;
-import net.pitchblack.getenjoyment.frontend.game.PitchBlackGraphics;
+import net.pitchblack.getenjoyment.frontend.rendering.PitchBlackGraphics;
 import net.pitchblack.getenjoyment.PBAssetManager;
 import net.pitchblack.getenjoyment.frontend.helpers.PitchBlackSound;
 import net.pitchblack.getenjoyment.frontend.helpers.PreferencesManager;
@@ -29,6 +29,7 @@ public class LobbyScreen implements Screen {
 	private HashMap<String, RoomUIInformation> roomMap;
 	private ArrayList<String> playersList;
 	private boolean roomMapLoaded;
+	private boolean readyWaiting; // clicked ready + waiting for other players to do same
 	private RoomUIInformation roomViewed; // if 0, lobby
 
 	private SoundManager sound;
@@ -45,17 +46,19 @@ public class LobbyScreen implements Screen {
 	private Label roomHeadingTitle;
 	private Label capacityHeadingTitle;
 
-	private Label currentPlayersInRoomTextArea;
+	private Label currentPlayersInRoomLabel;
 
     private TextButton backToMenuButton;
     private TextButton backToAllRoomsButton;
 	private TextButton joinButton;
+	private TextButton readyButton;
 
 	public LobbyScreen(PitchBlackGraphics p, final Client client) {
 		this.parent = p;
 		this.client = client;
         roomMap = null;
         roomMapLoaded = false;
+        readyWaiting = false;
 		roomViewed = null;
 
 		sound = SoundManager.getInstance();
@@ -72,11 +75,13 @@ public class LobbyScreen implements Screen {
 
 		roomHeadingTitle = new Label("Room", skin,"title");
 		capacityHeadingTitle = new Label("Capacity", skin, "title");
-        currentPlayersInRoomTextArea = new Label("Placeholder as room not selected", fontSkin);
+        currentPlayersInRoomLabel = new Label("Placeholder as room not selected", fontSkin);
 
         backToMenuButton = new TextButton("Back", skin);
         backToAllRoomsButton = new TextButton("Back", skin);
         joinButton = new TextButton("Join Room", skin);
+        readyButton = new TextButton("Ready to play!", skin);
+        readyButton.setSize(readyButton.getWidth() * 2, readyButton.getHeight() * 2);
         setupButtonListeners();
 
         client.emitJoinLobby();
@@ -92,7 +97,7 @@ public class LobbyScreen implements Screen {
 					sound.play(PitchBlackSound.CLICK);
 				}
 				parent.changeScreen(PitchBlackGraphics.Screens.MENU);
-			}
+            }
         });
 
         backToAllRoomsButton.addListener(new ChangeListener() {
@@ -107,18 +112,29 @@ public class LobbyScreen implements Screen {
         joinButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-            	joinButton.setTouchable(Touchable.disabled);
+            	joinButton.setVisible(false);
                 client.emitJoinRoomRequest(roomViewed.getRoomName());
             }
         });
+
+		readyButton.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				readyButton.setTouchable(Touchable.disabled);
+				readyWaiting = true;
+				client.emitLobbyPlayerReady();
+			}
+		});
     }
 
     public void restartLobby(){
 	    //roomMapLoaded = false;
+		readyWaiting = false;
         roomViewed = null;
         currentStage = allRoomsStage;
         backToAllRoomsButton.setVisible(true);
-        joinButton.setTouchable(Touchable.enabled);
+        joinButton.setVisible(true);
+		readyButton.setVisible(false);
         client.emitGetRooms();
     }
 
@@ -150,23 +166,27 @@ public class LobbyScreen implements Screen {
         }
 
         allRoomsTable.row();
-        allRoomsTable.add(backToMenuButton).center();
+        allRoomsTable.add(backToMenuButton).colspan(2);
     }
 
     private void createRoomScene(){
 		roomTable.setBackground(new TextureRegionDrawable(new TextureRegion(parent.pbAssetManager.getAsset(PBAssetManager.menuBackgroundClear))));
 		roomTable.setFillParent(true);
 		roomTable.setDebug(false);
+		readyButton.setVisible(false);
 
-		roomStage.addActor(currentPlayersInRoomTextArea);
+		roomStage.addActor(currentPlayersInRoomLabel);
 		roomStage.addActor(roomTable);
 		roomStage.addActor(joinButton);
+		roomStage.addActor(readyButton);
 
-		roomTable.add(currentPlayersInRoomTextArea).colspan(2).padBottom(25);
+		roomTable.add(currentPlayersInRoomLabel).colspan(2).padBottom(50);
 		//roomTable.add(currentPlayersInRoomTextArea).pad(0, 30, 0, 0);
 		roomTable.row();
 		roomTable.add(backToAllRoomsButton).padRight(40);
 		roomTable.add(joinButton);
+		roomTable.row();
+		roomTable.add(readyButton).colspan(2);
 	}
 
     private void addListenerToViewRoomButton(TextButton button, final String roomName) {
@@ -176,17 +196,17 @@ public class LobbyScreen implements Screen {
 			    RoomUIInformation roomUI = roomMap.get(roomName);
 			    roomViewed = roomUI;
                 currentStage = roomStage;
-                updateRoomTextArea();
+                updatePlayersInRoomLabel();
                 Gdx.input.setInputProcessor(currentStage);
 			}
 		});
 	}
 
-	private void updateRoomTextArea() {
+	private void updatePlayersInRoomLabel() {
 		if(roomViewed != null) {
-			Cell c = roomTable.getCell(currentPlayersInRoomTextArea);
-			currentPlayersInRoomTextArea = roomViewed.getPlayersInRoomTextArea();
-			c.setActor(currentPlayersInRoomTextArea);
+			Cell c = roomTable.getCell(currentPlayersInRoomLabel);
+			currentPlayersInRoomLabel = roomViewed.getPlayersInRoomLabel();
+			c.setActor(currentPlayersInRoomLabel);
 		}
 	}
 
@@ -218,12 +238,17 @@ public class LobbyScreen implements Screen {
 		if(joined){
 			RoomUIInformation roomInfo = roomMap.get(room);
 			backToAllRoomsButton.setVisible(false);  // no going back now
+			joinButton.setVisible(false);
 			addNewPlayer(client.getUsername(), room);
-			updateRoomTextArea();
+			updatePlayersInRoomLabel();
 		} else {
-			joinButton.setTouchable(Touchable.enabled);
+			joinButton.setVisible(true);
 			System.out.println(message);
 		}
+	}
+
+	public void setReadyButtonVisible() {
+		readyButton.setVisible(true);
 	}
 
 	public void addNewPlayer(String username, String room) {
@@ -258,21 +283,24 @@ public class LobbyScreen implements Screen {
 		Gdx.gl.glClearColor(0f, 0f, 0f, 1);  // clears screen each frame
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		if(roomMapLoaded) {
-			if(roomViewed == null){
+		if(roomMapLoaded) {  // if room data is sent and loaded
+			if(roomViewed == null){  // if not viewing a room
 				allRoomsStage.act();
 				allRoomsStage.draw();
-			} else {
-				if(roomViewed.isInSession()){
-					if(joinButton.isVisible()) joinButton.setVisible(false);
-				} else {
-					if(!joinButton.isVisible()) joinButton.setVisible(true);
+			} else {  // viewing a room
+				if(readyWaiting){  //  joined & waiting for players to be ready after clicking ready button
+					parent.getIntermissionScreen().renderScreen(delta, IntermissionScreen.Title.WAITING);
+				} else {  // not joined yet, but show room anyway, with buttons appropriately visible or not
+					if (roomViewed.isInSession()) {
+						if (joinButton.isVisible()) joinButton.setVisible(false);
+					}
+					roomStage.act();
+					roomStage.draw();
 				}
-				roomStage.act();
-				roomStage.draw();
 			}
-        } else {
-		    // show loading screen ?
+        } else {  // if loading / waiting for room data to be loaded / sent over
+			parent.getIntermissionScreen().renderScreen(delta, IntermissionScreen.Title.LOADING);
+
         }
 	}
 

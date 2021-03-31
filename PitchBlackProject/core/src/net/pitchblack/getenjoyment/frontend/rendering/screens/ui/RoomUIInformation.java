@@ -1,9 +1,8 @@
-package net.pitchblack.getenjoyment.frontend.game.screens;
+package net.pitchblack.getenjoyment.frontend.rendering.screens.ui;
 
 import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ public class RoomUIInformation {;
 
     private final TextButton roomTextButton;
     private final Label capacityTakenLabel;
-    private final Label playersInRoomTextArea;
+    private final Label playersInRoomLabel;
 
     public RoomUIInformation(String roomName, ArrayList<String> playersInRoom, Skin skin, Label.LabelStyle fontSkin){
         this.roomName = roomName;
@@ -26,9 +25,9 @@ public class RoomUIInformation {;
 
         roomTextButton = new TextButton("Room " + roomName,  skin);
         capacityTakenLabel = new Label("", skin);
-        playersInRoomTextArea = new Label("", fontSkin);
+        playersInRoomLabel = new Label("", fontSkin);
         //playersInRoomTextArea.setDisabled(true);  // so can't write in it
-        playersInRoomTextArea.setScale(5);
+        playersInRoomLabel.setScale(5);
 
         updateUIComponents();
     }
@@ -40,13 +39,14 @@ public class RoomUIInformation {;
 
     private void updateCapacityTakenLabel(){
         int size = playersInRoom.size();
-
-        if(size < capacity) {
-            capacityTakenLabel.setText(size + " / " + capacity);
-            roomTextButton.setTouchable(Touchable.enabled);
-        } else {
-            capacityTakenLabel.setText("Room is full!");
-            roomTextButton.setTouchable(Touchable.disabled);
+        if(!isInSession()) {
+            if (size < capacity) {
+                capacityTakenLabel.setText(size + " / " + capacity);
+                roomTextButton.setTouchable(Touchable.enabled);
+            } else {
+                capacityTakenLabel.setText("Room is full!");
+                roomTextButton.setTouchable(Touchable.disabled);
+            }
         }
     }
 
@@ -54,9 +54,9 @@ public class RoomUIInformation {;
         if(!sessionInProgress) {
             int playersInRoomSize = playersInRoom.size();
             if (playersInRoomSize == 0) {  // no players in room
-                playersInRoomTextArea.setText("There are no players in room " + roomName);
+                playersInRoomLabel.setText("There are no players in room " + roomName);
             } else {  // update text
-                playersInRoomTextArea.setText(getPlayersInRoomString());
+                playersInRoomLabel.setText(getPlayersInRoomString());
             }
         }
     }
@@ -87,6 +87,7 @@ public class RoomUIInformation {;
 
     public void setToInSession() {
         capacityTakenLabel.setText("Room in game session");
+        roomTextButton.setTouchable(Touchable.disabled);
         sessionInProgress = true;
     }
 
@@ -108,8 +109,8 @@ public class RoomUIInformation {;
         return capacityTakenLabel;
     }
 
-    public Label getPlayersInRoomTextArea(){
-        return playersInRoomTextArea;
+    public Label getPlayersInRoomLabel(){
+        return playersInRoomLabel;
     }
 
     public boolean isInSession() {
