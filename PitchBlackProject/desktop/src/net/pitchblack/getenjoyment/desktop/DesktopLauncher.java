@@ -12,10 +12,12 @@ public class DesktopLauncher {
 		config.width = 1280;
 		config.height = 720;
 		String serverURL = "http://localhost:8081";
-//		try{
-//			serverURL = args[0];
-//		} catch (NullPointerException e){ System.out.println("URL not provided, localhost:8081 will be used");}
 
+		try{
+			serverURL = args[0];
+		} catch (ArrayIndexOutOfBoundsException e){ System.out.println("No URL was provided, will run on localhost"); }
+
+		System.out.println("Connecting to: " + serverURL);
 		new LwjglApplication(new PitchBlackGraphics(serverURL), config);
 	}
 }
