@@ -12,9 +12,8 @@ D: Move right
 Space: Jump
 
 # Frameworks
-Our project was coded in java, whilst the server was made in javascript.
-The front-end was made using the libGDX framework
-The network layer was achieved using node.js and socket.io, as well as the the socket.io client java implementation
+Our project was coded in java, whilst the server was made in javascript. The front-end and back-end logic was made using the libGDX framework.
+Our network layer was achieved using node.js and socket.io, as well as the the socket.io client java implementation
 
 # Requirements
 Java 11+
@@ -25,6 +24,6 @@ A substantial internet connection (>3mbps)
   NB: Want to run the game locally? Well you can! (albeit quite fiddily)
   1. Ensure XAMPP, Node.js and Java (11+) is installed as well as the source code (this is the back-end, in master branch or zipped folder under releases v1.0)
   2. Run XAMPP for Apache and SQL.
-  3. Go to localhost in browser, open phpmyadmin, and run the sql commands as seen in the file 'SQLtoSetupDatabase.sql'. A gamedatabase databse should be created with a users table
-  4. Run the file 'runBacked.bat' in the root folder
+  3. Go to localhost in browser, open phpmyadmin, and run the sql commands as seen in the file 'SQLtoSetupDatabase.sql'. A 'gamedatabase' database should be created with a 'users ' table.
+  4. Run the file 'runBackend.bat' in the root folder
   5. Run the client as normal!
