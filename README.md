@@ -1,7 +1,6 @@
 # Pitch-Black-TeamProject
 Race though a dark dungeon as an explorer. Dubbed as the "Pitch Black" by archaic explorers of the past, escape the non-stop approach of poisonous fog among other explorers in a bid for freedom! After fighting you way though the dark depths, you and your team of explorers finally eye-out treasures beyond your wildest dreams! Basking in your newfound riches, you unknowingly trigger a curse. One which has you fighting against your spelunkers in fear of your lives!
 
-
 This repo was made by Team 8 for the module 'CS2020 Team Project'. Find more details, as well as the members involved, and our blog, on our website at http://www.pitchblack.getenjoyment.net
 
 # Game Controls:
@@ -13,10 +12,10 @@ Space: Jump
 
 # Frameworks
 Our project was coded in java, whilst the server was made in javascript. The front-end and back-end logic was made using the libGDX framework.
-Our network layer was achieved using node.js and socket.io, as well as the the socket.io client java implementation
+Our network layer was achieved using node.js and socket.io, as well as the the socket.io client java implementation. Gradle was our choice for software development involving dependency management and deployment.
 
 # Requirements
-Java 11+
+Java 11+ JRE (11 recommended)
 
 A substantial internet connection (>3mbps)
 
