@@ -11,6 +11,16 @@ D: Move right
 
 Space: Jump
 
+# Frameworks
+Our project was coded in java, whilst the server was made in javascript.
+The front-end was made using the libGDX framework
+The network layer was achieved using node.js and socket.io, as well as the the socket.io client java implementation
+
+# Requirements
+Java 11+
+
+A substantial internet connection (>3mbps)
+
 # Backend
   NB: Want to run the game locally? Well you can! (albeit quite fiddily)
   1. Ensure XAMPP, Node.js and Java (11+) is installed as well as the source code (this is the back-end, in master branch or zipped folder under releases v1.0)
