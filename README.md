@@ -1,6 +1,11 @@
 # Pitch-Black-TeamProject
 Race though a dark dungeon as an explorer. Dubbed as the "Pitch Black" by archaic explorers of the past, escape the non-stop approach of poisonous fog among other explorers in a bid for freedom! After fighting you way though the dark depths, you and your team of explorers finally eye-out treasures beyond your wildest dreams! Basking in your newfound riches, you unknowingly trigger a curse. One which has you fighting against your spelunkers in fear of your lives!
 
+Game Controls:
+A: Move Left
+D: Move right
+Space: Jump
+
 This repo was made by Team 8 for the module 'CS2020 Team Project'. Find more details, as well as the members involved, and our blog, on our website at http://www.pitchblack.getenjoyment.net
 
   NB: Want to run the game locally? Well you can! (albeit quite fiddily)
