@@ -6,7 +6,9 @@ This repo was made by Team 8 for the module 'CS2020 Team Project'. Find more det
 
 # Game Controls:
 A: Move Left
+
 D: Move right
+
 Space: Jump
 
 # Backend
