@@ -20,9 +20,10 @@ Java 11+ JRE (11 recommended)
 A substantial internet connection (>3mbps)
 
 # Backend
-  NB: Want to run the game locally? Well you can! (albeit quite fiddily)
+  NB: Want to run the game locally? Well you can! (albeit quite fiddily, as the backend is not compiled)
   1. Ensure XAMPP, Node.js and Java (11+) is installed as well as the source code (this is the back-end, in master branch or zipped folder under releases v1.0)
   2. Run XAMPP for Apache and SQL.
   3. Go to localhost in browser, open phpmyadmin, and run the sql commands as seen in the file 'SQLtoSetupDatabase.sql'. A 'gamedatabase' database should be created with a 'users ' table.
-  4. Run the file 'runBackend.bat' in the root folder
-  5. Run the client as normal!
+  4. Run npm install though the terminal inside the server folder
+  5. Run the file 'runBackend.bat' in the root folder
+  6. Run the client as normal!
